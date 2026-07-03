@@ -1,0 +1,1803 @@
+"use client";
+
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
+
+import {
+  formatCurrency,
+  getAvailabilityRows,
+  type BookingSlot,
+  type VenueSnapshot,
+} from "@/lib/site-data";
+
+type WarehouseShowcaseBookingBoardProps = {
+  snapshot: VenueSnapshot;
+};
+
+type SelectedSlot = {
+  courtId: string;
+  courtName: string;
+  startTime: string;
+  endTime: string;
+  timeLabel: string;
+  rate: number;
+};
+
+type BookingFormState = {
+  reservationName: string;
+  contactEmail: string;
+  contactNumber: string;
+  paymentMethod: string;
+  paymentReference: string;
+  acceptedTerms: boolean;
+  acceptedProceed: boolean;
+  acceptedFeePolicy: boolean;
+};
+
+type ModalStep = "details" | "payment";
+
+const initialFormState: BookingFormState = {
+  reservationName: "",
+  contactEmail: "",
+  contactNumber: "",
+  paymentMethod: "gcash",
+  paymentReference: "",
+  acceptedTerms: false,
+  acceptedProceed: false,
+  acceptedFeePolicy: false,
+};
+
+export function WarehouseShowcaseBookingBoard({
+  snapshot,
+}: WarehouseShowcaseBookingBoardProps) {
+  const hasMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const [isCompactMobile, setIsCompactMobile] = useState(false);
+  const [currentSnapshot, setCurrentSnapshot] =
+    useState<VenueSnapshot>(snapshot);
+  const [bookings, setBookings] = useState<BookingSlot[]>(snapshot.bookings);
+  const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([]);
+  const [formState, setFormState] =
+    useState<BookingFormState>(initialFormState);
+  const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null);
+  const [activeHoldIds, setActiveHoldIds] = useState<string[]>([]);
+  const [statusMessage, setStatusMessage] = useState<string>("");
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [modalStep, setModalStep] = useState<ModalStep>("details");
+  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+  const [showPolicyDetails, setShowPolicyDetails] = useState(false);
+  const [isHoldPending, setIsHoldPending] = useState(false);
+  const [isDateNavigating, setIsDateNavigating] = useState(false);
+  const [isUploadDragging, setIsUploadDragging] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const paymentProofInputId = useId();
+
+  const groupedBlocks = useMemo(
+    () => groupSelectedSlots(selectedSlots),
+    [selectedSlots],
+  );
+  const subtotal = groupedBlocks.reduce(
+    (sum, block) => sum + block.subtotalPhp,
+    0,
+  );
+  const holdCountdown = useHoldCountdown(holdExpiresAt);
+  const hasActiveHold = Boolean(
+    holdExpiresAt && holdCountdown.totalSeconds > 0,
+  );
+  const effectiveSnapshot = useMemo(() => {
+    const nextSnapshot = {
+      ...currentSnapshot,
+      bookings,
+      availabilityRows: [] as VenueSnapshot["availabilityRows"],
+    };
+
+    nextSnapshot.availabilityRows = getAvailabilityRows(nextSnapshot);
+    return nextSnapshot;
+  }, [bookings, currentSnapshot]);
+  const scheduleRows = effectiveSnapshot.availabilityRows;
+  const totalSelectedHours = groupedBlocks.reduce(
+    (sum, block) => sum + block.hours,
+    0,
+  );
+  const selectedCourtCount = new Set(
+    groupedBlocks.map((block) => block.courtId),
+  ).size;
+  const startingRate = effectiveSnapshot.courts.reduce(
+    (lowest, court) => Math.min(lowest, court.hourlyRatePhp),
+    effectiveSnapshot.courts[0]?.hourlyRatePhp ?? 0,
+  );
+  const minSelectableDate = getTodayDateKey();
+  const maxSelectableDate = shiftDateKey(
+    minSelectableDate,
+    Math.max((effectiveSnapshot.venue.bookingWindowDays ?? 14) - 1, 0),
+  );
+
+  const hasAcceptedPolicies =
+    formState.acceptedTerms &&
+    formState.acceptedProceed &&
+    formState.acceptedFeePolicy;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const syncViewport = () => setIsCompactMobile(mediaQuery.matches);
+
+    syncViewport();
+    mediaQuery.addEventListener("change", syncViewport);
+
+    return () => mediaQuery.removeEventListener("change", syncViewport);
+  }, []);
+
+  function closePaymentModal() {
+    setIsPaymentModalOpen(false);
+    setModalStep("details");
+    setPaymentProofFile(null);
+    setIsUploadDragging(false);
+  }
+
+  function updatePaymentProofFile(file: File | null) {
+    setPaymentProofFile(file);
+    setIsUploadDragging(false);
+  }
+
+  async function changeSelectedDate(nextDate: string) {
+    if (nextDate === currentSnapshot.selectedDate) {
+      return;
+    }
+
+    if (hasActiveHold) {
+      setStatusMessage(
+        "Finish or release your current hold before switching dates.",
+      );
+      return;
+    }
+
+    setIsDateNavigating(true);
+    setStatusMessage("");
+
+    try {
+      const response = await fetch(
+        `/api/venue-snapshot?date=${encodeURIComponent(nextDate)}`,
+      );
+      const nextSnapshot = (await response.json()) as VenueSnapshot;
+
+      if (!response.ok || !nextSnapshot?.selectedDate) {
+        setStatusMessage("We could not load that day's schedule yet.");
+        return;
+      }
+
+      setCurrentSnapshot(nextSnapshot);
+      setBookings(nextSnapshot.bookings);
+      setSelectedSlots([]);
+      setHoldExpiresAt(null);
+      setActiveHoldIds([]);
+      setPaymentProofFile(null);
+      setIsUploadDragging(false);
+      setModalStep("details");
+      setIsPaymentModalOpen(false);
+    } catch {
+      setStatusMessage("We could not load that day's schedule yet.");
+    } finally {
+      setIsDateNavigating(false);
+    }
+  }
+
+  function toggleSlot(slot: SelectedSlot) {
+    if (hasActiveHold) {
+      setStatusMessage(
+        "Finish or release your current hold before changing slots.",
+      );
+      return;
+    }
+
+    setSelectedSlots((current) => {
+      const exists = current.some(
+        (item) =>
+          item.courtId === slot.courtId && item.startTime === slot.startTime,
+      );
+
+      if (exists) {
+        return current.filter(
+          (item) =>
+            !(
+              item.courtId === slot.courtId && item.startTime === slot.startTime
+            ),
+        );
+      }
+
+      return [...current, slot];
+    });
+    setStatusMessage("");
+  }
+
+  function stepSelectedDate(offsetDays: number) {
+    const nextDate = shiftDateKey(currentSnapshot.selectedDate, offsetDays);
+
+    if (nextDate < minSelectableDate || nextDate > maxSelectableDate) {
+      return;
+    }
+
+    void changeSelectedDate(nextDate);
+  }
+
+  async function releaseSelection(options?: {
+    silent?: boolean;
+    reason?: "expired" | "manual";
+  }) {
+    if (activeHoldIds.length > 0) {
+      try {
+        await fetch("/api/booking-holds", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ holdIds: activeHoldIds }),
+        });
+      } catch {
+        if (!options?.silent) {
+          setStatusMessage(
+            "We could not release the held slots. Please try again.",
+          );
+          return;
+        }
+      }
+    }
+
+    setBookings((current) =>
+      removeBookingSlotsBySelection(current, selectedSlots),
+    );
+    setSelectedSlots([]);
+    setHoldExpiresAt(null);
+    setActiveHoldIds([]);
+    setPaymentProofFile(null);
+    setIsUploadDragging(false);
+    setModalStep("details");
+    setIsPaymentModalOpen(false);
+    setStatusMessage(
+      options?.reason === "expired"
+        ? "Your hold expired, so the selected slots were released."
+        : "Selection released.",
+    );
+  }
+
+  useEffect(() => {
+    if (!hasActiveHold && activeHoldIds.length > 0) {
+      void (async () => {
+        try {
+          await fetch("/api/booking-holds", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ holdIds: activeHoldIds }),
+          });
+        } catch {}
+
+        setBookings((current) =>
+          removeBookingSlotsBySelection(current, selectedSlots),
+        );
+        setSelectedSlots([]);
+        setHoldExpiresAt(null);
+        setActiveHoldIds([]);
+        setPaymentProofFile(null);
+        setModalStep("details");
+        setIsPaymentModalOpen(false);
+        setStatusMessage(
+          "Your hold expired, so the selected slots were released.",
+        );
+      })();
+    }
+  }, [activeHoldIds, hasActiveHold, selectedSlots]);
+
+  function continueToPayment() {
+    if (selectedSlots.length === 0) {
+      setStatusMessage("Select at least one available slot to continue.");
+      return;
+    }
+
+    setIsPaymentModalOpen(true);
+    setModalStep("details");
+    setStatusMessage("");
+  }
+
+  function updateField<K extends keyof BookingFormState>(
+    key: K,
+    value: BookingFormState[K],
+  ) {
+    setFormState((current) => ({ ...current, [key]: value }));
+  }
+
+  async function continueToPaymentStep() {
+    setStatusMessage("");
+
+    if (!formState.reservationName.trim()) {
+      setStatusMessage("Please add the reservation name before continuing.");
+      return;
+    }
+
+    if (!hasAcceptedPolicies) {
+      setStatusMessage(
+        "Please review and accept all booking policies before continuing.",
+      );
+      return;
+    }
+
+    if (activeHoldIds.length > 0 && hasActiveHold) {
+      setModalStep("payment");
+      setStatusMessage("");
+      return;
+    }
+
+    setIsHoldPending(true);
+
+    try {
+      const response = await fetch("/api/booking-holds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          playDate: currentSnapshot.selectedDate,
+          reservationName: formState.reservationName,
+          selectedBlocks: groupedBlocks.map((block) => ({
+            courtId: block.courtId,
+            startTime: block.startTime,
+            endTime: block.endTime,
+            hourlyRatePhp: block.rate,
+          })),
+        }),
+      });
+
+      const result = (await response.json()) as {
+        message?: string;
+        error?: string;
+        holdExpiresAt?: string;
+        bookings?: Array<BookingSlot & { id: string }>;
+      };
+
+      if (!response.ok || !result.bookings?.length || !result.holdExpiresAt) {
+        setStatusMessage(
+          result.error ?? "Unable to place the selected slots on hold.",
+        );
+        return;
+      }
+
+      const heldBookings = result.bookings ?? [];
+      setBookings((current) => mergeBookingSlots(current, heldBookings));
+      setActiveHoldIds(heldBookings.map((booking) => booking.id));
+      setHoldExpiresAt(result.holdExpiresAt);
+      setModalStep("payment");
+      setStatusMessage(result.message ?? "Selected slots are now on hold.");
+    } catch {
+      setStatusMessage(
+        "Network error. We could not place those slots on hold.",
+      );
+      return;
+    } finally {
+      setIsHoldPending(false);
+    }
+
+    setModalStep("payment");
+    setStatusMessage("");
+  }
+
+  function submitBookings(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatusMessage("");
+
+    if (modalStep !== "payment") {
+      void continueToPaymentStep();
+      return;
+    }
+
+    if (groupedBlocks.length === 0) {
+      setStatusMessage("No selected booking blocks were found.");
+      return;
+    }
+
+    if (!paymentProofFile) {
+      setStatusMessage(
+        "Please upload your payment screenshot before submitting.",
+      );
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const payload = new FormData();
+        payload.set("reservationName", formState.reservationName);
+        payload.set("fullName", formState.reservationName);
+        payload.set("contactEmail", formState.contactEmail);
+        payload.set("contactNumber", formState.contactNumber);
+        payload.set("paymentMethod", formState.paymentMethod);
+        payload.set("paymentReference", formState.paymentReference);
+        payload.set("notes", "");
+        payload.set("acceptedTerms", String(formState.acceptedTerms));
+        payload.set("playDate", currentSnapshot.selectedDate);
+        payload.set(
+          "selectedBlocks",
+          JSON.stringify(
+            groupedBlocks.map((block) => ({
+              courtId: block.courtId,
+              startTime: block.startTime,
+              endTime: block.endTime,
+              hourlyRatePhp: block.rate,
+            })),
+          ),
+        );
+        payload.set("holdIds", JSON.stringify(activeHoldIds));
+        payload.set("paymentProof", paymentProofFile);
+
+        const response = await fetch("/api/booking-requests", {
+          method: "POST",
+          body: payload,
+        });
+
+        const result = (await response.json()) as {
+          message?: string;
+          error?: string;
+          bookings?: BookingSlot[];
+        };
+
+        if (!response.ok) {
+          setStatusMessage(
+            result.error ?? "We could not save the booking request.",
+          );
+          return;
+        }
+
+        if (result.bookings?.length) {
+          setBookings((current) =>
+            mergeBookingSlots(
+              removeBookingSlotsBySelection(current, selectedSlots),
+              result.bookings ?? [],
+            ),
+          );
+        }
+
+        setStatusMessage(result.message ?? "Booking request saved.");
+        setSelectedSlots([]);
+        setFormState(initialFormState);
+        setHoldExpiresAt(null);
+        setActiveHoldIds([]);
+        setPaymentProofFile(null);
+        setIsUploadDragging(false);
+        setIsPaymentModalOpen(false);
+        setModalStep("details");
+      } catch {
+        setStatusMessage("Network error. Please try again.");
+      }
+    });
+  }
+
+  const selectedCourtIds = new Set(
+    selectedSlots.map((slot) => `${slot.courtId}-${slot.startTime}`),
+  );
+
+  return (
+    <div className="space-y-5 pb-32">
+      <div className="w-full">
+        <div className="h-fit w-full min-w-0 max-w-full overflow-hidden rounded-none border-y border-[#d8e4de] bg-[#fbfdfc] shadow-[0_16px_40px_rgba(22,46,39,0.05)] sm:rounded-[1.8rem] sm:border">
+          <div className="border-b border-[#dde7e1] px-4 py-5 sm:px-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7a8598]">
+                    Availability
+                  </p>
+                  <h3 className="mt-1 font-serif text-[1.6rem] leading-none tracking-[-0.03em] text-[#10233b] sm:text-[1.75rem]">
+                    {formatHeroDate(currentSnapshot.selectedDate)}
+                  </h3>
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                    <span className="uppercase tracking-[0.16em] text-slate-400">
+                      {formatMonthYear(currentSnapshot.selectedDate)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="hidden items-center gap-2 sm:flex">
+                  <button
+                    type="button"
+                    onClick={() => stepSelectedDate(-1)}
+                    disabled={
+                      isDateNavigating ||
+                      currentSnapshot.selectedDate <= minSelectableDate
+                    }
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#dde7e1] bg-white text-lg text-slate-500 transition hover:border-[#b7c9c0] hover:text-slate-700"
+                    aria-label="Show previous dates"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => stepSelectedDate(1)}
+                    disabled={
+                      isDateNavigating ||
+                      currentSnapshot.selectedDate >= maxSelectableDate
+                    }
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#dde7e1] bg-white text-lg text-slate-500 transition hover:border-[#b7c9c0] hover:text-slate-700"
+                    aria-label="Show next dates"
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 border-t border-[#edf2ef] pt-4">
+                <label className="flex min-w-0 flex-1 items-center gap-3 rounded-[1rem] border border-[#d7e3dd] bg-[#fdfefd] px-4 py-3 text-sm text-slate-600 shadow-[0_10px_24px_rgba(23,53,42,0.04)]">
+                  <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6d8098]">
+                    Play date
+                  </span>
+                  <input
+                    type="date"
+                    value={currentSnapshot.selectedDate}
+                    min={minSelectableDate}
+                    max={maxSelectableDate}
+                    disabled={isDateNavigating}
+                    onChange={(event) =>
+                      void changeSelectedDate(event.target.value)
+                    }
+                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#17352a] outline-none [color-scheme:light]"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => stepSelectedDate(-1)}
+                  disabled={
+                    isDateNavigating ||
+                    currentSnapshot.selectedDate <= minSelectableDate
+                  }
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dde7e1] bg-white text-lg text-slate-500 transition hover:border-[#b7c9c0] hover:text-slate-700 disabled:opacity-50"
+                  aria-label="Show previous date"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={() => stepSelectedDate(1)}
+                  disabled={
+                    isDateNavigating ||
+                    currentSnapshot.selectedDate >= maxSelectableDate
+                  }
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dde7e1] bg-white text-lg text-slate-500 transition hover:border-[#b7c9c0] hover:text-slate-700 disabled:opacity-50"
+                  aria-label="Show next date"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 border-b border-[#dde7e1] bg-[linear-gradient(180deg,rgba(20,137,125,0.04),rgba(255,255,255,0))] px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-700">
+                Real-time availability across active courts.
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Vibrant slots are live and bookable. Muted cells are held,
+                pending verification, already booked, or outside
+                operating hours.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-full border border-[#d7e3dd] bg-white px-3 py-2 text-sm text-slate-500 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+              <span className="h-2 w-2 rounded-full bg-[#16a34a]" />
+              Prices updated live
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 border-b border-[#dde7e1] bg-[#fcfdfd] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:px-6">
+            <span className="rounded-full border border-[#b9dfcf] bg-[#f3fbf7] px-3 py-1 text-[#1c8f5f]">
+              Available
+            </span>
+            <span className="rounded-full border border-[#cde4d9] bg-[#eef8f3] px-3 py-1 text-[#1c6b53]">
+              On Hold
+            </span>
+            <span className="rounded-full border border-[#f2d58b] bg-[#fff4cf] px-3 py-1 text-[#c77a18]">
+              Pending
+            </span>
+            <span className="rounded-full border border-[#efc3bb] bg-[#fff0ed] px-3 py-1 text-[#c35c45]">
+              Booked
+            </span>
+            <span className="rounded-full border border-[#e1e8ef] bg-[repeating-linear-gradient(-45deg,rgba(241,245,249,0.95),rgba(241,245,249,0.95)_10px,rgba(226,232,240,0.95)_10px,rgba(226,232,240,0.95)_20px)] px-3 py-1 text-slate-500">
+              Unavailable / Closed
+            </span>
+          </div>
+
+          <div className="px-2 py-4 sm:px-6">
+            <div className="relative">
+              {isDateNavigating ? (
+                <div className="absolute inset-0 z-30 flex items-center justify-center rounded-[1.35rem] bg-[rgba(248,250,252,0.78)] backdrop-blur-[2px]">
+                  <div className="rounded-[1.25rem] border border-[#dce7e1] bg-white/96 px-5 py-4 text-center shadow-[0_18px_40px_rgba(15,23,42,0.10)]">
+                    <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-[#d7e3dd] border-t-[#17352a]" />
+                    <p className="mt-3 text-sm font-semibold text-[#10233b]">
+                      Loading schedule
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Fetching availability for the selected date.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+            {isCompactMobile ? (
+              <div
+                className={`daily-grid-wrap transition-opacity ${
+                  isDateNavigating ? "pointer-events-none opacity-50" : ""
+                }`}
+              >
+                <div
+                  className="daily-grid"
+                  style={{
+                    gridTemplateColumns: `82px repeat(${Math.max(effectiveSnapshot.courts.length, 1)}, minmax(106px, 106px))`,
+                  }}
+                >
+                  <div className="daily-grid-time-header" />
+                  {effectiveSnapshot.courts.map((court) => (
+                    <div key={court.id} className="daily-grid-court-header">
+                      <p className="text-sm font-semibold text-[#10233b]">
+                        {court.name}
+                      </p>
+                      <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-slate-400">
+                        Court
+                      </p>
+                    </div>
+                  ))}
+
+                  {scheduleRows.map((row) => (
+                    <div className="contents" key={row.startTime}>
+                      <div className="daily-grid-time-cell">
+                        <p>
+                          {formatHeaderTimeRange(row.startTime, row.endTime)}
+                        </p>
+                        {hasMounted &&
+                        isCurrentTimeSlot(
+                          currentSnapshot.selectedDate,
+                          row.startTime,
+                        ) ? (
+                          <span className="mt-1 inline-flex rounded-full bg-[#edf7f3] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[#1c6b53]">
+                            Now
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {effectiveSnapshot.courts.map((court) => {
+                        const courtSlot = row.courts.find(
+                          (entry) => entry.courtId === court.id,
+                        );
+
+                        if (!courtSlot) {
+                          return (
+                            <div
+                              key={`${court.id}-${row.startTime}`}
+                              className="daily-grid-cell"
+                            />
+                          );
+                        }
+
+                        const slotKey = `${courtSlot.courtId}-${row.startTime}`;
+                        const isSelected = selectedCourtIds.has(slotKey);
+                        const selectedSlot = {
+                          courtId: courtSlot.courtId,
+                          courtName: courtSlot.courtName,
+                          startTime: row.startTime,
+                          endTime: row.endTime,
+                          timeLabel: row.timeLabel,
+                          rate: courtSlot.hourlyRatePhp,
+                        };
+
+                        return (
+                          <div key={slotKey} className="daily-grid-cell">
+                            {courtSlot.status === "available" ? (
+                              <button
+                                type="button"
+                                onClick={() => toggleSlot(selectedSlot)}
+                                className={`flex h-full min-h-[58px] w-full flex-col items-center justify-center rounded-[0.8rem] border px-1 text-center transition-all duration-200 ${
+                                  isSelected
+                                    ? "border-[#167c61] bg-[linear-gradient(180deg,#effcf5,#def7ea)] text-[#125845] shadow-[0_12px_30px_rgba(22,124,97,0.2)] ring-2 ring-[#bde7d4]"
+                                    : "border-[#b9dfcf] bg-[linear-gradient(180deg,#f7fdf9,#effaf4)] text-[#1c8f5f] hover:border-[#8bc3aa] hover:bg-[#edf8f2] hover:shadow-[0_10px_24px_rgba(28,107,83,0.10)]"
+                                }`}
+                              >
+                                <span className="text-[13px] font-bold">
+                                  {formatCompactSlotPrice(
+                                    courtSlot.hourlyRatePhp,
+                                  )}
+                                </span>
+                                <span
+                                  className={`mt-1 text-[10px] font-semibold ${isSelected ? "text-[#1c6b53]" : "text-[#4d9a72]"}`}
+                                >
+                                  {isSelected ? "Selected" : "Available"}
+                                </span>
+                              </button>
+                            ) : (
+                              <div
+                                className={`flex h-full min-h-[58px] w-full flex-col items-center justify-center rounded-[0.8rem] border px-1 text-center ${
+                                  getSlotStatusClasses(courtSlot.status)
+                                }`}
+                              >
+                                <span className="line-clamp-2 text-[10px] font-semibold">
+                                  {getSlotDisplayLabel(
+                                    courtSlot.status,
+                                    courtSlot.label,
+                                  )}
+                                </span>
+                                <span className="mt-1 text-[9px] font-medium opacity-80">
+                                  {getSlotStatusDetail(
+                                    courtSlot.status,
+                                    courtSlot.label,
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`booking-matrix-wrap transition-opacity ${
+                  isDateNavigating ? "pointer-events-none opacity-50" : ""
+                }`}
+              >
+                <div
+                  className="booking-matrix"
+                  style={{
+                    gridTemplateColumns: `190px repeat(${Math.max(scheduleRows.length, 1)}, minmax(128px, 128px))`,
+                  }}
+                >
+                  <div className="booking-matrix-corner" />
+                  {scheduleRows.map((row) => (
+                    <div
+                      key={row.startTime}
+                      className="booking-matrix-time-header"
+                    >
+                      <span>
+                        {formatHeaderTimeRange(row.startTime, row.endTime)}
+                      </span>
+                      {hasMounted &&
+                      isCurrentTimeSlot(
+                        currentSnapshot.selectedDate,
+                        row.startTime,
+                      ) ? (
+                        <span className="mt-1 inline-flex rounded-full bg-[#edf7f3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1c6b53]">
+                          Now
+                        </span>
+                      ) : null}
+                    </div>
+                  ))}
+
+                  {effectiveSnapshot.courts.map((court) => (
+                    <div className="contents" key={court.id}>
+                      <div className="booking-matrix-court-cell">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#d7e3dd] bg-[#f4f8f6] text-slate-500">
+                          <span className="text-base">⌗</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-lg font-semibold text-[#10233b]">
+                            {court.name}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            Court schedule
+                          </p>
+                        </div>
+                      </div>
+
+                      {scheduleRows.map((row) => {
+                        const courtSlot = row.courts.find(
+                          (entry) => entry.courtId === court.id,
+                        );
+
+                        if (!courtSlot) {
+                          return (
+                            <div
+                              key={`${court.id}-${row.startTime}`}
+                              className="booking-matrix-slot-cell"
+                            />
+                          );
+                        }
+
+                        const slotKey = `${courtSlot.courtId}-${row.startTime}`;
+                        const isSelected = selectedCourtIds.has(slotKey);
+                        const selectedSlot = {
+                          courtId: courtSlot.courtId,
+                          courtName: courtSlot.courtName,
+                          startTime: row.startTime,
+                          endTime: row.endTime,
+                          timeLabel: row.timeLabel,
+                          rate: courtSlot.hourlyRatePhp,
+                        };
+
+                        return (
+                          <div
+                            key={slotKey}
+                            className="booking-matrix-slot-cell"
+                          >
+                            {courtSlot.status === "available" ? (
+                              <button
+                                type="button"
+                                onClick={() => toggleSlot(selectedSlot)}
+                                className={`flex h-full min-h-[72px] w-full flex-col items-center justify-center rounded-[0.95rem] border px-2 text-center transition-all duration-200 ${
+                                  isSelected
+                                    ? "border-[#167c61] bg-[linear-gradient(180deg,#effcf5,#def7ea)] text-[#125845] shadow-[0_14px_34px_rgba(22,124,97,0.18)] ring-2 ring-[#bde7d4]"
+                                    : "border-[#b9dfcf] bg-[linear-gradient(180deg,#f7fdf9,#effaf4)] text-[#1c8f5f] hover:border-[#8bc3aa] hover:bg-[#edf8f2] hover:shadow-[0_10px_24px_rgba(28,107,83,0.10)]"
+                                }`}
+                              >
+                                <span className="text-lg font-bold">
+                                  {formatCompactSlotPrice(
+                                    courtSlot.hourlyRatePhp,
+                                  )}
+                                </span>
+                                <span
+                                  className={`mt-1 text-xs font-semibold ${isSelected ? "text-[#1c6b53]" : "text-[#4d9a72]"}`}
+                                >
+                                  {isSelected ? "Selected" : "Available"}
+                                </span>
+                              </button>
+                            ) : (
+                              <div
+                                className={`flex h-full min-h-[72px] w-full flex-col items-center justify-center rounded-[0.95rem] border px-2 text-center ${
+                                  getSlotStatusClasses(courtSlot.status)
+                                }`}
+                              >
+                                <span className="line-clamp-2 text-sm font-semibold">
+                                  {getSlotDisplayLabel(
+                                    courtSlot.status,
+                                    courtSlot.label,
+                                  )}
+                                </span>
+                                <span className="mt-1 text-[11px] font-medium opacity-80">
+                                  {getSlotStatusDetail(
+                                    courtSlot.status,
+                                    courtSlot.label,
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            </div>
+
+            <div className="sticky bottom-4 z-20 mt-5 hidden rounded-[1.6rem] border border-[#dce7e1] bg-white/92 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur-md sm:block sm:p-5">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex-1 rounded-[1.25rem] border border-[#dce7e1] bg-[linear-gradient(180deg,#fcfefd,#f4faf7)] px-4 py-4">
+                  {groupedBlocks.length > 0 && (
+                    <>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#14897d]">
+                        Ready to Checkout
+                      </p>
+                      <p className="text-[1.8rem] font-semibold leading-none tracking-[-0.04em] text-[#10233b]">
+                        {selectedCourtCount} court
+                        {selectedCourtCount === 1 ? "" : "s"} selected
+                      </p>
+                      <p className="mt-2 text-sm text-slate-600">
+                        {formatDisplayDate(currentSnapshot.selectedDate)}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-[#1c6b53]">
+                        {formatCurrency(subtotal)} total · {totalSelectedHours}{" "}
+                        hour
+                        {totalSelectedHours === 1 ? "" : "s"}
+                      </p>
+                    </>
+                  )}
+
+                  {groupedBlocks.length === 0 && (
+                    <>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                        Starts from
+                      </p>
+                      <p className="mt-2 text-[2rem] font-semibold leading-none tracking-[-0.04em] text-[#10233b]">
+                        {formatCurrency(startingRate)}
+                        <span className="ml-1 text-sm font-medium tracking-normal text-slate-400">
+                          /hr
+                        </span>
+                      </p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        Select one or more slots to start a reservation.
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+                  {hasActiveHold ? (
+                    <span className="rounded-full border border-[#cde4d9] bg-[#eef8f3] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1c6b53]">
+                      Hold {holdCountdown.label}
+                    </span>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => void releaseSelection({ reason: "manual" })}
+                    className="inline-flex min-w-[104px] items-center justify-center rounded-full border border-[#d8e4de] px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:min-w-[132px] sm:px-4 sm:py-3"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void continueToPayment()}
+                    disabled={isHoldPending}
+                    className="inline-flex min-w-[132px] items-center justify-center rounded-full bg-[#17352a] px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(23,53,42,0.22)] transition hover:bg-[#0f251d] disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[160px] sm:px-5"
+                  >
+                    {isHoldPending
+                      ? "Holding..."
+                      : hasActiveHold
+                        ? "Continue Payment"
+                        : "Checkout"}
+                  </button>
+                </div>
+              </div>
+
+              {statusMessage ? (
+                <p className="mt-4 text-sm text-slate-600">{statusMessage}</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isCompactMobile &&
+      (groupedBlocks.length > 0 || hasActiveHold) &&
+      !isPaymentModalOpen ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/98 px-4 py-4 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] backdrop-blur sm:px-6">
+          <div className="mx-auto flex w-full max-w-[1680px] items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase font-black tracking-[0.18em] text-slate-400">
+                {groupedBlocks.length} Selection
+                {groupedBlocks.length === 1 ? "" : "s"}
+              </p>
+              <div className="text-2xl font-bold text-slate-800">
+                {formatCurrency(subtotal)}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={isHoldPending || groupedBlocks.length === 0}
+              onClick={() => void continueToPayment()}
+              className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#3b5bfd] px-6 py-4 text-base font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-[#2f52f5] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none sm:px-8"
+            >
+              {isHoldPending
+                ? "Holding Slots..."
+                : hasActiveHold
+                  ? "Continue Payment"
+                  : "Checkout"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {isPaymentModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.42)] p-3 backdrop-blur-sm sm:p-4">
+          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-[#e2e8f0] bg-[#fdfbf7] shadow-[0_30px_120px_rgba(15,23,42,0.18)]">
+            <div className="flex items-start justify-between border-b border-[#e2e8f0] px-5 py-5 sm:px-6 sm:py-6">
+              <div>
+                <h3 className="text-xl font-semibold tracking-[-0.03em] text-[#10233b] sm:text-2xl">
+                  {modalStep === "details"
+                    ? "Reserve Court"
+                    : "Upload payment proof"}
+                </h3>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                  {modalStep === "details"
+                    ? "Choose your slots, review your details, then proceed to payment."
+                    : "Attach your payment screenshot, then submit it for venue verification."}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close booking modal"
+                onClick={closePaymentModal}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#e2e8f0] bg-white text-xl leading-none text-slate-500 transition hover:border-[#cbd5e1] hover:text-slate-700"
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              className="grid gap-0 md:grid-cols-[minmax(0,1fr)_340px]"
+              onSubmit={submitBookings}
+            >
+              <div className="border-b border-[#e2e8f0] px-5 py-5 md:border-b-0 md:border-r md:px-6 md:py-6">
+                <div className="space-y-8">
+                  <div className="flex flex-col gap-4 border-b border-[#e2e8f0] pb-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-6">
+                      <div className="min-w-0">
+                        <p
+                          className={`text-sm font-semibold tracking-[-0.02em] ${
+                            modalStep === "details"
+                              ? "text-[#10233b]"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          1. Guest Details
+                        </p>
+                        <div
+                          className={`mt-3 h-1 rounded-full transition ${
+                            modalStep === "details"
+                              ? "bg-[#2563eb]"
+                              : "bg-[#e2e8f0]"
+                          }`}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p
+                          className={`text-sm font-semibold tracking-[-0.02em] ${
+                            modalStep === "payment"
+                              ? "text-[#10233b]"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          2. Payment Proof
+                        </p>
+                        <div
+                          className={`mt-3 h-1 rounded-full transition ${
+                            modalStep === "payment"
+                              ? "bg-[#2563eb]"
+                              : "bg-[#e2e8f0]"
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    {hasActiveHold ? (
+                      <span className="inline-flex w-fit items-center rounded-full bg-[#fef2f2] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-[#dc2626]">
+                        Hold {holdCountdown.label}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {modalStep === "details" ? (
+                    <>
+                      <div className="grid gap-5">
+                        <label className="grid gap-2 text-sm font-medium text-slate-700">
+                          Reservation name
+                          <input
+                            value={formState.reservationName}
+                            onChange={(event) =>
+                              updateField("reservationName", event.target.value)
+                            }
+                            placeholder="e.g. Juan Dela Cruz"
+                            className="h-12 rounded-lg border border-[#e2e8f0] bg-white px-4 text-[#10233b] outline-none transition placeholder:text-slate-400 focus:border-[#2563eb] focus:ring-2 focus:ring-[#bfdbfe]"
+                          />
+                        </label>
+
+                        <div className="grid gap-5 xl:grid-cols-2">
+                          <label className="grid gap-2 text-sm font-medium text-slate-700">
+                            Contact email
+                            <input
+                              type="email"
+                              value={formState.contactEmail}
+                              onChange={(event) =>
+                                updateField("contactEmail", event.target.value)
+                              }
+                              placeholder="juan@email.com"
+                              className="h-12 rounded-lg border border-[#e2e8f0] bg-white px-4 text-[#10233b] outline-none transition placeholder:text-slate-400 focus:border-[#2563eb] focus:ring-2 focus:ring-[#bfdbfe]"
+                            />
+                          </label>
+
+                          <label className="grid gap-2 text-sm font-medium text-slate-700">
+                            Contact number
+                            <input
+                              value={formState.contactNumber}
+                              onChange={(event) =>
+                                updateField("contactNumber", event.target.value)
+                              }
+                              placeholder="09XX XXX XXXX"
+                              className="h-12 rounded-lg border border-[#e2e8f0] bg-white px-4 text-[#10233b] outline-none transition placeholder:text-slate-400 focus:border-[#2563eb] focus:ring-2 focus:ring-[#bfdbfe]"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <p className="text-sm leading-6 text-slate-500">
+                        Provide at least one contact detail so the facility can
+                        send your booking confirmation.
+                      </p>
+
+                      <section className="border-t border-[#e2e8f0] pt-6">
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#869ab0]">
+                          Booking Policies & Waiver
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          Please review and confirm these policies before you
+                          continue to payment.
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowPolicyDetails((current) => !current)
+                          }
+                          className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-[#e2e8f0] bg-white px-4 py-3 text-sm font-semibold text-[#10233b] transition hover:border-[#cbd5e1] hover:bg-[#fffdfa]"
+                        >
+                          {showPolicyDetails
+                            ? "Hide refund, cancellation, and waiver details"
+                            : "View refund, cancellation, and waiver details"}
+                        </button>
+
+                        {showPolicyDetails ? (
+                          <div className="mt-4 rounded-lg border border-[#e2e8f0] bg-white px-4 py-4 text-sm leading-6 text-slate-600">
+                            <p>
+                              Bookings are confirmed only after payment
+                              verification by the venue.
+                            </p>
+                            <p className="mt-2">
+                              Rescheduling is subject to venue approval and
+                              available schedule.
+                            </p>
+                            <p className="mt-2">
+                              Convenience and processing fees, when charged, are
+                              non-refundable.
+                            </p>
+                          </div>
+                        ) : null}
+
+                        <div className="mt-5 space-y-3">
+                          <label className="flex items-start gap-3 rounded-lg border border-[#e2e8f0] bg-white px-4 py-4 text-sm text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={formState.acceptedTerms}
+                              onChange={(event) =>
+                                updateField(
+                                  "acceptedTerms",
+                                  event.target.checked,
+                                )
+                              }
+                              className="mt-1 h-4 w-4 rounded border-[#c8d7d0] text-[#3b82f6]"
+                            />
+                            <span>
+                              I have read the{" "}
+                              <span className="font-semibold text-[#2563eb]">
+                                Terms and Conditions
+                              </span>{" "}
+                              and the waiver policy.
+                            </span>
+                          </label>
+
+                          <label className="flex items-start gap-3 rounded-lg border border-[#e2e8f0] bg-white px-4 py-4 text-sm text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={formState.acceptedProceed}
+                              onChange={(event) =>
+                                updateField(
+                                  "acceptedProceed",
+                                  event.target.checked,
+                                )
+                              }
+                              className="mt-1 h-4 w-4 rounded border-[#c8d7d0] text-[#3b82f6]"
+                            />
+                            <span>
+                              I understand and wish to proceed.
+                              <span className="mt-1 block text-xs leading-5 text-slate-500">
+                                Rebooking is allowed only once per booking and
+                                must be requested at least 3 days before the
+                                reserved date, subject to available schedule.
+                              </span>
+                            </span>
+                          </label>
+
+                          <label className="flex items-start gap-3 rounded-lg border border-[#e2e8f0] bg-white px-4 py-4 text-sm text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={formState.acceptedFeePolicy}
+                              onChange={(event) =>
+                                updateField(
+                                  "acceptedFeePolicy",
+                                  event.target.checked,
+                                )
+                              }
+                              className="mt-1 h-4 w-4 rounded border-[#c8d7d0] text-[#3b82f6]"
+                            />
+                            <span>
+                              I understand that the convenience fee is
+                              non-refundable.
+                              <span className="mt-1 block text-xs leading-5 text-slate-500">
+                                Note: The convenience fee charged during
+                                checkout is non-refundable.
+                              </span>
+                            </span>
+                          </label>
+                        </div>
+                      </section>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid gap-5 md:grid-cols-2">
+                        <label className="grid gap-2 text-sm font-medium text-slate-700">
+                          Payment method
+                          <select
+                            value={formState.paymentMethod}
+                            onChange={(event) =>
+                              updateField("paymentMethod", event.target.value)
+                            }
+                            className="h-12 rounded-lg border border-[#e2e8f0] bg-white px-4 text-[#10233b] outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#bfdbfe]"
+                          >
+                            <option value="gcash">GCash</option>
+                            <option value="paymaya">PayMaya</option>
+                            <option value="bank">Bank Transfer</option>
+                          </select>
+                        </label>
+
+                        <label className="grid gap-2 text-sm font-medium text-slate-700">
+                          Reference ID (optional)
+                          <input
+                            value={formState.paymentReference}
+                            onChange={(event) =>
+                              updateField(
+                                "paymentReference",
+                                event.target.value,
+                              )
+                            }
+                            placeholder="Enter your payment reference"
+                            className="h-12 rounded-lg border border-[#e2e8f0] bg-white px-4 text-[#10233b] outline-none transition placeholder:text-slate-400 focus:border-[#2563eb] focus:ring-2 focus:ring-[#bfdbfe]"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="grid gap-2 text-sm font-medium text-slate-700">
+                        <p>Payment screenshot</p>
+                        <input
+                          id={paymentProofInputId}
+                          required
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg,image/webp"
+                          onChange={(event) =>
+                            updatePaymentProofFile(
+                              event.target.files?.[0] ?? null,
+                            )
+                          }
+                          className="sr-only"
+                        />
+                        <label
+                          htmlFor={paymentProofInputId}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setIsUploadDragging(true);
+                          }}
+                          onDragLeave={() => setIsUploadDragging(false)}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            updatePaymentProofFile(
+                              event.dataTransfer.files?.[0] ?? null,
+                            );
+                          }}
+                          className={`flex min-h-[152px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed bg-white px-6 py-8 text-center transition ${
+                            isUploadDragging
+                              ? "border-[#93c5fd] bg-[#f8fbff]"
+                              : "border-[#cbd5e1]"
+                          }`}
+                        >
+                          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#eff6ff] text-[#2563eb]">
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-6 w-6"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M12 16V8" />
+                              <path d="m8.5 11.5 3.5-3.5 3.5 3.5" />
+                              <path d="M20 16.5a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5" />
+                            </svg>
+                          </span>
+                          <span className="mt-4 text-sm font-semibold text-[#10233b]">
+                            Click to upload screenshot or drag and drop here
+                          </span>
+                          <span className="mt-2 text-xs text-slate-500">
+                            PNG, JPG, or WEBP up to 10MB
+                          </span>
+                          {paymentProofFile ? (
+                            <span className="mt-4 rounded-full bg-[#eff6ff] px-3 py-1 text-xs font-semibold text-[#2563eb]">
+                              {paymentProofFile.name}
+                            </span>
+                          ) : null}
+                        </label>
+                      </div>
+
+                      <div className="border-t border-[#e2e8f0] pt-6 text-sm text-slate-600">
+                        <p className="font-semibold text-[#10233b]">
+                          How this works
+                        </p>
+                        <p className="mt-2 leading-6">
+                          Upload the screenshot of your payment after sending
+                          the amount through{" "}
+                          {formState.paymentMethod === "gcash"
+                            ? "GCash"
+                            : formState.paymentMethod === "paymaya"
+                              ? "PayMaya"
+                              : "Bank Transfer"}
+                          . Your reservation will be marked pending until the
+                          venue verifies it.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-[rgba(255,255,255,0.55)] px-5 py-5 md:px-6 md:py-6">
+                <div className="md:sticky md:top-0">
+                  <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#869ab0]">
+                    Booking Summary
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#10233b] sm:text-[2rem]">
+                    {formatDisplayDate(currentSnapshot.selectedDate)}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    {groupedBlocks.length} selected block
+                    {groupedBlocks.length === 1 ? "" : "s"} across{" "}
+                    {new Set(groupedBlocks.map((block) => block.courtId)).size}{" "}
+                    court
+                    {new Set(groupedBlocks.map((block) => block.courtId))
+                      .size === 1
+                      ? ""
+                      : "s"}
+                    .
+                  </p>
+                  {modalStep === "details" && hasActiveHold ? (
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      These slots are temporarily held while you finish the
+                      booking details.
+                    </p>
+                  ) : null}
+
+                  <div className="mt-6 divide-y divide-[#e2e8f0] border-y border-[#e2e8f0]">
+                    {groupedBlocks.map((block) => (
+                      <div
+                        key={`${block.courtId}-${block.startTime}`}
+                        className="px-0 py-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-base font-semibold text-[#10233b] sm:text-lg">
+                              {block.courtName}
+                            </p>
+                            <p className="mt-1 text-sm font-medium text-[#4a6886]">
+                              {formatTimeLabel(block.startTime)} -{" "}
+                              {formatTimeLabel(block.endTime)}
+                            </p>
+                          </div>
+                          <p className="text-base font-semibold text-[#10233b] sm:text-lg">
+                            {formatCurrency(block.subtotalPhp)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 space-y-4 border-t border-[#e2e8f0] pt-5">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm uppercase tracking-[0.16em] text-slate-400">
+                        Court Rental
+                      </p>
+                      <p className="text-xl font-semibold text-[#10233b] sm:text-2xl">
+                        {formatCurrency(subtotal)}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 border-t border-[#e2e8f0] pt-4">
+                      <p className="text-sm text-slate-500">Service Fee</p>
+                      <p className="text-sm font-semibold text-[#10233b]">
+                        {formatCurrency(0)}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 border-t border-[#e2e8f0] pt-4">
+                      <p className="text-xl font-semibold text-[#10233b] sm:text-2xl">
+                        Total
+                      </p>
+                      <p className="text-2xl font-semibold tracking-[-0.03em] text-[#2563eb] sm:text-3xl">
+                        {formatCurrency(subtotal)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 border-t border-[#e2e8f0] pt-6">
+                    <button
+                      type="submit"
+                      disabled={isPending || isHoldPending}
+                      className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#2563eb] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(37,99,235,0.24)] transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
+                    >
+                      {isPending || isHoldPending
+                        ? "Saving..."
+                        : modalStep === "details"
+                          ? "Proceed to Payment"
+                          : "Submit Payment Proof"}
+                    </button>
+
+                    <div className="mt-4 flex items-center justify-start">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          modalStep === "payment"
+                            ? setModalStep("details")
+                            : closePaymentModal()
+                        }
+                        className="inline-flex items-center justify-center rounded-lg px-1 py-1 text-sm font-semibold text-slate-500 transition hover:text-slate-700"
+                      >
+                        Back
+                      </button>
+                    </div>
+
+                    <div className="mt-5 border-t border-[#e2e8f0] pt-4">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void releaseSelection({ reason: "manual" })
+                        }
+                        className="text-sm font-medium text-slate-400 underline decoration-slate-300 underline-offset-4 transition hover:text-slate-600"
+                      >
+                        Release Hold
+                      </button>
+                    </div>
+
+                    {statusMessage ? (
+                      <p className="mt-4 text-sm text-slate-500">
+                        {statusMessage}
+                      </p>
+                    ) : hasActiveHold ? (
+                      <p className="mt-4 text-sm text-slate-400">
+                        Slots are held for 10 minutes once you proceed to payment.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function groupSelectedSlots(slots: SelectedSlot[]) {
+  const byCourt = new Map<string, SelectedSlot[]>();
+
+  for (const slot of slots) {
+    const key = `${slot.courtId}::${slot.courtName}`;
+    const existing = byCourt.get(key) ?? [];
+    existing.push(slot);
+    byCourt.set(key, existing);
+  }
+
+  const blocks: Array<{
+    courtId: string;
+    courtName: string;
+    startTime: string;
+    endTime: string;
+    rate: number;
+    subtotalPhp: number;
+    hours: number;
+  }> = [];
+
+  for (const [key, courtSlots] of byCourt.entries()) {
+    const [courtId, courtName] = key.split("::");
+    const sorted = [...courtSlots].sort((a, b) =>
+      a.startTime.localeCompare(b.startTime),
+    );
+
+    let currentBlockSlots = [sorted[0]];
+
+    for (let index = 1; index < sorted.length; index += 1) {
+      const nextSlot = sorted[index];
+      const previousSlot = currentBlockSlots[currentBlockSlots.length - 1];
+      if (
+        nextSlot.startTime === previousSlot.endTime &&
+        nextSlot.rate === previousSlot.rate
+      ) {
+        currentBlockSlots.push(nextSlot);
+      } else {
+        blocks.push(createBlock(courtId, courtName, currentBlockSlots));
+        currentBlockSlots = [nextSlot];
+      }
+    }
+
+    blocks.push(createBlock(courtId, courtName, currentBlockSlots));
+  }
+
+  return blocks.sort((a, b) =>
+    `${a.courtName}-${a.startTime}`.localeCompare(
+      `${b.courtName}-${b.startTime}`,
+    ),
+  );
+}
+
+function createBlock(
+  courtId: string,
+  courtName: string,
+  slots: SelectedSlot[],
+) {
+  const startSlot = slots[0];
+  const endSlot = slots[slots.length - 1];
+  const rate = startSlot.rate;
+  const subtotalPhp = slots.reduce((sum, slot) => sum + slot.rate, 0);
+  const hours = slots.length;
+
+  return {
+    courtId,
+    courtName,
+    startTime: startSlot.startTime,
+    endTime: endSlot.endTime,
+    rate,
+    subtotalPhp,
+    hours,
+  };
+}
+
+function mergeBookingSlots(current: BookingSlot[], incoming: BookingSlot[]) {
+  const next = [...current];
+
+  for (const booking of incoming) {
+    const existingIndex = next.findIndex(
+      (entry) =>
+        entry.courtId === booking.courtId &&
+        entry.startsAt === booking.startsAt &&
+        entry.endsAt === booking.endsAt,
+    );
+
+    if (existingIndex >= 0) {
+      next[existingIndex] = booking;
+    } else {
+      next.push(booking);
+    }
+  }
+
+  return next;
+}
+
+function removeBookingSlotsBySelection(
+  current: BookingSlot[],
+  selectedSlots: SelectedSlot[],
+) {
+  if (!selectedSlots.length) {
+    return current;
+  }
+
+  return current.filter((booking) => {
+    const bookingStart = timeToMinutes(booking.startsAt);
+    const bookingEnd = timeToMinutes(booking.endsAt);
+
+    return !selectedSlots.some((slot) => {
+      if (slot.courtId !== booking.courtId) {
+        return false;
+      }
+
+      const slotStart = timeToMinutes(slot.startTime);
+      const slotEnd = timeToMinutes(slot.endTime);
+      return slotStart < bookingEnd && slotEnd > bookingStart;
+    });
+  });
+}
+
+function formatDisplayDate(value: string) {
+  const date = new Date(`${value}T12:00:00`);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatHeroDate(value: string) {
+  const date = new Date(`${value}T12:00:00`);
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
+function formatMonthYear(value: string) {
+  const date = new Date(`${value}T12:00:00`);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatHeaderTimeRange(startTime: string, endTime: string) {
+  return `${formatShortTimeLabel(startTime)}-${formatShortTimeLabel(endTime)}`;
+}
+
+function formatShortTimeLabel(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const twelveHour = hours % 12 === 0 ? 12 : hours % 12;
+  return `${twelveHour}${minutes === 0 ? "" : `:${String(minutes).padStart(2, "0")}`}${suffix}`;
+}
+
+function formatTimeLabel(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const twelveHour = hours % 12 === 0 ? 12 : hours % 12;
+  return `${twelveHour}:${String(minutes).padStart(2, "0")} ${suffix}`;
+}
+
+function formatCompactSlotPrice(value: number) {
+  return `₱${Math.round(value).toLocaleString("en-PH")}`;
+}
+
+function getSlotStatusTitle(
+  status:
+    | "available"
+    | "unavailable"
+    | "hold"
+    | "pending"
+    | "booked",
+  label: string,
+) {
+  if (status === "hold") {
+    return "On Hold";
+  }
+
+  if (status === "pending") {
+    return "Pending";
+  }
+
+  if (status === "booked") {
+    return "Booked";
+  }
+
+  if (status === "unavailable") {
+    return label.toLowerCase().includes("closed") ? "Closed" : "Unavailable";
+  }
+
+  return "Available";
+}
+
+function getSlotDisplayLabel(
+  status:
+    | "available"
+    | "unavailable"
+    | "hold"
+    | "pending"
+    | "booked",
+  label: string,
+) {
+  return getSlotStatusTitle(status, label);
+}
+
+function getSlotStatusDetail(
+  status:
+    | "available"
+    | "unavailable"
+    | "hold"
+    | "pending"
+    | "booked",
+  label: string,
+) {
+  if (status === "hold") {
+    return "Temporarily held";
+  }
+
+  if (status === "pending") {
+    return "Awaiting review";
+  }
+
+  if (status === "booked") {
+    return label && label !== "Reserved" ? label : "Already booked";
+  }
+
+  if (status === "unavailable") {
+    return label.toLowerCase().includes("closed") ? "Venue closed" : "Not bookable";
+  }
+
+  return label;
+}
+
+function getSlotStatusClasses(
+  status:
+    | "available"
+    | "unavailable"
+    | "hold"
+    | "pending"
+    | "booked",
+) {
+  if (status === "hold") {
+    return "border-[#bfd7ff] bg-[#edf4ff] text-[#2457a6]";
+  }
+
+  if (status === "pending") {
+    return "border-[#f2d58b] bg-[#fff4cf] text-[#c77a18]";
+  }
+
+  if (status === "booked") {
+    return "border-[#efc3bb] bg-[#fff0ed] text-[#c35c45]";
+  }
+
+  return "border-[#e1e8ef] bg-[repeating-linear-gradient(-45deg,rgba(241,245,249,0.95),rgba(241,245,249,0.95)_10px,rgba(226,232,240,0.95)_10px,rgba(226,232,240,0.95)_20px)] text-slate-400";
+}
+
+function timeToMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function shiftDateKey(value: string, offsetDays: number) {
+  const date = new Date(`${value}T12:00:00+08:00`);
+  date.setDate(date.getDate() + offsetDays);
+  return date.toISOString().slice(0, 10);
+}
+
+function getTodayDateKey() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function isCurrentTimeSlot(selectedDate: string, startTime: string) {
+  if (selectedDate !== getTodayDateKey()) {
+    return false;
+  }
+
+  const minutes = getCurrentMinutesInManila();
+  const slotStart = timeToMinutes(startTime);
+  const slotEnd = slotStart + 60;
+
+  return minutes >= slotStart && minutes < slotEnd;
+}
+
+function getCurrentMinutesInManila() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0");
+  const minute = Number(
+    parts.find((part) => part.type === "minute")?.value ?? "0",
+  );
+  return hour * 60 + minute;
+}
+
+function useHoldCountdown(holdExpiresAt: string | null) {
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    if (!holdExpiresAt) {
+      return;
+    }
+
+    const tick = () => setNow(Date.now());
+    const timeout = window.setTimeout(tick, 0);
+    const interval = window.setInterval(tick, 1000);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearInterval(interval);
+    };
+  }, [holdExpiresAt]);
+
+  if (!holdExpiresAt) {
+    return { totalSeconds: 0, label: "00:00" };
+  }
+
+  const totalSeconds = Math.max(
+    0,
+    Math.floor((new Date(holdExpiresAt).getTime() - now) / 1000),
+  );
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return {
+    totalSeconds,
+    label: `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`,
+  };
+}

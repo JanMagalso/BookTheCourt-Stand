@@ -1,0 +1,221 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f5ef;
+  --foreground: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+a,
+button {
+  cursor: pointer;
+}
+
+.daily-grid-wrap {
+  width: 100%;
+  max-width: 100%;
+  max-height: min(72vh, 640px);
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  border: 1px solid rgba(29, 42, 68, 0.12);
+  border-radius: 14px;
+}
+
+.daily-grid-wrap-single-court .daily-grid {
+  width: 100%;
+}
+
+.daily-grid {
+  display: grid;
+  width: 100%;
+  min-width: max-content;
+}
+
+.daily-grid-time-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 12;
+  border-right: 1px solid rgba(29, 42, 68, 0.08);
+  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
+  background: #f7f8fb;
+  padding: 0.7rem;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(29, 42, 68, 0.5);
+}
+
+.daily-grid-court-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-right: 1px solid rgba(29, 42, 68, 0.08);
+  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
+  background: #f7f8fb;
+  padding: 0.7rem 0.6rem;
+}
+
+.daily-grid-time-cell {
+  position: sticky;
+  left: 0;
+  z-index: 11;
+  min-height: 62px;
+  border-right: 1px solid rgba(29, 42, 68, 0.07);
+  border-bottom: 1px solid rgba(29, 42, 68, 0.07);
+  background: #fafbff;
+  padding: 0.5rem 0.45rem;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(29, 42, 68, 0.5);
+}
+
+.daily-grid-cell {
+  min-height: 62px;
+  border-right: 1px solid rgba(29, 42, 68, 0.07);
+  border-bottom: 1px solid rgba(29, 42, 68, 0.07);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 0.3rem;
+}
+
+.booking-matrix-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  border-top: 1px solid rgba(29, 42, 68, 0.1);
+  border-bottom: 1px solid rgba(29, 42, 68, 0.1);
+}
+
+.booking-matrix {
+  display: grid;
+  width: max-content;
+  min-width: 100%;
+}
+
+.booking-matrix-corner {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 14;
+  min-height: 54px;
+  border-right: 1px solid rgba(29, 42, 68, 0.08);
+  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
+  background: #ffffff;
+}
+
+.booking-matrix-time-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  min-height: 54px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  border-right: 1px solid rgba(29, 42, 68, 0.08);
+  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
+  background: #ffffff;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(29, 42, 68, 0.68);
+}
+
+.booking-matrix-court-cell {
+  position: sticky;
+  left: 0;
+  z-index: 12;
+  display: flex;
+  min-height: 96px;
+  align-items: center;
+  gap: 0.9rem;
+  border-right: 1px solid rgba(29, 42, 68, 0.08);
+  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
+  background: #ffffff;
+  padding: 0.9rem 1rem;
+}
+
+.booking-matrix-slot-cell {
+  min-height: 96px;
+  border-right: 1px solid rgba(29, 42, 68, 0.06);
+  border-bottom: 1px solid rgba(29, 42, 68, 0.06);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.3rem;
+}
+
+@media (max-width: 640px) {
+  .daily-grid-wrap-single-court .daily-grid {
+    min-width: 0;
+  }
+
+  .daily-grid-time-header {
+    padding: 0.55rem 0.45rem;
+    font-size: 10px;
+  }
+
+  .daily-grid-court-header {
+    padding: 0.55rem 0.45rem;
+  }
+
+  .daily-grid-time-cell,
+  .daily-grid-cell {
+    min-height: 56px;
+  }
+
+  .daily-grid-wrap {
+    max-height: 66vh;
+  }
+
+  .booking-matrix-time-header {
+    min-height: 46px;
+    padding: 0.45rem 0.25rem;
+    font-size: 0.68rem;
+    letter-spacing: 0;
+  }
+
+  .booking-matrix-court-cell {
+    min-height: 74px;
+    gap: 0.55rem;
+    padding: 0.65rem 0.55rem;
+  }
+
+  .booking-matrix-slot-cell {
+    min-height: 74px;
+    padding: 0.18rem;
+  }
+
+  .daily-grid-wrap-single-court .daily-grid-time-header,
+  .daily-grid-wrap-single-court .daily-grid-time-cell {
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+  }
+
+  .daily-grid-wrap-single-court .daily-grid-court-header {
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+  }
+}

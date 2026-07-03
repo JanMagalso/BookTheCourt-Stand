@@ -1,0 +1,24 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1100" fill="#081712"/>
+  <rect x="72" y="72" width="1456" height="956" rx="40" fill="url(#paint0_linear_1_2)" fill-opacity="0.9"/>
+  <path d="M337 770C337 577.291 493.291 421 686 421H914C1106.71 421 1263 577.291 1263 770V834H337V770Z" fill="#143126"/>
+  <path d="M800 317L870.534 459.873L1028.2 482.792L914.102 593.964L941.067 751L800 676.873L658.933 751L685.898 593.964L571.799 482.792L729.466 459.873L800 317Z" fill="#D5EF76"/>
+  <circle cx="450" cy="315" r="92" fill="#1AA39A" fill-opacity="0.18"/>
+  <circle cx="1194" cy="262" r="124" fill="#8DE3D8" fill-opacity="0.14"/>
+  <circle cx="1160" cy="828" r="162" fill="#38BDF8" fill-opacity="0.12"/>
+  <path d="M487 834C547.236 730.346 659.303 666 786.166 666H813.834C940.697 666 1052.76 730.346 1113 834H487Z" fill="#1C4637"/>
+  <path d="M560 872H1040" stroke="#D5EF76" stroke-width="18" stroke-linecap="round"/>
+  <path d="M520 934H1080" stroke="#8DE3D8" stroke-opacity="0.4" stroke-width="10" stroke-linecap="round"/>
+  <text x="800" y="195" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="58" font-weight="700" text-anchor="middle">
+    Venue Photo Placeholder
+  </text>
+  <text x="800" y="258" fill="#CFE6DE" font-family="Arial, sans-serif" font-size="26" font-weight="500" text-anchor="middle">
+    Replace this with your own facility image in Supabase or /public
+  </text>
+  <defs>
+    <linearGradient id="paint0_linear_1_2" x1="213" y1="116" x2="1372" y2="1015" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#16382C"/>
+      <stop offset="1" stop-color="#10233B"/>
+    </linearGradient>
+  </defs>
+</svg>
