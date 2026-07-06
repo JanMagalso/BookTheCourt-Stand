@@ -288,7 +288,7 @@ export default async function Home() {
                         href={venue.contactFacebook}
                         target="_blank"
                         rel="noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/70 bg-[rgba(var(--color-surface-rgb),0.52)] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] backdrop-blur-md transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/70 bg-[rgba(var(--color-surface-rgb),0.52)] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] backdrop-blur-md transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
                       >
                         <FacebookIcon className="mr-2 h-4 w-4" />
                         Facebook
@@ -322,7 +322,7 @@ export default async function Home() {
                       title={`${venue.name} map`}
                       src={getGoogleMapsEmbedUrl(
                         venue.googleMapsUrl,
-                        venue.address,
+                        `${venue.name} ${venue.address}`.trim(),
                       )}
                       className="h-full w-full border-0"
                       loading="lazy"
@@ -583,11 +583,23 @@ function AlertIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-function getGoogleMapsEmbedUrl(googleMapsUrl: string, address: string) {
-  const fallbackQuery = encodeURIComponent(address);
+function getGoogleMapsEmbedUrl(
+  googleMapsUrl: string,
+  fallbackLocation: string,
+) {
+  const fallbackQuery = encodeURIComponent(fallbackLocation);
 
   try {
     const url = new URL(googleMapsUrl);
+    const isShortGoogleMapsLink =
+      url.hostname === "maps.app.goo.gl" || url.hostname === "goo.gl";
+
+    // TODO: When the schema has a dedicated Google Maps embed/src field,
+    // prefer that here instead of parsing share links.
+    if (isShortGoogleMapsLink) {
+      return `https://www.google.com/maps?q=${fallbackQuery}&output=embed`;
+    }
+
     const coordinatesMatch = `${url.pathname}${url.search}`.match(
       /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
     );
@@ -600,7 +612,9 @@ function getGoogleMapsEmbedUrl(googleMapsUrl: string, address: string) {
       (coordinatesMatch
         ? `${coordinatesMatch[1]},${coordinatesMatch[2]}`
         : null) ||
-      (placePathMatch ? decodeURIComponent(placePathMatch[1]).replace(/\+/g, " ") : null);
+      (placePathMatch
+        ? decodeURIComponent(placePathMatch[1]).replace(/\+/g, " ")
+        : null);
 
     if (query) {
       return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
