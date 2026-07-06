@@ -17,7 +17,7 @@ export function ShowcaseInfoCard({
 }) {
   return (
     <div
-      className={`rounded-[2rem] border border-[color:var(--color-border)] bg-[rgba(var(--color-surface-rgb),0.92)] p-6 shadow-[0_16px_48px_rgba(var(--color-shadow-brand-rgb),0.06)] ${className}`.trim()}
+      className={`rounded-[2rem] border border-white/65 bg-[rgba(var(--color-surface-rgb),0.52)] p-6 shadow-[0_20px_56px_rgba(var(--color-shadow-brand-rgb),0.08)] backdrop-blur-2xl ${className}`.trim()}
     >
       {children}
     </div>
@@ -32,9 +32,13 @@ export function ShowcaseMiniCard({
   value: ReactNode;
 }) {
   return (
-    <div className="rounded-[1.25rem] bg-[color:var(--color-surface-soft)] p-4">
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</p>
-      <div className="mt-2 text-sm leading-6 text-slate-700">{value}</div>
+    <div className="rounded-[1.25rem] border border-white/60 bg-[rgba(var(--color-surface-rgb),0.56)] p-4 backdrop-blur-md">
+      <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--color-text-soft)]">
+        {label}
+      </p>
+      <div className="mt-2 text-sm leading-6 text-[color:var(--color-text-secondary)]">
+        {value}
+      </div>
     </div>
   );
 }
@@ -68,12 +72,14 @@ export function ShowcaseFeatureCard({
   description: string;
 }) {
   return (
-    <div className="rounded-[1.8rem] border border-[color:var(--color-border)] bg-[rgba(var(--color-surface-rgb),0.88)] p-5 shadow-[0_16px_40px_rgba(var(--color-shadow-brand-rgb),0.05)]">
+    <div className="rounded-[1.8rem] border border-white/65 bg-[rgba(var(--color-surface-rgb),0.52)] p-5 shadow-[0_18px_48px_rgba(var(--color-shadow-brand-rgb),0.08)] backdrop-blur-xl">
       <div className="flex items-center gap-3 text-[color:var(--color-brand-strong)]">
         <Icon className="h-5 w-5" />
         <p className="text-sm font-semibold uppercase tracking-[0.16em]">{title}</p>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
+      <p className="mt-3 text-sm leading-6 text-[color:var(--color-text-muted)]">
+        {description}
+      </p>
     </div>
   );
 }

@@ -55,7 +55,7 @@ button {
   z-index: 12;
   border-right: 1px solid var(--grid-line);
   border-bottom: 1px solid var(--grid-line);
-  background: #f7f8fb;
+  background: var(--color-surface-elevated);
   padding: 0.7rem;
   font-size: 11px;
   font-weight: 700;
@@ -69,7 +69,7 @@ button {
   z-index: 10;
   border-right: 1px solid var(--grid-line);
   border-bottom: 1px solid var(--grid-line);
-  background: #f7f8fb;
+  background: var(--color-surface-elevated);
   padding: 0.7rem 0.6rem;
 }
 
@@ -80,7 +80,7 @@ button {
   min-height: 62px;
   border-right: 1px solid var(--grid-line-soft);
   border-bottom: 1px solid var(--grid-line-soft);
-  background: #fafbff;
+  background: var(--color-surface);
   padding: 0.5rem 0.45rem;
   font-size: 11px;
   font-weight: 600;
@@ -91,7 +91,7 @@ button {
   min-height: 62px;
   border-right: 1px solid var(--grid-line-soft);
   border-bottom: 1px solid var(--grid-line-soft);
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--color-surface-overlay-soft);
   padding: 0.3rem;
 }
 

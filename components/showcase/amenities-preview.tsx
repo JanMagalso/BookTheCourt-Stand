@@ -59,17 +59,17 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
           {mobileAmenities.map((item) => (
             <div
               key={item.label}
-              className="rounded-[1.3rem] border border-[color:var(--color-border-light)] bg-[color:var(--color-surface-muted)] px-4 py-4"
+              className="rounded-[1.35rem] border border-[color:var(--color-border-light)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.7),rgba(var(--color-surface-rgb),0.52))] px-4 py-4 shadow-[0_16px_36px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5"
             >
               <div className="flex items-start gap-3">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--color-surface-accent)] text-[color:var(--color-brand)]">
+                <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--color-border-subtle)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-[color:var(--color-brand)] shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
                   <item.icon className="h-4.5 w-4.5" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[color:var(--color-text-primary)]">
                     {item.label}
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                  <p className="mt-1 text-xs leading-5 text-[color:var(--color-text-muted)]">
                     {item.description}
                   </p>
                 </div>
@@ -97,15 +97,15 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
               {group.items.map((item) => (
                 <div
                   key={`${group.title}-${item.label}`}
-                  className="rounded-[1.75rem] border border-[color:var(--color-border-light)] bg-[color:var(--color-surface-muted)] px-5 py-5"
+                  className="rounded-[1.75rem] border border-[color:var(--color-border-light)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.72),rgba(var(--color-surface-rgb),0.54))] px-5 py-5 shadow-[0_16px_40px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5"
                 >
                   <div className="flex h-full items-start gap-4">
-                    <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--color-surface-accent)] text-[color:var(--color-brand)]">
+                    <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--color-border-subtle)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-[color:var(--color-brand)] shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
                       <item.icon className="h-5 w-5" />
                     </div>
                     <div>
                       <p className="font-semibold text-[color:var(--color-text-primary)]">{item.label}</p>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                      <p className="mt-1 text-sm leading-6 text-[color:var(--color-text-muted)]">
                         {item.description}
                       </p>
                     </div>
@@ -127,15 +127,15 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
 }
 
 function AllAmenitiesDrawer({
-  groups,
-  totalAmenities,
+      groups,
+      totalAmenities,
 }: {
   groups: ReturnType<typeof buildAmenityGroups>;
   totalAmenities: number;
 }) {
   return (
     <Drawer>
-      <DrawerTrigger className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.06)]">
+      <DrawerTrigger className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border-light)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.62))] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand)] shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand-bright)]">
         View All {totalAmenities} Amenities
       </DrawerTrigger>
       <DrawerContent className="h-[100dvh] overflow-y-auto md:mb-8 md:h-auto md:max-h-[84vh] md:max-w-[880px] md:rounded-[2rem]">
@@ -157,17 +157,17 @@ function AllAmenitiesDrawer({
                 {group.items.map((item) => (
                   <div
                     key={`${group.title}-${item.label}`}
-                    className="rounded-[1.25rem] border border-[color:var(--color-border-light)] bg-[color:var(--color-surface-muted)] px-4 py-4"
+                    className="rounded-[1.25rem] border border-[color:var(--color-border-light)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.72),rgba(var(--color-surface-rgb),0.54))] px-4 py-4 shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.06)] backdrop-blur-md"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--color-surface-accent)] text-[color:var(--color-brand)]">
+                      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--color-border-subtle)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-[color:var(--color-brand)]">
                         <item.icon className="h-4.5 w-4.5" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-[color:var(--color-text-primary)]">
                           {item.label}
                         </p>
-                        <p className="mt-1 text-xs leading-5 text-slate-600">
+                        <p className="mt-1 text-xs leading-5 text-[color:var(--color-text-muted)]">
                           {item.description}
                         </p>
                       </div>

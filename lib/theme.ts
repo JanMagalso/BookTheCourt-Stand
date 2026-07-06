@@ -497,12 +497,20 @@ export const themeOptions = {
 } as const;
 
 export type ThemeName = keyof typeof themeOptions;
+export type ThemeMode = "light" | "dark";
 
-export const defaultThemeName: ThemeName = "green";
+const configuredDefaultThemeName = process.env.NEXT_PUBLIC_DEFAULT_THEME?.trim();
+
+export const defaultThemeName: ThemeName =
+  configuredDefaultThemeName && configuredDefaultThemeName in themeOptions
+    ? (configuredDefaultThemeName as ThemeName)
+    : "green";
+export const defaultThemeMode: ThemeMode = "light";
 export const themeStorageKey = "btc-theme";
+export const themeModeStorageKey = "btc-theme-mode";
 
-export function getThemeVariables(themeName: ThemeName) {
-  const theme = themeOptions[themeName].theme;
+export function getThemeVariables(themeName: ThemeName, mode: ThemeMode = defaultThemeMode) {
+  const theme = resolveThemeMode(themeOptions[themeName].theme, mode);
 
   return {
     "--background": theme.colors.background,
@@ -621,4 +629,118 @@ export function isThemeName(value: string): value is ThemeName {
   return value in themeOptions;
 }
 
-export const rootThemeStyle = getThemeVariables(defaultThemeName) as CSSProperties;
+export function isThemeMode(value: string): value is ThemeMode {
+  return value === "light" || value === "dark";
+}
+
+export const rootThemeStyle = getThemeVariables(defaultThemeName, defaultThemeMode) as CSSProperties;
+
+function resolveThemeMode(theme: ThemeTokens, mode: ThemeMode): ThemeTokens {
+  if (mode === "light") {
+    return theme;
+  }
+
+  return {
+    ...theme,
+    colors: {
+      ...theme.colors,
+      background: "#07111a",
+      foreground: "#edf4ff",
+      pageStart: "#08131d",
+      pageMid: "#0b1721",
+      pageEnd: "#0e1b26",
+      surface: "#10202d",
+      surfaceElevated: "#122431",
+      surfaceMuted: "#132633",
+      surfaceSoft: "#162b3a",
+      surfaceAccent: "#173143",
+      surfaceSuccess: "#102b25",
+      surfaceSuccessStrong: "#16372f",
+      surfaceInfo: "#12283d",
+      surfaceInfoStrong: "#16324a",
+      surfaceWarning: "#3a2b15",
+      surfaceDanger: "#3c1f22",
+      surfaceDangerSoft: "#34181d",
+      textPrimary: "#edf4ff",
+      textSecondary: "#b4c5d9",
+      textMuted: "#93a9c3",
+      textSoft: "#869ab4",
+      textSubtle: "#7387a2",
+      textDisabled: "#69798f",
+      textBodyStrong: "#f2f6fb",
+      textBodyMuted: "#b9c4d4",
+      textBodySoft: "#9eafc4",
+      borderStrong: "#284052",
+      border: "#223747",
+      borderSoft: "#2a4050",
+      borderMuted: "#2c4455",
+      borderSubtle: "#284253",
+      borderLight: "#2f485a",
+      borderLighter: "#365164",
+      borderPanel: "#2a4253",
+      borderPanelSoft: "#3b5467",
+      borderPanelMuted: "#355166",
+      borderCard: "#2a4456",
+      borderWarm: "#564737",
+      borderWarning: "#66512f",
+      borderWarningStrong: "#98743a",
+      borderDanger: "#7d4a4f",
+      borderNeutral100: "#30495e",
+      borderNeutral200: "#294456",
+      danger: "#f87171",
+      dangerStrong: "#fca5a5",
+      dangerAccent: "#f87171",
+      warning: "#fbbf24",
+      warningStrong: "#fcd34d",
+      buttonWarm: theme.colors.brand,
+      buttonWarmHover: theme.colors.brandBright,
+      borderHighlight: "#8e7744",
+      borderHighlightSoft: "#6a5a39",
+      surfaceHighlight: "#2c2618",
+      surfaceHighlightSoft: "#1d1912",
+      surfaceWarm: "#1d1711",
+      info: "#93c5fd",
+    },
+    rgba: {
+      ...theme.rgba,
+      surfaceOverlay: "rgba(16, 32, 45, 0.62)",
+      surfaceOverlayStrong: "rgba(16, 32, 45, 0.82)",
+      surfaceOverlaySoft: "rgba(16, 32, 45, 0.48)",
+      gridLineStrong: "rgba(148, 163, 184, 0.2)",
+      gridLine: "rgba(148, 163, 184, 0.14)",
+      gridLineSoft: "rgba(148, 163, 184, 0.1)",
+      gridLineFaint: "rgba(148, 163, 184, 0.08)",
+      gridText: "rgba(203, 213, 225, 0.55)",
+      gridTextStrong: "rgba(226, 232, 240, 0.72)",
+    },
+    rgb: {
+      ...theme.rgb,
+      surface: "16, 32, 45",
+      shadow: "2, 6, 23",
+      shadowBrand: "2, 6, 23",
+      shadowSuccess: "4, 120, 87",
+      overlay: "2, 6, 23",
+    },
+    gradients: {
+      ...theme.gradients,
+      page:
+        "linear-gradient(180deg, var(--color-page-start) 0%, var(--color-page-mid) 38%, var(--color-page-end) 100%)",
+      shell:
+        "linear-gradient(180deg, rgba(18,36,49,0.92) 0%, rgba(13,28,38,0.88) 100%)",
+      shellHeader:
+        "radial-gradient(circle at top left, color-mix(in srgb, var(--color-brand-accent) 18%, transparent), transparent 28%), linear-gradient(180deg, color-mix(in srgb, var(--color-brand) 10%, transparent), rgba(255, 255, 255, 0))",
+      surfaceSuccess:
+        "linear-gradient(180deg, var(--color-surface-success) 0%, var(--color-surface-success-strong) 100%)",
+      surfaceSuccessSoft:
+        "linear-gradient(180deg, rgba(18,45,39,0.94) 0%, rgba(14,36,31,0.9) 100%)",
+      galleryOverlay:
+        "linear-gradient(180deg, transparent, rgba(2, 6, 23, 0.82))",
+      loadingSlate:
+        "linear-gradient(110deg, rgba(71, 85, 105, 0.95), rgba(100, 116, 139, 0.75), rgba(71, 85, 105, 0.95))",
+      loadingBlue:
+        "linear-gradient(110deg, rgba(30, 64, 175, 0.82), rgba(59, 130, 246, 0.62), rgba(30, 64, 175, 0.82))",
+      loadingNeutral:
+        "linear-gradient(110deg, rgba(51, 65, 85, 0.92), rgba(71, 85, 105, 0.72), rgba(51, 65, 85, 0.92))",
+    },
+  };
+}

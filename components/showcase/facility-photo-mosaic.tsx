@@ -143,7 +143,7 @@ export function FacilityPhotoMosaic({
 
   if (cleanPhotos.length === 0) {
     return (
-      <div className="flex h-[350px] items-center justify-center rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 text-sm font-semibold text-slate-400">
+      <div className="flex h-[350px] items-center justify-center rounded-3xl bg-[image:var(--gradient-loading-neutral)] text-sm font-semibold text-[color:var(--color-text-soft)]">
         No facility image yet
       </div>
     );
@@ -238,7 +238,7 @@ export function FacilityPhotoMosaic({
 
   return (
     <div className="space-y-5">
-      <div className="relative w-full overflow-hidden rounded-[2.2rem] border border-[color:var(--color-border-card)] bg-slate-100 shadow-[0_24px_80px_rgba(var(--color-shadow-rgb),0.12)]">
+      <div className="relative w-full overflow-hidden rounded-[2.2rem] border border-[color:var(--color-border-card)] bg-[color:var(--color-surface-soft)] shadow-[0_24px_80px_rgba(var(--color-shadow-rgb),0.12)]">
         <div className="overflow-hidden px-3 sm:px-4 lg:px-5" ref={emblaRef}>
           <div className="-ml-3 flex touch-pan-y sm:-ml-4 lg:-ml-5">
             {renderedPhotos.map((photo, index) => (
@@ -257,10 +257,10 @@ export function FacilityPhotoMosaic({
                     alt={`${title} photo ${(index % photoCount) + 1}`}
                     width={1600}
                     height={1100}
-                    className="aspect-[16/10] w-full bg-slate-950 object-contain md:aspect-[4/3] md:object-cover lg:aspect-[5/4]"
+                    className="aspect-[16/10] w-full bg-[color:var(--color-hero-deep)] object-contain md:aspect-[4/3] md:object-cover lg:aspect-[5/4]"
                     skeletonClassName="bg-[image:var(--gradient-loading-slate)]"
                   />
-                  <span className="pointer-events-none absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(15,23,42,0.66)] text-white shadow-[0_10px_24px_rgba(15,23,42,0.22)]">
+                  <span className="pointer-events-none absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(var(--color-overlay-rgb),0.68)] text-white shadow-[0_10px_24px_rgba(var(--color-shadow-rgb),0.22)]">
                     <span aria-hidden="true" className="text-lg leading-none">
                       ⌕
                     </span>
@@ -289,7 +289,7 @@ export function FacilityPhotoMosaic({
                   className={`h-2.5 rounded-full transition-all ${
                     dotIndex === safeIndex
                       ? "w-8 bg-[color:var(--color-action-primary)]"
-                      : "w-2.5 bg-slate-300 hover:bg-slate-400"
+                      : "w-2.5 bg-[color:var(--color-border-panel-soft)] hover:bg-[color:var(--color-text-soft)]"
                   }`}
                 />
               ))}
@@ -352,14 +352,14 @@ export function FacilityPhotoMosaic({
         >
           <div className="flex h-full flex-col">
             <div
-              className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4 sm:px-6"
+              className="flex items-center justify-between gap-3 border-b border-[color:var(--color-border-panel)] px-4 py-4 sm:px-6"
               onClick={(event) => event.stopPropagation()}
             >
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-soft)]">
                   Photo Viewer
                 </p>
-                <p className="truncate text-sm text-white/85">
+                <p className="truncate text-sm text-[color:var(--color-text-primary)]">
                   {title} {lightboxIndex + 1} / {photoCount}
                 </p>
               </div>
@@ -368,7 +368,7 @@ export function FacilityPhotoMosaic({
                 <button
                   type="button"
                   onClick={() => updateLightboxZoom(lightboxZoom - 0.5)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/8 text-xl text-white transition hover:bg-white/14"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.08)] text-xl text-[color:var(--color-text-primary)] transition hover:bg-[rgba(var(--color-surface-rgb),0.14)]"
                   aria-label="Zoom out"
                 >
                   -
@@ -376,7 +376,7 @@ export function FacilityPhotoMosaic({
                 <button
                   type="button"
                   onClick={() => updateLightboxZoom(1)}
-                  className="rounded-full border border-white/15 bg-white/8 px-3 py-2 text-xs font-semibold tracking-[0.16em] text-white transition hover:bg-white/14"
+                  className="rounded-full border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.08)] px-3 py-2 text-xs font-semibold tracking-[0.16em] text-[color:var(--color-text-primary)] transition hover:bg-[rgba(var(--color-surface-rgb),0.14)]"
                   aria-label="Reset zoom"
                 >
                   {Math.round(lightboxZoom * 100)}%
@@ -384,7 +384,7 @@ export function FacilityPhotoMosaic({
                 <button
                   type="button"
                   onClick={() => updateLightboxZoom(lightboxZoom + 0.5)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/8 text-xl text-white transition hover:bg-white/14"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.08)] text-xl text-[color:var(--color-text-primary)] transition hover:bg-[rgba(var(--color-surface-rgb),0.14)]"
                   aria-label="Zoom in"
                 >
                   +
@@ -392,7 +392,7 @@ export function FacilityPhotoMosaic({
                 <button
                   type="button"
                   onClick={closeLightbox}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/8 text-xl text-white transition hover:bg-white/14"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.08)] text-xl text-[color:var(--color-text-primary)] transition hover:bg-[rgba(var(--color-surface-rgb),0.14)]"
                   aria-label="Close photo viewer"
                 >
                   ×
@@ -404,11 +404,11 @@ export function FacilityPhotoMosaic({
               className="flex min-h-0 flex-1 items-center justify-center px-3 py-4 sm:px-6 sm:py-6"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="relative flex h-full w-full items-center justify-center overflow-auto rounded-[2rem] border border-white/10 bg-[rgba(15,23,42,0.45)]">
+              <div className="relative flex h-full w-full items-center justify-center overflow-auto rounded-[2rem] border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-overlay-rgb),0.42)]">
                 <button
                   type="button"
                   onClick={showLightboxPrevious}
-                  className={`absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/15 bg-[rgba(15,23,42,0.72)] px-4 py-3 text-2xl text-white transition hover:bg-[rgba(15,23,42,0.9)] ${photoCount > 1 ? "" : "hidden"}`}
+                  className={`absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-overlay-rgb),0.72)] px-4 py-3 text-2xl text-[color:var(--color-text-primary)] transition hover:bg-[rgba(var(--color-overlay-rgb),0.9)] ${photoCount > 1 ? "" : "hidden"}`}
                   aria-label="Previous photo"
                 >
                   ‹
@@ -416,7 +416,7 @@ export function FacilityPhotoMosaic({
                 <button
                   type="button"
                   onClick={showLightboxNext}
-                  className={`absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/15 bg-[rgba(15,23,42,0.72)] px-4 py-3 text-2xl text-white transition hover:bg-[rgba(15,23,42,0.9)] ${photoCount > 1 ? "" : "hidden"}`}
+                  className={`absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-overlay-rgb),0.72)] px-4 py-3 text-2xl text-[color:var(--color-text-primary)] transition hover:bg-[rgba(var(--color-overlay-rgb),0.9)] ${photoCount > 1 ? "" : "hidden"}`}
                   aria-label="Next photo"
                 >
                   ›

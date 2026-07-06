@@ -30,7 +30,7 @@ export default async function Home() {
       ? venue.amenities
       : fallbackAmenities(venue, courtCount);
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[image:var(--gradient-page)] text-[color:var(--color-text-primary)]">
+    <main className="min-h-screen overflow-x-hidden bg-[color:var(--background)] text-[color:var(--color-text-primary)]">
       <section className="relative overflow-hidden bg-[color:var(--color-hero)] text-white">
         <div className="absolute inset-0">
           <LoadingImage
@@ -163,7 +163,7 @@ export default async function Home() {
         className="relative z-10 px-3 pb-16 pt-10 sm:px-6 sm:pt-14 lg:px-10 lg:pt-16"
       >
         <div className="mx-auto w-full max-w-[1680px]">
-          <Card className="border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.82)]">
+          <Card className="border-[color:var(--color-border-card)]">
             <CardHeader className="pb-4">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
                 Facility Overview
@@ -197,7 +197,7 @@ export default async function Home() {
               Get a feel for the venue before you visit
             </h2>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-slate-600">
+          <p className="max-w-xl text-sm leading-6 text-[color:var(--color-text-muted)]">
             Browse the courts, atmosphere, and player areas before you lock in
             your next session.
           </p>
@@ -222,7 +222,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="overflow-hidden rounded-[2rem] border border-[color:var(--color-border-card)] bg-[image:var(--gradient-shell)] shadow-[0_24px_80px_rgba(var(--color-shadow-brand-rgb),0.08)]">
+          <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-[rgba(var(--color-surface-rgb),0.54)] shadow-[0_28px_90px_rgba(var(--color-shadow-brand-rgb),0.1)] backdrop-blur-2xl">
             <div className="border-b border-[color:var(--color-border-neutral-200)] bg-[image:var(--gradient-shell-header)] px-4 py-4 sm:px-6 lg:px-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -234,7 +234,7 @@ export default async function Home() {
                     place.
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.82)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-brand-strong)]">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-[rgba(var(--color-surface-rgb),0.62)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-brand-strong)] backdrop-blur-md">
                   <MapPinIcon className="h-3.5 w-3.5" />
                   Venue Map
                 </div>
@@ -288,7 +288,7 @@ export default async function Home() {
                         href={venue.contactFacebook}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.9)] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/70 bg-[rgba(var(--color-surface-rgb),0.52)] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] backdrop-blur-md transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
                       >
                         <FacebookIcon className="mr-2 h-4 w-4" />
                         Facebook
@@ -297,8 +297,8 @@ export default async function Home() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[1.8rem] border border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.86)] p-3 shadow-[0_18px_50px_rgba(var(--color-shadow-brand-rgb),0.08)]">
-                  <div className="mb-3 flex items-center justify-between rounded-[1rem] border border-[color:var(--color-border-light)] bg-[color:var(--color-surface-soft)] px-4 py-3">
+                <div className="overflow-hidden rounded-[1.8rem] border border-white/65 bg-[rgba(var(--color-surface-rgb),0.4)] p-3 shadow-[0_18px_50px_rgba(var(--color-shadow-brand-rgb),0.08)] backdrop-blur-xl">
+                  <div className="mb-3 flex items-center justify-between rounded-[1rem] border border-white/70 bg-[rgba(var(--color-surface-rgb),0.58)] px-4 py-3 backdrop-blur-md">
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-brand)]">
                         Venue Location
@@ -311,7 +311,7 @@ export default async function Home() {
                       href={venue.googleMapsUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--color-border-soft)] bg-[color:var(--color-surface)] text-[color:var(--color-brand-strong)] transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-[rgba(var(--color-surface-rgb),0.7)] text-[color:var(--color-brand-strong)] backdrop-blur-md transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
                       aria-label="Open venue location in Google Maps"
                     >
                       <ExternalLinkIcon className="h-4 w-4" />
@@ -338,9 +338,9 @@ export default async function Home() {
 
       <section className="px-3 pb-16 pt-6 sm:px-6 lg:px-10">
         <div className="mx-auto grid w-full max-w-[1680px] grid-cols-1 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-          <Card className="border-[#eadab2] bg-[linear-gradient(180deg,#fff7df_0%,#fffdf5_100%)] shadow-[0_18px_50px_rgba(202,154,34,0.12)]">
+          <Card className="border-[color:var(--color-border-highlight)] bg-[linear-gradient(180deg,var(--color-surface-highlight)_0%,var(--color-surface-highlight-soft)_100%)] shadow-[0_18px_50px_rgba(var(--color-shadow-brand-rgb),0.12)]">
             <CardHeader className="pb-4">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[color:var(--color-border-highlight)] bg-white/75 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-warning-strong)]">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[color:var(--color-border-highlight)] bg-[rgba(var(--color-surface-rgb),0.72)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-warning-strong)]">
                 <AlertIcon className="h-3.5 w-3.5" />
                 Cancellation Policy
               </div>
@@ -352,13 +352,13 @@ export default async function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="rounded-[1.4rem] border border-[color:var(--color-border-highlight-soft)] bg-white/80 px-5 py-5 text-sm leading-7 text-slate-700">
+              <p className="rounded-[1.4rem] border border-[color:var(--color-border-highlight-soft)] bg-[rgba(var(--color-surface-rgb),0.8)] px-5 py-5 text-sm leading-7 text-[color:var(--color-text-secondary)]">
                 {venue.cancellationPolicy}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.88)]">
+          <Card className="border-[color:var(--color-border-card)]">
             <CardHeader className="pb-2">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand)]">
                 FAQ & Operations
@@ -377,26 +377,26 @@ export default async function Home() {
                   <AccordionItem
                     key={faq.question}
                     value={`faq-${index}`}
-                    className="rounded-[1.5rem] border border-[color:var(--color-border-light)] bg-[#f9fcfb] px-5 py-3"
+                    className="rounded-[1.5rem] border border-[color:var(--color-border-light)] bg-[rgba(var(--color-surface-rgb),0.72)] px-5 py-3"
                   >
                     <AccordionTrigger className="py-3 text-lg font-semibold text-[color:var(--color-text-primary)]">
                       {faq.question}
                     </AccordionTrigger>
-                    <AccordionContent className="pb-4 pt-1 text-sm leading-7 text-slate-600">
+                    <AccordionContent className="pb-4 pt-1 text-sm leading-7 text-[color:var(--color-text-muted)]">
                       {faq.answer}
                     </AccordionContent>
                   </AccordionItem>
                 ))}
               </Accordion>
 
-              <footer className="mt-8 flex flex-col gap-4 border-t border-[#e4eee8] pt-6 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
+              <footer className="mt-8 flex flex-col gap-4 border-t border-[color:var(--color-border-light)] pt-6 text-sm text-[color:var(--color-text-muted)] md:flex-row md:items-center md:justify-between">
                 <p>Built for a modern, sport-first venue booking experience.</p>
                 <div className="flex flex-wrap gap-3">
                   {venue.socialLinks.map((link, index) => (
                     <Link
                       key={`${link.label}-${index}`}
                       href={link.href}
-                      className="rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 text-slate-700 transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+                      className="rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
                     >
                       {link.label}
                     </Link>
