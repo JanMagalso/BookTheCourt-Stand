@@ -126,6 +126,13 @@ type ThemeOption = {
   theme: ThemeTokens;
 };
 
+type ThemeOverrides = {
+  colors?: Partial<ThemeTokens["colors"]>;
+  rgba?: Partial<ThemeTokens["rgba"]>;
+  rgb?: Partial<ThemeTokens["rgb"]>;
+  gradients?: Partial<ThemeTokens["gradients"]>;
+};
+
 const baseTheme: ThemeTokens = {
   colors: {
     background: "#f6f5ef",
@@ -260,7 +267,7 @@ const baseTheme: ThemeTokens = {
 function createTheme(
   label: string,
   swatch: string,
-  overrides: Partial<ThemeTokens>,
+  overrides: ThemeOverrides,
 ): ThemeOption {
   return {
     label,

@@ -153,7 +153,7 @@ export function FacilityPhotoMosaic({
     activeIndex >= 0 && activeIndex < cleanPhotos.length ? activeIndex : 0;
 
   const scrollTo = (index: number) => {
-    if (!isCarouselReady) {
+    if (!isCarouselReady || !emblaApi) {
       return;
     }
 
@@ -161,7 +161,7 @@ export function FacilityPhotoMosaic({
   };
 
   const showPrevious = () => {
-    if (!isCarouselReady) {
+    if (!isCarouselReady || !emblaApi) {
       return;
     }
 
@@ -169,7 +169,7 @@ export function FacilityPhotoMosaic({
   };
 
   const showNext = () => {
-    if (!isCarouselReady) {
+    if (!isCarouselReady || !emblaApi) {
       return;
     }
 
@@ -177,7 +177,7 @@ export function FacilityPhotoMosaic({
   };
 
   const toggleAutoScroll = () => {
-    if (!isCarouselReady) {
+    if (!isCarouselReady || !emblaApi) {
       return;
     }
 
