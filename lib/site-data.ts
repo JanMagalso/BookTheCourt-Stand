@@ -265,6 +265,8 @@ export async function getVenueSnapshot(
   selectedDate: string | undefined = formatDateInput(new Date()),
 ): Promise<VenueSnapshot> {
   const resolvedDate = selectedDate ?? formatDateInput(new Date());
+  const preferredWarehouseId = process.env.BOOKING_WAREHOUSE_ID?.trim();
+
   if (!hasSupabaseEnv()) {
     return cloneSnapshotForDate(fallbackSnapshot, resolvedDate);
   }
@@ -281,18 +283,22 @@ export async function getVenueSnapshot(
       await releaseExpiredHolds(createSupabaseServiceClient());
     }
 
-    const { data: warehouse, error: warehouseError } = await supabase
+    const warehouseQuery = supabase
       .from("warehouses")
       .select(
         "id, name, location, about, contact_email, contact_phone, contact_facebook, amenities, gallery_urls, operating_hours, google_maps_url, owner_id, booking_window_days, time_slot_display_mode",
       )
-      .eq("booking_enabled", true)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+      .eq("booking_enabled", true);
+
+    const { data: warehouse, error: warehouseError } = preferredWarehouseId
+      ? await warehouseQuery.eq("id", preferredWarehouseId).maybeSingle()
+      : await warehouseQuery
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
 
     if (warehouseError || !warehouse) {
-      return fallbackSnapshot;
+      return cloneSnapshotForDate(fallbackSnapshot, resolvedDate);
     }
 
     const [{ data: courts }, { data: bookings }, { data: paymentMethods }] = await Promise.all([

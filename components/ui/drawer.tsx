@@ -82,12 +82,12 @@ export function DrawerContent({
       <button
         type="button"
         aria-label="Close drawer"
-        className="absolute inset-0 bg-[rgba(15,23,42,0.52)] backdrop-blur-[3px]"
+        className="absolute inset-0 bg-[rgba(var(--color-overlay-rgb),0.52)] backdrop-blur-[3px]"
         onClick={() => setOpen(false)}
       />
-      <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[640px] px-2 sm:px-4">
+      <div className="absolute inset-0 flex items-end justify-center sm:px-4 sm:pb-4">
         <div
-          className={`max-h-[84vh] overflow-hidden rounded-t-[2rem] border border-[#dbe8e1] bg-white shadow-[0_-24px_70px_rgba(15,23,42,0.18)] ${className}`.trim()}
+          className={`h-full w-full overflow-hidden rounded-none border-0 bg-[color:var(--color-surface)] shadow-none sm:h-auto sm:max-h-[84vh] sm:max-w-[640px] sm:rounded-[2rem] sm:border sm:border-[color:var(--color-border-light)] sm:shadow-[0_-24px_70px_rgba(var(--color-shadow-rgb),0.18)] ${className}`.trim()}
         >
           {children}
         </div>
@@ -116,7 +116,7 @@ export function DrawerTitle({
 }: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={`text-xl font-semibold tracking-[-0.03em] text-[#10233b] ${className}`.trim()}
+      className={`text-xl font-semibold tracking-[-0.03em] text-[color:var(--color-text-primary)] ${className}`.trim()}
       {...props}
     >
       {children}

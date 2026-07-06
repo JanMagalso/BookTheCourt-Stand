@@ -136,6 +136,34 @@ export function WarehouseShowcaseBookingBoard({
     return () => mediaQuery.removeEventListener("change", syncViewport);
   }, []);
 
+  useEffect(() => {
+    if (!isPaymentModalOpen) {
+      return;
+    }
+
+    const scrollY = window.scrollY;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyPosition = document.body.style.position;
+    const previousBodyTop = document.body.style.top;
+    const previousBodyWidth = document.body.style.width;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.position = previousBodyPosition;
+      document.body.style.top = previousBodyTop;
+      document.body.style.width = previousBodyWidth;
+      window.scrollTo({ top: scrollY });
+    };
+  }, [isPaymentModalOpen]);
+
   function closePaymentModal() {
     setIsPaymentModalOpen(false);
     setModalStep("details");
@@ -473,21 +501,21 @@ export function WarehouseShowcaseBookingBoard({
   }
 
   const selectedCourtIds = new Set(
-    selectedSlots.map((slot) => `${slot.courtId}-${slot.startTime}`),
+    selectedSlots.map((slot) => getSelectedSlotKey(slot.courtId, slot.startTime)),
   );
 
   return (
     <div className="space-y-5 pb-32">
       <div className="w-full">
-        <div className="h-fit w-full min-w-0 max-w-full overflow-hidden rounded-none border-y border-[#d8e4de] bg-[#fbfdfc] shadow-[0_16px_40px_rgba(22,46,39,0.05)] sm:rounded-[1.8rem] sm:border">
-          <div className="border-b border-[#dde7e1] px-4 py-5 sm:px-6">
+        <div className="h-fit w-full min-w-0 max-w-full overflow-hidden rounded-none border-y border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] shadow-[0_16px_40px_rgba(var(--color-shadow-brand-rgb),0.05)] sm:rounded-[1.8rem] sm:border">
+          <div className="border-b border-[color:var(--color-border-muted)] px-4 py-5 sm:px-6">
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7a8598]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-soft)]">
                     Availability
                   </p>
-                  <h3 className="mt-1 font-serif text-[1.6rem] leading-none tracking-[-0.03em] text-[#10233b] sm:text-[1.75rem]">
+                  <h3 className="mt-1 font-serif text-[1.6rem] leading-none tracking-[-0.03em] text-[color:var(--color-text-primary)] sm:text-[1.75rem]">
                     {formatHeroDate(currentSnapshot.selectedDate)}
                   </h3>
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-500">
@@ -505,7 +533,7 @@ export function WarehouseShowcaseBookingBoard({
                       isDateNavigating ||
                       currentSnapshot.selectedDate <= minSelectableDate
                     }
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#dde7e1] bg-white text-lg text-slate-500 transition hover:border-[#b7c9c0] hover:text-slate-700"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--color-border-muted)] bg-[color:var(--color-surface)] text-lg text-slate-500 transition hover:border-[color:var(--color-brand-success-border)] hover:text-slate-700"
                     aria-label="Show previous dates"
                   >
                     ‹
@@ -517,7 +545,7 @@ export function WarehouseShowcaseBookingBoard({
                       isDateNavigating ||
                       currentSnapshot.selectedDate >= maxSelectableDate
                     }
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#dde7e1] bg-white text-lg text-slate-500 transition hover:border-[#b7c9c0] hover:text-slate-700"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--color-border-muted)] bg-[color:var(--color-surface)] text-lg text-slate-500 transition hover:border-[color:var(--color-brand-success-border)] hover:text-slate-700"
                     aria-label="Show next dates"
                   >
                     ›
@@ -526,8 +554,8 @@ export function WarehouseShowcaseBookingBoard({
               </div>
 
               <div className="flex items-center gap-3 border-t border-[#edf2ef] pt-4">
-                <label className="flex min-w-0 flex-1 items-center gap-3 rounded-[1rem] border border-[#d7e3dd] bg-[#fdfefd] px-4 py-3 text-sm text-slate-600 shadow-[0_10px_24px_rgba(23,53,42,0.04)]">
-                  <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6d8098]">
+                <label className="flex min-w-0 flex-1 items-center gap-3 rounded-[1rem] border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-elevated)] px-4 py-3 text-sm text-slate-600 shadow-[0_10px_24px_rgba(var(--color-shadow-brand-rgb),0.04)]">
+                  <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
                     Play date
                   </span>
                   <input
@@ -539,7 +567,7 @@ export function WarehouseShowcaseBookingBoard({
                     onChange={(event) =>
                       void changeSelectedDate(event.target.value)
                     }
-                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#17352a] outline-none [color-scheme:light]"
+                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[color:var(--color-brand-strong)] outline-none [color-scheme:light]"
                   />
                 </label>
                 <button
@@ -549,7 +577,7 @@ export function WarehouseShowcaseBookingBoard({
                     isDateNavigating ||
                     currentSnapshot.selectedDate <= minSelectableDate
                   }
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dde7e1] bg-white text-lg text-slate-500 transition hover:border-[#b7c9c0] hover:text-slate-700 disabled:opacity-50"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[color:var(--color-border-muted)] bg-[color:var(--color-surface)] text-lg text-slate-500 transition hover:border-[color:var(--color-brand-success-border)] hover:text-slate-700 disabled:opacity-50"
                   aria-label="Show previous date"
                 >
                   ‹
@@ -561,7 +589,7 @@ export function WarehouseShowcaseBookingBoard({
                     isDateNavigating ||
                     currentSnapshot.selectedDate >= maxSelectableDate
                   }
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dde7e1] bg-white text-lg text-slate-500 transition hover:border-[#b7c9c0] hover:text-slate-700 disabled:opacity-50"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[color:var(--color-border-muted)] bg-[color:var(--color-surface)] text-lg text-slate-500 transition hover:border-[color:var(--color-brand-success-border)] hover:text-slate-700 disabled:opacity-50"
                   aria-label="Show next date"
                 >
                   ›
@@ -588,17 +616,17 @@ export function WarehouseShowcaseBookingBoard({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 border-b border-[#dde7e1] bg-[#fcfdfd] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:px-6">
-            <span className="rounded-full border border-[#b9dfcf] bg-[#f3fbf7] px-3 py-1 text-[#1c8f5f]">
+          <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--color-border-muted)] bg-[#fcfdfd] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:px-6">
+            <span className="rounded-full border border-[color:var(--color-brand-success-border)] bg-[#f3fbf7] px-3 py-1 text-[color:var(--color-brand-success)]">
               Available
             </span>
-            <span className="rounded-full border border-[#cde4d9] bg-[#eef8f3] px-3 py-1 text-[#1c6b53]">
+            <span className="rounded-full border border-[#cde4d9] bg-[#eef8f3] px-3 py-1 text-[color:var(--color-brand-success-deep)]">
               On Hold
             </span>
-            <span className="rounded-full border border-[#f2d58b] bg-[#fff4cf] px-3 py-1 text-[#c77a18]">
+            <span className="rounded-full border border-[color:var(--color-border-warning-strong)] bg-[color:var(--color-surface-warning)] px-3 py-1 text-[color:var(--color-warning)]">
               Pending
             </span>
-            <span className="rounded-full border border-[#efc3bb] bg-[#fff0ed] px-3 py-1 text-[#c35c45]">
+            <span className="rounded-full border border-[color:var(--color-border-danger)] bg-[color:var(--color-surface-danger)] px-3 py-1 text-[color:var(--color-danger-strong)]">
               Booked
             </span>
             <span className="rounded-full border border-[#e1e8ef] bg-[repeating-linear-gradient(-45deg,rgba(241,245,249,0.95),rgba(241,245,249,0.95)_10px,rgba(226,232,240,0.95)_10px,rgba(226,232,240,0.95)_20px)] px-3 py-1 text-slate-500">
@@ -610,9 +638,9 @@ export function WarehouseShowcaseBookingBoard({
             <div className="relative">
               {isDateNavigating ? (
                 <div className="absolute inset-0 z-30 flex items-center justify-center rounded-[1.35rem] bg-[rgba(248,250,252,0.78)] backdrop-blur-[2px]">
-                  <div className="rounded-[1.25rem] border border-[#dce7e1] bg-white/96 px-5 py-4 text-center shadow-[0_18px_40px_rgba(15,23,42,0.10)]">
-                    <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-[#d7e3dd] border-t-[#17352a]" />
-                    <p className="mt-3 text-sm font-semibold text-[#10233b]">
+                  <div className="rounded-[1.25rem] border border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.96)] px-5 py-4 text-center shadow-[0_18px_40px_rgba(var(--color-shadow-rgb),0.10)]">
+                    <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-[color:var(--color-border-subtle)] border-t-[color:var(--color-brand-strong)]" />
+                    <p className="mt-3 text-sm font-semibold text-[color:var(--color-text-primary)]">
                       Loading schedule
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
@@ -646,8 +674,11 @@ export function WarehouseShowcaseBookingBoard({
                     </div>
                   ))}
 
-                  {scheduleRows.map((row) => (
-                    <div className="contents" key={row.startTime}>
+                  {scheduleRows.map((row, rowIndex) => (
+                    <div
+                      className="contents"
+                      key={`${row.startTime}-${row.endTime}-${rowIndex}`}
+                    >
                       <div className="daily-grid-time-cell">
                         <p>
                           {formatHeaderTimeRange(row.startTime, row.endTime)}
@@ -657,7 +688,7 @@ export function WarehouseShowcaseBookingBoard({
                           currentSnapshot.selectedDate,
                           row.startTime,
                         ) ? (
-                          <span className="mt-1 inline-flex rounded-full bg-[#edf7f3] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[#1c6b53]">
+                          <span className="mt-1 inline-flex rounded-full bg-[color:var(--color-surface-accent)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[color:var(--color-brand-success-deep)]">
                             Now
                           </span>
                         ) : null}
@@ -671,14 +702,18 @@ export function WarehouseShowcaseBookingBoard({
                         if (!courtSlot) {
                           return (
                             <div
-                              key={`${court.id}-${row.startTime}`}
+                              key={`${court.id}-${row.startTime}-${row.endTime}-${rowIndex}`}
                               className="daily-grid-cell"
                             />
                           );
                         }
 
-                        const slotKey = `${courtSlot.courtId}-${row.startTime}`;
-                        const isSelected = selectedCourtIds.has(slotKey);
+                        const slotKey = `${courtSlot.courtId}-${row.startTime}-${row.endTime}-${rowIndex}`;
+                        const selectedSlotKey = getSelectedSlotKey(
+                          courtSlot.courtId,
+                          row.startTime,
+                        );
+                        const isSelected = selectedCourtIds.has(selectedSlotKey);
                         const selectedSlot = {
                           courtId: courtSlot.courtId,
                           courtName: courtSlot.courtName,
@@ -694,19 +729,23 @@ export function WarehouseShowcaseBookingBoard({
                               <button
                                 type="button"
                                 onClick={() => toggleSlot(selectedSlot)}
-                                className={`flex h-full min-h-[58px] w-full flex-col items-center justify-center rounded-[0.8rem] border px-1 text-center transition-all duration-200 ${
+                                aria-pressed={isSelected}
+                                className={`relative flex h-full min-h-[58px] w-full flex-col items-center justify-center overflow-hidden rounded-[0.8rem] border px-1 text-center transition-all duration-200 ${
                                   isSelected
-                                    ? "border-[#167c61] bg-[linear-gradient(180deg,#effcf5,#def7ea)] text-[#125845] shadow-[0_12px_30px_rgba(22,124,97,0.2)] ring-2 ring-[#bde7d4]"
-                                    : "border-[#b9dfcf] bg-[linear-gradient(180deg,#f7fdf9,#effaf4)] text-[#1c8f5f] hover:border-[#8bc3aa] hover:bg-[#edf8f2] hover:shadow-[0_10px_24px_rgba(28,107,83,0.10)]"
+                                    ? "border-[color:var(--color-brand-success-strong)] bg-[image:var(--gradient-surface-success)] text-[color:var(--color-brand-success-deep)] shadow-[0_14px_34px_rgba(var(--color-shadow-success-rgb),0.22)] ring-2 ring-[color:var(--color-brand-success-ring)] ring-offset-2 ring-offset-white"
+                                    : "border-[color:var(--color-brand-success-border)] bg-[image:var(--gradient-surface-success-soft)] text-[color:var(--color-brand-success)] hover:border-[color:var(--color-brand-success-hover)] hover:bg-[color:#edf8f2] hover:shadow-[0_10px_24px_rgba(28,107,83,0.10)]"
                                 }`}
                               >
+                                {isSelected ? (
+                                  <span className="absolute inset-x-0 top-0 h-1.5 bg-[color:var(--color-brand-success-strong)]" />
+                                ) : null}
                                 <span className="text-[13px] font-bold">
                                   {formatCompactSlotPrice(
                                     courtSlot.hourlyRatePhp,
                                   )}
                                 </span>
                                 <span
-                                  className={`mt-1 text-[10px] font-semibold ${isSelected ? "text-[#1c6b53]" : "text-[#4d9a72]"}`}
+                                  className={`mt-1 text-[10px] font-semibold ${isSelected ? "text-[color:var(--color-brand-success-deep)]" : "text-[color:var(--color-brand-success-muted)]"}`}
                                 >
                                   {isSelected ? "Selected" : "Available"}
                                 </span>
@@ -751,9 +790,9 @@ export function WarehouseShowcaseBookingBoard({
                   }}
                 >
                   <div className="booking-matrix-corner" />
-                  {scheduleRows.map((row) => (
+                  {scheduleRows.map((row, rowIndex) => (
                     <div
-                      key={row.startTime}
+                      key={`${row.startTime}-${row.endTime}-${rowIndex}`}
                       className="booking-matrix-time-header"
                     >
                       <span>
@@ -764,7 +803,7 @@ export function WarehouseShowcaseBookingBoard({
                         currentSnapshot.selectedDate,
                         row.startTime,
                       ) ? (
-                        <span className="mt-1 inline-flex rounded-full bg-[#edf7f3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1c6b53]">
+                        <span className="mt-1 inline-flex rounded-full bg-[color:var(--color-surface-accent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--color-brand-success-deep)]">
                           Now
                         </span>
                       ) : null}
@@ -774,11 +813,11 @@ export function WarehouseShowcaseBookingBoard({
                   {effectiveSnapshot.courts.map((court) => (
                     <div className="contents" key={court.id}>
                       <div className="booking-matrix-court-cell">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#d7e3dd] bg-[#f4f8f6] text-slate-500">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-soft)] text-slate-500">
                           <span className="text-base">⌗</span>
                         </div>
                         <div className="min-w-0">
-                          <p className="text-lg font-semibold text-[#10233b]">
+                          <p className="text-lg font-semibold text-[color:var(--color-text-primary)]">
                             {court.name}
                           </p>
                           <p className="text-sm text-slate-500">
@@ -787,7 +826,7 @@ export function WarehouseShowcaseBookingBoard({
                         </div>
                       </div>
 
-                      {scheduleRows.map((row) => {
+                      {scheduleRows.map((row, rowIndex) => {
                         const courtSlot = row.courts.find(
                           (entry) => entry.courtId === court.id,
                         );
@@ -795,14 +834,18 @@ export function WarehouseShowcaseBookingBoard({
                         if (!courtSlot) {
                           return (
                             <div
-                              key={`${court.id}-${row.startTime}`}
+                              key={`${court.id}-${row.startTime}-${row.endTime}-${rowIndex}`}
                               className="booking-matrix-slot-cell"
                             />
                           );
                         }
 
-                        const slotKey = `${courtSlot.courtId}-${row.startTime}`;
-                        const isSelected = selectedCourtIds.has(slotKey);
+                        const slotKey = `${courtSlot.courtId}-${row.startTime}-${row.endTime}-${rowIndex}`;
+                        const selectedSlotKey = getSelectedSlotKey(
+                          courtSlot.courtId,
+                          row.startTime,
+                        );
+                        const isSelected = selectedCourtIds.has(selectedSlotKey);
                         const selectedSlot = {
                           courtId: courtSlot.courtId,
                           courtName: courtSlot.courtName,
@@ -821,19 +864,23 @@ export function WarehouseShowcaseBookingBoard({
                               <button
                                 type="button"
                                 onClick={() => toggleSlot(selectedSlot)}
-                                className={`flex h-full min-h-[72px] w-full flex-col items-center justify-center rounded-[0.95rem] border px-2 text-center transition-all duration-200 ${
+                                aria-pressed={isSelected}
+                                className={`relative flex h-full min-h-[72px] w-full flex-col items-center justify-center overflow-hidden rounded-[0.95rem] border px-2 text-center transition-all duration-200 ${
                                   isSelected
-                                    ? "border-[#167c61] bg-[linear-gradient(180deg,#effcf5,#def7ea)] text-[#125845] shadow-[0_14px_34px_rgba(22,124,97,0.18)] ring-2 ring-[#bde7d4]"
-                                    : "border-[#b9dfcf] bg-[linear-gradient(180deg,#f7fdf9,#effaf4)] text-[#1c8f5f] hover:border-[#8bc3aa] hover:bg-[#edf8f2] hover:shadow-[0_10px_24px_rgba(28,107,83,0.10)]"
+                                    ? "border-[color:var(--color-brand-success-strong)] bg-[image:var(--gradient-surface-success)] text-[color:var(--color-brand-success-deep)] shadow-[0_18px_38px_rgba(var(--color-shadow-success-rgb),0.22)] ring-2 ring-[color:var(--color-brand-success-ring)] ring-offset-2 ring-offset-white"
+                                    : "border-[color:var(--color-brand-success-border)] bg-[image:var(--gradient-surface-success-soft)] text-[color:var(--color-brand-success)] hover:border-[color:var(--color-brand-success-hover)] hover:bg-[color:#edf8f2] hover:shadow-[0_10px_24px_rgba(28,107,83,0.10)]"
                                 }`}
                               >
+                                {isSelected ? (
+                                  <span className="absolute inset-x-0 top-0 h-2 bg-[color:var(--color-brand-success-strong)]" />
+                                ) : null}
                                 <span className="text-lg font-bold">
                                   {formatCompactSlotPrice(
                                     courtSlot.hourlyRatePhp,
                                   )}
                                 </span>
                                 <span
-                                  className={`mt-1 text-xs font-semibold ${isSelected ? "text-[#1c6b53]" : "text-[#4d9a72]"}`}
+                                  className={`mt-1 text-xs font-semibold ${isSelected ? "text-[color:var(--color-brand-success-deep)]" : "text-[color:var(--color-brand-success-muted)]"}`}
                                 >
                                   {isSelected ? "Selected" : "Available"}
                                 </span>
@@ -868,7 +915,7 @@ export function WarehouseShowcaseBookingBoard({
             )}
             </div>
 
-            <div className="sticky bottom-4 z-20 mt-5 hidden rounded-[1.6rem] border border-[#dce7e1] bg-white/92 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur-md sm:block sm:p-5">
+            <div className="sticky bottom-4 z-20 mt-5 hidden rounded-[1.6rem] border border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.92)] p-4 shadow-[0_18px_50px_rgba(var(--color-shadow-rgb),0.12)] backdrop-blur-md sm:block sm:p-5">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div className="flex-1 rounded-[1.25rem] border border-[#dce7e1] bg-[linear-gradient(180deg,#fcfefd,#f4faf7)] px-4 py-4">
                   {groupedBlocks.length > 0 && (
@@ -927,7 +974,7 @@ export function WarehouseShowcaseBookingBoard({
                     type="button"
                     onClick={() => void continueToPayment()}
                     disabled={isHoldPending}
-                    className="inline-flex min-w-[132px] items-center justify-center rounded-full bg-[#17352a] px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(23,53,42,0.22)] transition hover:bg-[#0f251d] disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[160px] sm:px-5"
+                    className="inline-flex min-w-[132px] items-center justify-center rounded-full bg-[color:var(--color-brand-strong)] px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(23,53,42,0.22)] transition hover:bg-[color:var(--color-brand-strong-hover)] disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[160px] sm:px-5"
                   >
                     {isHoldPending
                       ? "Holding..."
@@ -939,7 +986,15 @@ export function WarehouseShowcaseBookingBoard({
               </div>
 
               {statusMessage ? (
-                <p className="mt-4 text-sm text-slate-600">{statusMessage}</p>
+                <p
+                  className={`mt-4 text-sm ${
+                    isErrorStatusMessage(statusMessage)
+                      ? "font-semibold text-[color:var(--color-danger-strong)]"
+                      : "text-slate-600"
+                  }`}
+                >
+                  {statusMessage}
+                </p>
               ) : null}
             </div>
           </div>
@@ -965,7 +1020,7 @@ export function WarehouseShowcaseBookingBoard({
               type="button"
               disabled={isHoldPending || groupedBlocks.length === 0}
               onClick={() => void continueToPayment()}
-              className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#3b5bfd] px-6 py-4 text-base font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-[#2f52f5] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none sm:px-8"
+              className="inline-flex shrink-0 items-center justify-center rounded-full bg-[color:var(--color-action-secondary)] px-6 py-4 text-base font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-[color:var(--color-action-secondary-hover)] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none sm:px-8"
             >
               {isHoldPending
                 ? "Holding Slots..."
@@ -978,8 +1033,8 @@ export function WarehouseShowcaseBookingBoard({
       ) : null}
 
       {isPaymentModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.42)] p-3 backdrop-blur-sm sm:p-4">
-          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-[#e2e8f0] bg-[#fdfbf7] shadow-[0_30px_120px_rgba(15,23,42,0.18)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overscroll-contain bg-[rgba(var(--color-overlay-rgb),0.42)] p-3 backdrop-blur-sm sm:p-4">
+          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto overscroll-contain rounded-[2rem] border border-[color:var(--color-border-panel)] bg-[#fdfbf7] shadow-[0_30px_120px_rgba(var(--color-shadow-rgb),0.18)]">
             <div className="flex items-start justify-between border-b border-[#e2e8f0] px-5 py-5 sm:px-6 sm:py-6">
               <div>
                 <h3 className="text-xl font-semibold tracking-[-0.03em] text-[#10233b] sm:text-2xl">
@@ -1404,10 +1459,39 @@ export function WarehouseShowcaseBookingBoard({
                   </div>
 
                   <div className="mt-8 border-t border-[#e2e8f0] pt-6">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          modalStep === "payment"
+                            ? setModalStep("details")
+                            : closePaymentModal()
+                        }
+                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border-soft)] bg-[color:var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[color:var(--color-text-secondary)] shadow-[0_8px_24px_rgba(var(--color-shadow-rgb),0.05)] transition hover:border-[color:var(--color-brand-success-border)] hover:text-[color:var(--color-brand-strong)]"
+                      >
+                        <span aria-hidden="true" className="mr-2 text-base leading-none">
+                          ←
+                        </span>
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void releaseSelection({ reason: "manual" })
+                        }
+                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border-danger)] bg-[color:var(--color-surface-danger-soft)] px-4 py-2.5 text-sm font-semibold text-[color:var(--color-danger-strong)] transition hover:bg-[color:var(--color-surface-danger)] hover:text-[color:var(--color-danger)]"
+                      >
+                        <span aria-hidden="true" className="mr-2 text-base leading-none">
+                          ×
+                        </span>
+                        Release Hold
+                      </button>
+                    </div>
+
                     <button
                       type="submit"
                       disabled={isPending || isHoldPending}
-                      className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#2563eb] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(37,99,235,0.24)] transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
+                      className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#2563eb] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(37,99,235,0.24)] transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
                     >
                       {isPending || isHoldPending
                         ? "Saving..."
@@ -1416,36 +1500,16 @@ export function WarehouseShowcaseBookingBoard({
                           : "Submit Payment Proof"}
                     </button>
 
-                    <div className="mt-4 flex items-center justify-start">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          modalStep === "payment"
-                            ? setModalStep("details")
-                            : closePaymentModal()
-                        }
-                        className="inline-flex items-center justify-center rounded-lg px-1 py-1 text-sm font-semibold text-slate-500 transition hover:text-slate-700"
-                      >
-                        Back
-                      </button>
-                    </div>
-
-                    <div className="mt-5 border-t border-[#e2e8f0] pt-4">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void releaseSelection({ reason: "manual" })
-                        }
-                        className="text-sm font-medium text-slate-400 underline decoration-slate-300 underline-offset-4 transition hover:text-slate-600"
-                      >
-                        Release Hold
-                      </button>
-                    </div>
-
                     {statusMessage ? (
-                      <p className="mt-4 text-sm text-slate-500">
+                      <div
+                        className={`mt-4 rounded-[1rem] border px-4 py-3 text-sm ${
+                          isErrorStatusMessage(statusMessage)
+                            ? "border-[color:var(--color-border-danger)] bg-[color:var(--color-surface-danger-soft)] font-semibold text-[color:var(--color-danger-strong)]"
+                            : "border-[color:var(--color-border-light)] bg-[color:var(--color-surface-soft)] text-[color:var(--color-text-secondary)]"
+                        }`}
+                      >
                         {statusMessage}
-                      </p>
+                      </div>
                     ) : hasActiveHold ? (
                       <p className="mt-4 text-sm text-slate-400">
                         Slots are held for 10 minutes once you proceed to payment.
@@ -1511,6 +1575,24 @@ function groupSelectedSlots(slots: SelectedSlot[]) {
     `${a.courtName}-${a.startTime}`.localeCompare(
       `${b.courtName}-${b.startTime}`,
     ),
+  );
+}
+
+function getSelectedSlotKey(courtId: string, startTime: string) {
+  return `${courtId}-${startTime}`;
+}
+
+function isErrorStatusMessage(message: string) {
+  const normalized = message.toLowerCase();
+
+  return (
+    normalized.includes("please ") ||
+    normalized.includes("unable ") ||
+    normalized.includes("could not") ||
+    normalized.includes("network error") ||
+    normalized.includes("no selected") ||
+    normalized.includes("finish or release") ||
+    normalized.includes("select at least")
   );
 }
 
@@ -1706,18 +1788,18 @@ function getSlotStatusClasses(
     | "booked",
 ) {
   if (status === "hold") {
-    return "border-[#bfd7ff] bg-[#edf4ff] text-[#2457a6]";
+    return "border-[color:var(--color-action-info-subtle)] bg-[color:var(--color-surface-info-strong)] text-[color:var(--color-info)]";
   }
 
   if (status === "pending") {
-    return "border-[#f2d58b] bg-[#fff4cf] text-[#c77a18]";
+    return "border-[color:var(--color-border-warning-strong)] bg-[color:var(--color-surface-warning)] text-[color:var(--color-warning)]";
   }
 
   if (status === "booked") {
-    return "border-[#efc3bb] bg-[#fff0ed] text-[#c35c45]";
+    return "border-[color:var(--color-border-danger)] bg-[color:var(--color-surface-danger)] text-[color:var(--color-danger-strong)]";
   }
 
-  return "border-[#e1e8ef] bg-[repeating-linear-gradient(-45deg,rgba(241,245,249,0.95),rgba(241,245,249,0.95)_10px,rgba(226,232,240,0.95)_10px,rgba(226,232,240,0.95)_20px)] text-slate-400";
+  return "border-[color:var(--color-border-neutral-100)] bg-[repeating-linear-gradient(-45deg,rgba(241,245,249,0.95),rgba(241,245,249,0.95)_10px,rgba(226,232,240,0.95)_10px,rgba(226,232,240,0.95)_20px)] text-slate-400";
 }
 
 function timeToMinutes(value: string) {

@@ -38,7 +38,7 @@ export function AvailabilityBookingExperience({
       <AvailabilityBoard snapshot={snapshot} onSelectSlot={setSelectedSlot} />
 
       <section id="book" className="px-2 py-8">
-        <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-[0_20px_80px_rgba(12,24,44,0.08)] md:flex md:items-center md:justify-between md:px-8">
+        <div className="rounded-[2rem] border border-slate-200 bg-[color:var(--color-surface)] px-6 py-6 shadow-[0_20px_80px_rgba(var(--color-shadow-rgb),0.08)] md:flex md:items-center md:justify-between md:px-8">
           <div>
             <p className="text-sm uppercase tracking-[0.32em] text-cyan-700">Book From Slots</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">

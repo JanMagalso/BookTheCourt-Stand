@@ -126,7 +126,7 @@ export function AccordionTrigger({
       <span>{children}</span>
       <span
         aria-hidden="true"
-        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#dbe7e2] bg-white text-lg text-slate-500 transition-transform duration-200 ${item.isOpen ? "rotate-45" : ""}`.trim()}
+        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--color-border-light)] bg-[color:var(--color-surface)] text-lg text-slate-500 transition-transform duration-200 ${item.isOpen ? "rotate-45" : ""}`.trim()}
       >
         +
       </span>

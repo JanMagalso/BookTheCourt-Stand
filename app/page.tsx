@@ -30,8 +30,8 @@ export default async function Home() {
       ? venue.amenities
       : fallbackAmenities(venue, courtCount);
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#edf4ef_0%,#f8f5ef_36%,#ffffff_100%)] text-[#10233b]">
-      <section className="relative overflow-hidden bg-[#071712] text-white">
+    <main className="min-h-screen overflow-x-hidden bg-[image:var(--gradient-page)] text-[color:var(--color-text-primary)]">
+      <section className="relative overflow-hidden bg-[color:var(--color-hero)] text-white">
         <div className="absolute inset-0">
           <LoadingImage
             src={heroImage}
@@ -41,23 +41,20 @@ export default async function Home() {
             wrapperClassName="absolute inset-0"
             className="object-cover opacity-24"
             sizes="100vw"
-            skeletonClassName="bg-[linear-gradient(120deg,rgba(4,20,16,1),rgba(12,56,44,0.88),rgba(7,23,18,1))]"
+            skeletonClassName="bg-[image:var(--gradient-hero-skeleton)]"
           />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(151,236,114,0.16),transparent_32%),radial-gradient(circle_at_80%_20%,rgba(68,211,255,0.16),transparent_28%),linear-gradient(135deg,rgba(4,16,12,0.96),rgba(7,34,28,0.88)_45%,rgba(10,24,22,0.96))]" />
-          <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-position:center_center] [background-size:118px_118px]" />
+          <div className="absolute inset-0 bg-[image:var(--gradient-hero-overlay)]" />
+          <div className="absolute inset-0 opacity-35 [background-image:var(--gradient-hero-grid)] [background-position:center_center] [background-size:118px_118px]" />
           <div className="absolute left-1/2 top-[-12%] h-[620px] w-[620px] -translate-x-1/2 rounded-full border border-white/8" />
-          <div className="absolute inset-x-[12%] bottom-[24%] h-[160px] rounded-[999px] border border-[#d5ef76]/14" />
+          <div className="absolute inset-x-[12%] bottom-[24%] h-[160px] rounded-[999px] border border-[color:rgba(213,239,118,0.14)]" />
         </div>
 
         <div className="relative mx-auto flex min-h-[640px] w-full max-w-[1680px] flex-col px-4 pb-12 pt-3 sm:min-h-[760px] sm:px-6 sm:pb-24 sm:pt-5 lg:px-10">
           <header className="rounded-[1.6rem] border border-white/10 bg-[rgba(9,27,22,0.58)] px-4 py-3 shadow-[0_18px_48px_rgba(0,0,0,0.2)] backdrop-blur-xl sm:rounded-full sm:px-6">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center justify-between gap-3">
-                <Link
-                  href="/"
-                  className="flex min-w-0 items-center gap-3"
-                >
-                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d5ef76]/28 bg-[#d5ef76]/14 text-sm font-bold uppercase tracking-[0.22em] text-[#d5ef76]">
+                <Link href="/" className="flex min-w-0 items-center gap-3">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[color:rgba(213,239,118,0.28)] bg-[color:rgba(213,239,118,0.14)] text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--color-brand-accent)]">
                     PG
                   </span>
                   <div className="min-w-0">
@@ -72,7 +69,7 @@ export default async function Home() {
 
                 <a
                   href="#book-now"
-                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#d5ef76] px-4 py-2 text-sm font-semibold text-[#17352a] transition hover:bg-[#c6e663] lg:hidden"
+                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-[color:var(--color-brand-accent)] px-4 py-2 text-sm font-semibold text-[color:var(--color-brand-strong)] transition hover:bg-[color:var(--color-brand-accent-hover)] lg:hidden"
                 >
                   Book
                 </a>
@@ -92,6 +89,12 @@ export default async function Home() {
                   Photos
                 </a>
                 <a
+                  href="#contact"
+                  className="rounded-full border border-white/10 bg-white/6 px-4 py-2 transition hover:border-white/24 hover:bg-white/10 hover:text-white"
+                >
+                  Contact
+                </a>
+                <a
                   href="#venue-info"
                   className="rounded-full border border-white/10 bg-white/6 px-4 py-2 transition hover:border-white/24 hover:bg-white/10 hover:text-white"
                 >
@@ -105,7 +108,7 @@ export default async function Home() {
                 </span>
                 <a
                   href="#book-now"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#d5ef76] px-5 py-2.5 text-sm font-semibold text-[#17352a] transition hover:bg-[#c6e663]"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[color:var(--color-brand-accent)] px-5 py-2.5 text-sm font-semibold text-[color:var(--color-brand-strong)] transition hover:bg-[color:var(--color-brand-accent-hover)]"
                 >
                   Reserve now
                 </a>
@@ -124,7 +127,7 @@ export default async function Home() {
               </span>
             </div>
 
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#d5ef76] sm:text-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand-accent)] sm:text-sm">
               {venue.name}
             </p>
 
@@ -138,7 +141,7 @@ export default async function Home() {
             <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:gap-4 sm:flex-row">
               <a
                 href="#book-now"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#d5ef76] px-6 py-3 text-sm font-semibold text-[#17352a] transition hover:bg-[#c6e663]"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[color:var(--color-brand-accent)] px-6 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] transition hover:bg-[color:var(--color-brand-accent-hover)]"
               >
                 Reserve your session
                 <ArrowRightIcon className="ml-2 h-4 w-4" />
@@ -152,7 +155,6 @@ export default async function Home() {
               </a>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -160,10 +162,10 @@ export default async function Home() {
         id="venue-info"
         className="relative z-10 px-3 pb-16 pt-10 sm:px-6 sm:pt-14 lg:px-10 lg:pt-16"
       >
-        <div className="mx-auto grid w-full max-w-[1680px] grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.15fr)_360px]">
-          <Card className="border-[#d9e7df] bg-white/82">
+        <div className="mx-auto w-full max-w-[1680px]">
+          <Card className="border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.82)]">
             <CardHeader className="pb-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#14897d]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
                 Facility Overview
               </p>
               <CardTitle className="mt-2 text-2xl sm:text-3xl lg:text-[2.2rem]">
@@ -179,80 +181,6 @@ export default async function Home() {
               <AmenitiesPreview amenities={amenityList} />
             </CardContent>
           </Card>
-
-          <Card className="overflow-hidden border-[#d9e7df] bg-[linear-gradient(180deg,#15382d_0%,#102a21_100%)] text-white">
-            <CardHeader className="border-b border-white/10 pb-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8de3d8]">
-                Contact & Links
-              </p>
-              <CardTitle className="mt-2 text-2xl text-white sm:text-3xl">
-                Venue profile
-              </CardTitle>
-              <CardDescription className="mt-3 text-white/68">
-                Contact details, directions, and venue links in one place.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-5 py-6">
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/6 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/50">
-                  Address
-                </p>
-                <p className="mt-3 text-base leading-7 text-white/84">
-                  {venue.address}
-                </p>
-              </div>
-
-              <div className="grid gap-3">
-                <ProfileDetail
-                  icon={MailIcon}
-                  label="Facility"
-                  value={venue.name}
-                  href={
-                    venue.contactEmail
-                      ? `mailto:${venue.contactEmail}`
-                      : undefined
-                  }
-                />
-                <ProfileDetail
-                  icon={PhoneIcon}
-                  label="Phone"
-                  value={venue.contactPhone ?? "Guest support available on-site"}
-                />
-                <ProfileDetail
-                  icon={FacebookIcon}
-                  label="Facebook"
-                  value={venue.name}
-                  href={venue.contactFacebook ?? undefined}
-                />
-              </div>
-
-              <div className="grid gap-3">
-                <a
-                  href={venue.googleMapsUrl}
-                  className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#17352a] transition hover:bg-[#eaf6f1]"
-                >
-                  Open in Google Maps
-                  <ExternalLinkIcon className="ml-2 h-4 w-4" />
-                </a>
-                <div className="flex flex-wrap gap-3">
-                  {venue.socialLinks.map((link, index) => (
-                    <a
-                      key={`${link.label}-${link.href}-${index}`}
-                      href={link.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/6 px-4 py-2 text-sm text-white/82 transition hover:bg-white/10"
-                    >
-                      <SocialGlyph label={link.label} />
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-            </CardContent>
-          </Card>
         </div>
       </section>
 
@@ -262,10 +190,10 @@ export default async function Home() {
       >
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#14897d]">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand)]">
               Venue Highlights
             </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#10233b] sm:text-3xl lg:text-[2.4rem]">
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[color:var(--color-text-primary)] sm:text-3xl lg:text-[2.4rem]">
               Get a feel for the venue before you visit
             </h2>
           </div>
@@ -279,11 +207,140 @@ export default async function Home() {
 
       <LiveBookingShell snapshot={snapshot} />
 
+      <section id="contact" className="px-3 pb-16 pt-8 sm:px-6 lg:px-10">
+        <div className="mx-auto w-full max-w-[1680px]">
+          <div className="mb-8 max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand)]">
+              Contact Details
+            </p>
+            <h2 className="mt-4 text-[2.4rem] font-semibold leading-[0.95] tracking-[-0.05em] text-[color:var(--color-text-primary)] sm:text-[3.2rem] lg:text-[4.1rem]">
+              Find {venue.name} with ease.
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-8 text-[color:var(--color-text-secondary)] sm:text-[1.05rem]">
+              View the exact venue location, check the latest contact details,
+              and head over when you&apos;re ready to play.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-[2rem] border border-[color:var(--color-border-card)] bg-[image:var(--gradient-shell)] shadow-[0_24px_80px_rgba(var(--color-shadow-brand-rgb),0.08)]">
+            <div className="border-b border-[color:var(--color-border-neutral-200)] bg-[image:var(--gradient-shell-header)] px-4 py-4 sm:px-6 lg:px-8">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
+                    Visit & Connect
+                  </p>
+                  <p className="mt-1 text-sm text-[color:var(--color-text-secondary)]">
+                    Directions, contact details, and public venue info in one
+                    place.
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.82)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-brand-strong)]">
+                  <MapPinIcon className="h-3.5 w-3.5" />
+                  Venue Map
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 sm:p-6 lg:p-8">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(340px,0.98fr)] lg:items-start">
+                <div className="space-y-4">
+                  <ContactDetail
+                    icon={MapPinIcon}
+                    label="Address"
+                    value={venue.address}
+                  />
+                  <ContactDetail
+                    icon={MailIcon}
+                    label="Email"
+                    value={venue.contactEmail ?? "Unavailable"}
+                    href={
+                      venue.contactEmail
+                        ? `mailto:${venue.contactEmail}`
+                        : undefined
+                    }
+                  />
+                  <ContactDetail
+                    icon={ClockIcon}
+                    label="Hours"
+                    value={venue.businessHours}
+                    note="Hours subject to change. Live availability is always accurate in the booking board."
+                  />
+                  {venue.contactPhone ? (
+                    <ContactDetail
+                      icon={PhoneIcon}
+                      label="Phone"
+                      value={venue.contactPhone}
+                      href={`tel:${venue.contactPhone.replace(/\s+/g, "")}`}
+                    />
+                  ) : null}
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <a
+                      href={venue.googleMapsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full bg-[color:var(--color-brand-strong)] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-[color:var(--color-brand-strong-hover)]"
+                    >
+                      Open in Google Maps
+                      <ExternalLinkIcon className="ml-2 h-4 w-4" />
+                    </a>
+                    {venue.contactFacebook ? (
+                      <a
+                        href={venue.contactFacebook}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.9)] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+                      >
+                        <FacebookIcon className="mr-2 h-4 w-4" />
+                        Facebook
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-[1.8rem] border border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.86)] p-3 shadow-[0_18px_50px_rgba(var(--color-shadow-brand-rgb),0.08)]">
+                  <div className="mb-3 flex items-center justify-between rounded-[1rem] border border-[color:var(--color-border-light)] bg-[color:var(--color-surface-soft)] px-4 py-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-brand)]">
+                        Venue Location
+                      </p>
+                      <p className="mt-1 text-sm text-[color:var(--color-text-secondary)]">
+                        Tap the map or open full directions in Google Maps.
+                      </p>
+                    </div>
+                    <a
+                      href={venue.googleMapsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--color-border-soft)] bg-[color:var(--color-surface)] text-[color:var(--color-brand-strong)] transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+                      aria-label="Open venue location in Google Maps"
+                    >
+                      <ExternalLinkIcon className="h-4 w-4" />
+                    </a>
+                  </div>
+                  <div className="aspect-[16/11] w-full overflow-hidden rounded-[1.35rem] border border-[color:var(--color-border-soft)]">
+                    <iframe
+                      title={`${venue.name} map`}
+                      src={getGoogleMapsEmbedUrl(
+                        venue.googleMapsUrl,
+                        venue.address,
+                      )}
+                      className="h-full w-full border-0"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="px-3 pb-16 pt-6 sm:px-6 lg:px-10">
         <div className="mx-auto grid w-full max-w-[1680px] grid-cols-1 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
           <Card className="border-[#eadab2] bg-[linear-gradient(180deg,#fff7df_0%,#fffdf5_100%)] shadow-[0_18px_50px_rgba(202,154,34,0.12)]">
             <CardHeader className="pb-4">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#f0dba3] bg-white/75 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#b07a12]">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[color:var(--color-border-highlight)] bg-white/75 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-warning-strong)]">
                 <AlertIcon className="h-3.5 w-3.5" />
                 Cancellation Policy
               </div>
@@ -295,15 +352,15 @@ export default async function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="rounded-[1.4rem] border border-[#efdba8] bg-white/80 px-5 py-5 text-sm leading-7 text-slate-700">
+              <p className="rounded-[1.4rem] border border-[color:var(--color-border-highlight-soft)] bg-white/80 px-5 py-5 text-sm leading-7 text-slate-700">
                 {venue.cancellationPolicy}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-[#d9e7df] bg-white/88">
+          <Card className="border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.88)]">
             <CardHeader className="pb-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#14897d]">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand)]">
                 FAQ & Operations
               </p>
               <CardTitle className="mt-2 text-2xl sm:text-3xl">
@@ -320,9 +377,9 @@ export default async function Home() {
                   <AccordionItem
                     key={faq.question}
                     value={`faq-${index}`}
-                    className="rounded-[1.5rem] border border-[#deebe4] bg-[#f9fcfb] px-5 py-3"
+                    className="rounded-[1.5rem] border border-[color:var(--color-border-light)] bg-[#f9fcfb] px-5 py-3"
                   >
-                    <AccordionTrigger className="py-3 text-lg font-semibold text-[#10233b]">
+                    <AccordionTrigger className="py-3 text-lg font-semibold text-[color:var(--color-text-primary)]">
                       {faq.question}
                     </AccordionTrigger>
                     <AccordionContent className="pb-4 pt-1 text-sm leading-7 text-slate-600">
@@ -339,7 +396,7 @@ export default async function Home() {
                     <Link
                       key={`${link.label}-${index}`}
                       href={link.href}
-                      className="rounded-full border border-[#dce8e1] px-4 py-2 text-slate-700 transition hover:border-[#14897d] hover:text-[#14897d]"
+                      className="rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 text-slate-700 transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
                     >
                       {link.label}
                     </Link>
@@ -368,60 +425,59 @@ function fallbackAmenities(
   ];
 }
 
-function ProfileDetail({
+function ContactDetail({
   icon: Icon,
   label,
   value,
   href,
+  note,
 }: {
   icon: (props: SVGProps<SVGSVGElement>) => ReactElement;
   label: string;
   value: string;
   href?: string;
+  note?: string;
 }) {
   return (
-    <div className="flex items-start gap-4 rounded-[1.35rem] border border-white/10 bg-white/6 px-4 py-4">
-      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-[#8de3d8]">
+    <div className="flex items-start gap-4 rounded-[1.35rem] border border-[color:var(--color-border-light)] bg-[rgba(var(--color-surface-rgb),0.84)] px-4 py-4 shadow-[0_10px_28px_rgba(var(--color-shadow-brand-rgb),0.04)] sm:px-5">
+      <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--color-brand-success-border)] bg-[color:var(--color-surface-accent)] text-[color:var(--color-brand)]">
         <Icon className="h-4.5 w-4.5" />
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/48">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-text-soft)]">
           {label}
         </p>
         {href ? (
           <a
             href={href}
-            className="mt-1 break-words text-sm leading-6 text-white/82 underline-offset-4 transition hover:text-white hover:underline"
+            className="mt-1 block break-words text-sm leading-6 text-[color:var(--color-text-primary)] underline-offset-4 transition hover:text-[color:var(--color-brand)] hover:underline sm:text-[1.05rem]"
           >
             {value}
           </a>
         ) : (
-          <p className="mt-1 break-words text-sm leading-6 text-white/82">
+          <p className="mt-1 break-words text-sm leading-6 text-[color:var(--color-text-primary)] sm:text-[1.05rem]">
             {value}
           </p>
         )}
+        {note ? (
+          <p className="mt-1 text-sm leading-6 text-[color:var(--color-text-muted)]">
+            {note}
+          </p>
+        ) : null}
       </div>
     </div>
   );
 }
 
-function SocialGlyph({ label }: { label: string }) {
-  const normalized = label.toLowerCase();
-
-  if (normalized.includes("facebook")) {
-    return <FacebookIcon className="h-4 w-4" />;
-  }
-
-  if (normalized.includes("instagram")) {
-    return <CameraIcon className="h-4 w-4" />;
-  }
-
-  return <ExternalLinkIcon className="h-4 w-4" />;
-}
-
 function ArrowRightIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      {...props}
+    >
       <path d="M5 12h14" />
       <path d="m12 5 7 7-7 7" />
     </svg>
@@ -430,7 +486,13 @@ function ArrowRightIcon(props: SVGProps<SVGSVGElement>) {
 
 function ExternalLinkIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      {...props}
+    >
       <path d="M14 3h7v7" />
       <path d="M10 14 21 3" />
       <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
@@ -440,7 +502,13 @@ function ExternalLinkIcon(props: SVGProps<SVGSVGElement>) {
 
 function MapPinIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      {...props}
+    >
       <path d="M12 22s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11Z" />
       <circle cx="12" cy="11" r="2.5" />
     </svg>
@@ -449,7 +517,13 @@ function MapPinIcon(props: SVGProps<SVGSVGElement>) {
 
 function MailIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      {...props}
+    >
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="m4 7 8 6 8-6" />
     </svg>
@@ -458,8 +532,29 @@ function MailIcon(props: SVGProps<SVGSVGElement>) {
 
 function PhoneIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      {...props}
+    >
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.1 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72l.41 2.82a2 2 0 0 1-.57 1.72L7.67 9.53a16 16 0 0 0 6.8 6.8l1.27-1.28a2 2 0 0 1 1.72-.57l2.82.41A2 2 0 0 1 22 16.92Z" />
+    </svg>
+  );
+}
+
+function ClockIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
     </svg>
   );
 }
@@ -472,21 +567,47 @@ function FacebookIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-function CameraIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
-      <path d="M4 7h3l2-2h6l2 2h3v12H4Z" />
-      <circle cx="12" cy="13" r="4" />
-    </svg>
-  );
-}
-
 function AlertIcon(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      {...props}
+    >
       <path d="M12 9v4" />
       <path d="M12 17h.01" />
       <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
     </svg>
   );
+}
+
+function getGoogleMapsEmbedUrl(googleMapsUrl: string, address: string) {
+  const fallbackQuery = encodeURIComponent(address);
+
+  try {
+    const url = new URL(googleMapsUrl);
+    const coordinatesMatch = `${url.pathname}${url.search}`.match(
+      /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+    );
+    const placePathMatch = url.pathname.match(/\/place\/([^/]+)/);
+    const query =
+      url.searchParams.get("q") ||
+      url.searchParams.get("query") ||
+      url.searchParams.get("destination") ||
+      url.searchParams.get("daddr") ||
+      (coordinatesMatch
+        ? `${coordinatesMatch[1]},${coordinatesMatch[2]}`
+        : null) ||
+      (placePathMatch ? decodeURIComponent(placePathMatch[1]).replace(/\+/g, " ") : null);
+
+    if (query) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+    }
+  } catch {
+    return `https://www.google.com/maps?q=${fallbackQuery}&output=embed`;
+  }
+
+  return `https://www.google.com/maps?q=${fallbackQuery}&output=embed`;
 }

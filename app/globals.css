@@ -1,10 +1,5 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f6f5ef;
-  --foreground: #0f172a;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -39,7 +34,7 @@ button {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  border: 1px solid rgba(29, 42, 68, 0.12);
+  border: 1px solid var(--grid-line-strong);
   border-radius: 14px;
 }
 
@@ -58,22 +53,22 @@ button {
   top: 0;
   left: 0;
   z-index: 12;
-  border-right: 1px solid rgba(29, 42, 68, 0.08);
-  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
+  border-right: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
   background: #f7f8fb;
   padding: 0.7rem;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: rgba(29, 42, 68, 0.5);
+  color: var(--grid-text);
 }
 
 .daily-grid-court-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  border-right: 1px solid rgba(29, 42, 68, 0.08);
-  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
+  border-right: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
   background: #f7f8fb;
   padding: 0.7rem 0.6rem;
 }
@@ -83,19 +78,19 @@ button {
   left: 0;
   z-index: 11;
   min-height: 62px;
-  border-right: 1px solid rgba(29, 42, 68, 0.07);
-  border-bottom: 1px solid rgba(29, 42, 68, 0.07);
+  border-right: 1px solid var(--grid-line-soft);
+  border-bottom: 1px solid var(--grid-line-soft);
   background: #fafbff;
   padding: 0.5rem 0.45rem;
   font-size: 11px;
   font-weight: 600;
-  color: rgba(29, 42, 68, 0.5);
+  color: var(--grid-text);
 }
 
 .daily-grid-cell {
   min-height: 62px;
-  border-right: 1px solid rgba(29, 42, 68, 0.07);
-  border-bottom: 1px solid rgba(29, 42, 68, 0.07);
+  border-right: 1px solid var(--grid-line-soft);
+  border-bottom: 1px solid var(--grid-line-soft);
   background: rgba(255, 255, 255, 0.6);
   padding: 0.3rem;
 }
@@ -121,9 +116,9 @@ button {
   top: 0;
   z-index: 14;
   min-height: 54px;
-  border-right: 1px solid rgba(29, 42, 68, 0.08);
-  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
-  background: #ffffff;
+  border-right: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
+  background: var(--color-surface);
 }
 
 .booking-matrix-time-header {
@@ -136,13 +131,13 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.125rem;
-  border-right: 1px solid rgba(29, 42, 68, 0.08);
-  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
-  background: #ffffff;
+  border-right: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
+  background: var(--color-surface);
   padding: 0.75rem 0.5rem;
   font-size: 0.78rem;
   font-weight: 700;
-  color: rgba(29, 42, 68, 0.68);
+  color: var(--grid-text-strong);
 }
 
 .booking-matrix-court-cell {
@@ -153,17 +148,17 @@ button {
   min-height: 96px;
   align-items: center;
   gap: 0.9rem;
-  border-right: 1px solid rgba(29, 42, 68, 0.08);
-  border-bottom: 1px solid rgba(29, 42, 68, 0.08);
-  background: #ffffff;
+  border-right: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
+  background: var(--color-surface);
   padding: 0.9rem 1rem;
 }
 
 .booking-matrix-slot-cell {
   min-height: 96px;
-  border-right: 1px solid rgba(29, 42, 68, 0.06);
-  border-bottom: 1px solid rgba(29, 42, 68, 0.06);
-  background: rgba(255, 255, 255, 0.72);
+  border-right: 1px solid var(--grid-line-faint);
+  border-bottom: 1px solid var(--grid-line-faint);
+  background: var(--color-surface-overlay);
   padding: 0.3rem;
 }
 

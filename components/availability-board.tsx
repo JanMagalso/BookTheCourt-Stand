@@ -15,7 +15,7 @@ export function AvailabilityBoard({ snapshot, onSelectSlot }: AvailabilityBoardP
   return (
     <section
       id="availability"
-      className="rounded-[2rem] border border-white/[0.12] bg-slate-950/85 p-6 shadow-[0_30px_120px_rgba(15,23,42,0.45)] backdrop-blur md:p-8"
+      className="rounded-[2rem] border border-white/[0.12] bg-slate-950/85 p-6 shadow-[0_30px_120px_rgba(var(--color-shadow-rgb),0.45)] backdrop-blur md:p-8"
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>

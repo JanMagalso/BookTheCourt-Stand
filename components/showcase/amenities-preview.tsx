@@ -59,14 +59,14 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
           {mobileAmenities.map((item) => (
             <div
               key={item.label}
-              className="rounded-[1.3rem] border border-[#deebe4] bg-[#f8fcfa] px-4 py-4"
+              className="rounded-[1.3rem] border border-[color:var(--color-border-light)] bg-[color:var(--color-surface-muted)] px-4 py-4"
             >
               <div className="flex items-start gap-3">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#e8f5ef] text-[#147d67]">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--color-surface-accent)] text-[color:var(--color-brand)]">
                   <item.icon className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#10233b]">
+                  <p className="text-sm font-semibold text-[color:var(--color-text-primary)]">
                     {item.label}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-slate-600">
@@ -88,7 +88,7 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
           <div key={group.title}>
             <div className="mb-4 flex items-center gap-3">
               <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(20,137,125,0.22),rgba(20,137,125,0))]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#14897d]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
                 {group.title}
               </p>
               <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(20,137,125,0),rgba(20,137,125,0.22))]" />
@@ -97,14 +97,14 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
               {group.items.map((item) => (
                 <div
                   key={`${group.title}-${item.label}`}
-                  className="rounded-[1.75rem] border border-[#deebe4] bg-[#f8fcfa] px-5 py-5"
+                  className="rounded-[1.75rem] border border-[color:var(--color-border-light)] bg-[color:var(--color-surface-muted)] px-5 py-5"
                 >
                   <div className="flex h-full items-start gap-4">
-                    <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#e8f5ef] text-[#147d67]">
+                    <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--color-surface-accent)] text-[color:var(--color-brand)]">
                       <item.icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-[#10233b]">{item.label}</p>
+                      <p className="font-semibold text-[color:var(--color-text-primary)]">{item.label}</p>
                       <p className="mt-1 text-sm leading-6 text-slate-600">
                         {item.description}
                       </p>
@@ -117,7 +117,7 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
         ))}
 
         {hasMoreDesktopAmenities ? (
-          <div className="flex justify-center border-t border-[#e2ece6] pt-2">
+          <div className="flex justify-center border-t border-[color:var(--color-border-lighter)] pt-2">
             <AllAmenitiesDrawer groups={groups} totalAmenities={totalAmenities} />
           </div>
         ) : null}
@@ -135,12 +135,12 @@ function AllAmenitiesDrawer({
 }) {
   return (
     <Drawer>
-      <DrawerTrigger className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#d8e4de] bg-white px-5 py-3 text-sm font-semibold text-[#17352a] shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+      <DrawerTrigger className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.06)]">
         View All {totalAmenities} Amenities
       </DrawerTrigger>
-      <DrawerContent className="max-h-[84vh] overflow-y-auto md:mb-8 md:max-w-[880px] md:rounded-[2rem]">
-        <DrawerHeader className="border-b border-[#e4eee8]">
-          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#dce8e1]" />
+      <DrawerContent className="h-[100dvh] overflow-y-auto md:mb-8 md:h-auto md:max-h-[84vh] md:max-w-[880px] md:rounded-[2rem]">
+        <DrawerHeader className="border-b border-[color:var(--color-border-lighter)]">
+          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[color:var(--color-border-soft)]" />
           <DrawerTitle>All Venue Amenities</DrawerTitle>
           <DrawerDescription className="mt-2">
             Browse the full amenity list without crowding the main page.
@@ -150,21 +150,21 @@ function AllAmenitiesDrawer({
         <div className="space-y-6 px-5 py-5">
           {groups.map((group) => (
             <div key={group.title}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-[#14897d]">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
                 {group.title}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 {group.items.map((item) => (
                   <div
                     key={`${group.title}-${item.label}`}
-                    className="rounded-[1.25rem] border border-[#deebe4] bg-[#f8fcfa] px-4 py-4"
+                    className="rounded-[1.25rem] border border-[color:var(--color-border-light)] bg-[color:var(--color-surface-muted)] px-4 py-4"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#e8f5ef] text-[#147d67]">
+                      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--color-surface-accent)] text-[color:var(--color-brand)]">
                         <item.icon className="h-4.5 w-4.5" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#10233b]">
+                        <p className="text-sm font-semibold text-[color:var(--color-text-primary)]">
                           {item.label}
                         </p>
                         <p className="mt-1 text-xs leading-5 text-slate-600">
@@ -178,7 +178,7 @@ function AllAmenitiesDrawer({
             </div>
           ))}
 
-          <DrawerClose className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#17352a] px-5 py-3 text-sm font-semibold text-white">
+          <DrawerClose className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[color:var(--color-brand-strong)] px-5 py-3 text-sm font-semibold text-white">
             Done
           </DrawerClose>
         </div>

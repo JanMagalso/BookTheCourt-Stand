@@ -36,7 +36,7 @@ export function LoadingImage({
       <div
         aria-hidden="true"
         className={clsx(
-          "absolute inset-0 bg-[linear-gradient(110deg,rgba(226,232,240,0.9),rgba(241,245,249,0.72),rgba(226,232,240,0.9))] bg-[length:220%_100%] animate-[shimmer_1.8s_ease-in-out_infinite] transition-opacity duration-300",
+          "absolute inset-0 bg-[image:var(--gradient-loading-neutral)] bg-[length:220%_100%] animate-[shimmer_1.8s_ease-in-out_infinite] transition-opacity duration-300",
           isLoaded ? "pointer-events-none opacity-0" : "opacity-100",
           skeletonClassName,
         )}
