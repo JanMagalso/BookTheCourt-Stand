@@ -81,13 +81,14 @@ export function ThemeSwitcher() {
           </button>
         ) : null}
 
-        <div
-          className={`rounded-[1.4rem] border border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.9)] px-3 py-3 shadow-[0_20px_48px_rgba(var(--color-shadow-rgb),0.14)] backdrop-blur-xl transition-all duration-200 ${
-            isOpen
-              ? "pointer-events-auto translate-y-0 opacity-100"
-              : "pointer-events-none translate-y-2 opacity-0"
-          }`}
-        >
+        {!isCompactMobile || isOpen ? (
+          <div
+            className={`rounded-[1.4rem] border border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.9)] px-3 py-3 shadow-[0_20px_48px_rgba(var(--color-shadow-rgb),0.14)] backdrop-blur-xl transition-all duration-200 ${
+              isOpen
+                ? "pointer-events-auto translate-y-0 opacity-100"
+                : "pointer-events-none translate-y-2 opacity-0"
+            }`}
+          >
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-soft)]">
@@ -147,7 +148,8 @@ export function ThemeSwitcher() {
               );
             })}
           </div>
-        </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
