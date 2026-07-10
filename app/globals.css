@@ -100,8 +100,8 @@ button {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  border-top: 1px solid rgba(29, 42, 68, 0.1);
-  border-bottom: 1px solid rgba(29, 42, 68, 0.1);
+  border-top: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
 }
 
 .booking-matrix {

@@ -138,7 +138,7 @@ function AllAmenitiesDrawer({
       <DrawerTrigger className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border-light)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.62))] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand)] shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand-bright)]">
         View All {totalAmenities} Amenities
       </DrawerTrigger>
-      <DrawerContent className="h-[100dvh] overflow-y-auto md:mb-8 md:h-auto md:max-h-[84vh] md:max-w-[880px] md:rounded-[2rem]">
+      <DrawerContent className="h-[100dvh] overflow-y-auto pt-20 md:mb-8 md:h-auto md:max-h-[84vh] md:max-w-[880px] md:rounded-[2rem] md:pt-0">
         <DrawerHeader className="border-b border-[color:var(--color-border-lighter)]">
           <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[color:var(--color-border-soft)]" />
           <DrawerTitle>All Venue Amenities</DrawerTitle>
@@ -195,10 +195,11 @@ function buildAmenityGroups(amenities: string[]) {
   }
 
   for (const amenity of amenities) {
-    const normalized = amenity.toLowerCase();
+    const sanitizedAmenity = sanitizeAmenityLabel(amenity);
+    const normalized = sanitizedAmenity.toLowerCase();
     const category = resolveAmenityCategory(normalized);
     grouped.get(category)?.push({
-      label: titleCaseAmenity(amenity),
+      label: titleCaseAmenity(sanitizedAmenity),
       description: amenityDescription(normalized),
       icon: resolveAmenityIcon(normalized),
     });
@@ -208,6 +209,10 @@ function buildAmenityGroups(amenities: string[]) {
     title,
     items: grouped.get(title) ?? [],
   })).filter((group) => group.items.length > 0);
+}
+
+function sanitizeAmenityLabel(value: string) {
+  return value.replace(/^[^A-Za-z0-9]+/u, "").trim();
 }
 
 function resolveAmenityCategory(value: string): AmenityCategory {

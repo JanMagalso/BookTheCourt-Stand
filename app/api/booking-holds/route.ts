@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 
+import {
+  DEFAULT_BOOKING_WINDOW_DAYS,
+  formatBookingWindowRestrictionMessage,
+  normalizeBookingWindowDays,
+} from "@/lib/booking-window";
+import { isWithinOnlineBookingWindow } from "@/lib/facility-status-overrides";
 import { createSupabaseServiceClient, hasSupabaseEnv } from "@/lib/supabase";
 
 const HOLD_MINUTES = 10;
@@ -14,6 +20,7 @@ type BookingBlock = {
 type HoldRequestPayload = {
   playDate: string;
   reservationName: string;
+  authAccessToken?: string;
   selectedBlocks: BookingBlock[];
 };
 
@@ -25,6 +32,7 @@ export async function POST(request: Request) {
   const payload = (await request.json()) as Partial<HoldRequestPayload>;
   const playDate = String(payload.playDate ?? "").trim();
   const reservationName = String(payload.reservationName ?? "").trim() || "Guest hold";
+  const authAccessToken = String(payload.authAccessToken ?? "").trim();
   const selectedBlocks = Array.isArray(payload.selectedBlocks) ? payload.selectedBlocks : [];
 
   if (!playDate || !selectedBlocks.length) {
@@ -39,13 +47,44 @@ export async function POST(request: Request) {
   }
 
   const supabaseAdmin = createSupabaseServiceClient();
-  const playerId = await resolveFallbackPlayerId(supabaseAdmin);
+  const playerResult = await resolveBookingPlayerId(supabaseAdmin, authAccessToken);
   const holdExpiresAt = new Date(Date.now() + HOLD_MINUTES * 60 * 1000).toISOString();
 
-  if (!playerId) {
+  if (!playerResult.playerId) {
     return NextResponse.json(
-      { error: "No valid player profile is available for guest holds yet." },
-      { status: 500 },
+      {
+        error:
+          playerResult.error ??
+          "No valid player profile is available for guest holds yet.",
+      },
+      { status: playerResult.error ? 401 : 500 },
+    );
+  }
+
+  const bookingWindowResult = await resolveWarehouseBookingWindowDays(
+    supabaseAdmin,
+    selectedBlocks,
+  );
+  if (!bookingWindowResult.ok) {
+    return NextResponse.json({ error: bookingWindowResult.error }, { status: 400 });
+  }
+
+  if (
+    selectedBlocks.some((block) =>
+      !isWithinOnlineBookingWindow(
+        new Date(toBookingTimestamp(playDate, block.startTime)),
+        new Date(),
+        bookingWindowResult.bookingWindowDays,
+      ),
+    )
+  ) {
+    return NextResponse.json(
+      {
+        error: formatBookingWindowRestrictionMessage(
+          bookingWindowResult.bookingWindowDays,
+        ),
+      },
+      { status: 409 },
     );
   }
 
@@ -57,9 +96,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const rows = selectedBlocks.map((block) => ({
+    const rows = selectedBlocks.map((block) => ({
     court_id: block.courtId,
-    player_id: playerId,
+    player_id: playerResult.playerId,
     reservation_name: reservationName,
     starts_at: toBookingTimestamp(playDate, block.startTime),
     ends_at: toBookingTimestamp(playDate, block.endTime),
@@ -89,10 +128,50 @@ export async function POST(request: Request) {
       courtId: booking.court_id,
       startsAt: formatTimeForSchedule(booking.starts_at),
       endsAt: formatTimeForSchedule(booking.ends_at),
+      startMinuteOffset: getMinuteOffsetForSchedule(playDate, booking.starts_at),
+      endMinuteOffset: getMinuteOffsetForSchedule(playDate, booking.ends_at),
       status: "hold",
       holdExpiresAt: booking.hold_expires_at ?? holdExpiresAt,
     })),
   });
+}
+
+async function resolveBookingPlayerId(
+  supabaseAdmin: ReturnType<typeof createSupabaseServiceClient>,
+  accessToken?: string,
+) {
+  if (accessToken) {
+    const {
+      data: { user },
+      error,
+    } = await supabaseAdmin.auth.getUser(accessToken);
+
+    if (error || !user?.id) {
+      return {
+        playerId: null,
+        error: "Your BookTheCourt session is no longer valid. Please sign in again.",
+      };
+    }
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile?.id) {
+      return {
+        playerId: null,
+        error:
+          "Your BookTheCourt account does not have a player profile yet.",
+      };
+    }
+
+    return { playerId: profile.id, error: null };
+  }
+
+  const fallbackPlayerId = await resolveFallbackPlayerId(supabaseAdmin);
+  return { playerId: fallbackPlayerId, error: null };
 }
 
 async function resolveFallbackPlayerId(
@@ -200,6 +279,55 @@ async function findOverlappingBookings(
   });
 }
 
+async function resolveWarehouseBookingWindowDays(
+  supabaseAdmin: ReturnType<typeof createSupabaseServiceClient>,
+  blocks: BookingBlock[],
+) {
+  const courtIds = Array.from(new Set(blocks.map((block) => block.courtId)));
+  const { data: courts, error: courtsError } = await supabaseAdmin
+    .from("courts")
+    .select("id, warehouse_id")
+    .in("id", courtIds);
+
+  if (courtsError || !courts?.length || courts.length !== courtIds.length) {
+    return {
+      ok: false as const,
+      error: "Selected court is no longer available.",
+    };
+  }
+
+  const warehouseIds = Array.from(
+    new Set(courts.map((court) => String(court.warehouse_id ?? ""))),
+  );
+  if (warehouseIds.length !== 1 || !warehouseIds[0]) {
+    return {
+      ok: false as const,
+      error: "Selected slots must belong to the same facility.",
+    };
+  }
+
+  const { data: warehouse, error: warehouseError } = await supabaseAdmin
+    .from("warehouses")
+    .select("id, booking_window_days")
+    .eq("id", warehouseIds[0])
+    .maybeSingle();
+
+  if (warehouseError) {
+    return {
+      ok: false as const,
+      error: "Unable to validate the facility booking window right now.",
+    };
+  }
+
+  return {
+    ok: true as const,
+    bookingWindowDays: normalizeBookingWindowDays(
+      warehouse?.booking_window_days,
+      DEFAULT_BOOKING_WINDOW_DAYS,
+    ),
+  };
+}
+
 function toBookingTimestamp(playDate: string, time: string) {
   const [hours, minutes] = time.split(":").map(Number);
   const baseDate = new Date(`${playDate}T00:00:00+08:00`);
@@ -208,12 +336,24 @@ function toBookingTimestamp(playDate: string, time: string) {
 }
 
 function formatTimeForSchedule(value: string) {
-  const date = new Date(value);
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Manila",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(value));
 
-  return `${date.getHours().toString().padStart(2, "0")}:${date
-    .getMinutes()
-    .toString()
-    .padStart(2, "0")}`;
+  const hours = parts.find((part) => part.type === "hour")?.value ?? "00";
+  const minutes =
+    parts.find((part) => part.type === "minute")?.value ?? "00";
+
+  return `${hours}:${minutes}`;
+}
+
+function getMinuteOffsetForSchedule(playDate: string, value: string) {
+  const dayStart = new Date(`${playDate}T00:00:00+08:00`).getTime();
+  const target = new Date(value).getTime();
+  return Math.round((target - dayStart) / (60 * 1000));
 }
 
 function diffHours(start: string, end: string) {

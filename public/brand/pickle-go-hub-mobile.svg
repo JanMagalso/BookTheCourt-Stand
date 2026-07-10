@@ -1,0 +1,29 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mobile-paddle" x1="18" y1="20" x2="74" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C6A36"/>
+      <stop offset="1" stop-color="#064A25"/>
+    </linearGradient>
+    <linearGradient id="mobile-ball" x1="54" y1="16" x2="86" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE24B"/>
+      <stop offset="1" stop-color="#FFC907"/>
+    </linearGradient>
+    <linearGradient id="mobile-go" x1="40" y1="82" x2="106" y2="82" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8ED414"/>
+      <stop offset="1" stop-color="#68B90E"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M29 78C14 60 14 34 31 20C46 8 72 8 92 23L73 42C61 33 47 34 39 43C30 53 33 66 46 80L29 78Z" fill="url(#mobile-paddle)"/>
+  <rect x="18" y="76" width="40" height="14" rx="7" transform="rotate(28 18 76)" fill="#0B5D30"/>
+  <path d="M73 26C91 22 106 23 118 29C102 28 88 31 76 36L73 26Z" fill="#FFD31A"/>
+  <path d="M71 37C86 33 98 33 108 37C95 38 84 41 74 47L71 37Z" fill="#FFD31A"/>
+  <circle cx="75" cy="36" r="20" fill="url(#mobile-ball)" stroke="#0A6A35" stroke-width="4"/>
+  <circle cx="66" cy="29" r="3.2" fill="#0A6A35"/>
+  <circle cx="84" cy="42" r="4" fill="#0A6A35"/>
+  <circle cx="62" cy="46" r="3.4" fill="#0A6A35"/>
+
+  <path d="M34 95C61 80 81 78 110 84C82 83 61 87 39 104L34 95Z" fill="url(#mobile-go)"/>
+  <path d="M44 102H64L61 112H41L44 102Z" fill="#0A6A35"/>
+  <path d="M70 102H89C98 102 102 105 101 111C99 117 94 120 85 120H66L70 102ZM77 108L75 114H84C87 114 90 113 91 110C91 108 89 108 86 108H77Z" fill="#0A6A35"/>
+</svg>

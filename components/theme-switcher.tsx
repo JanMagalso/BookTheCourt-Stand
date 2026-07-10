@@ -65,13 +65,13 @@ export function ThemeSwitcher() {
   }
 
   return (
-    <div className="fixed right-[-0.75rem] top-24 z-[1300] sm:right-4 sm:top-auto sm:bottom-4">
+    <div className="fixed -right-3 top-24 z-[1300] sm:bottom-4 sm:right-4 sm:top-auto">
       <div className="flex flex-col items-end gap-2">
         {isCompactMobile ? (
           <button
             type="button"
             onClick={() => setIsOpen((current) => !current)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.92)] pr-2 text-[color:var(--color-text-primary)] shadow-[0_20px_48px_rgba(var(--color-shadow-rgb),0.16)] backdrop-blur-xl transition hover:scale-[1.03]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.92)] pr-2 text-(--color-text-primary) shadow-[0_20px_48px_rgba(var(--color-shadow-rgb),0.16)] backdrop-blur-xl transition hover:scale-[1.03]"
             aria-expanded={isOpen}
             aria-label={isOpen ? "Close theme switcher" : "Open theme switcher"}
           >
@@ -83,7 +83,7 @@ export function ThemeSwitcher() {
 
         {!isCompactMobile || isOpen ? (
           <div
-            className={`rounded-[1.4rem] border border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.9)] px-3 py-3 shadow-[0_20px_48px_rgba(var(--color-shadow-rgb),0.14)] backdrop-blur-xl transition-all duration-200 ${
+            className={`rounded-[1.4rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.9)] px-3 py-3 shadow-[0_20px_48px_rgba(var(--color-shadow-rgb),0.14)] backdrop-blur-xl transition-all duration-200 ${
               isOpen
                 ? "pointer-events-auto translate-y-0 opacity-100"
                 : "pointer-events-none translate-y-2 opacity-0"
@@ -91,16 +91,16 @@ export function ThemeSwitcher() {
           >
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-text-soft)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-(--color-text-soft)">
                 Theme
               </p>
-              <p className="text-xs text-[color:var(--color-text-secondary)]">
+              <p className="text-xs text-(--color-text-secondary)">
                 Switch the venue look
               </p>
             </div>
           </div>
 
-          <div className="mb-3 inline-flex rounded-full border border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.68)] p-1">
+          <div className="mb-3 inline-flex rounded-full border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.68)] p-1">
             {(["light", "dark"] as const).map((mode) => {
               const isActive = selectedMode === mode;
 
@@ -111,8 +111,8 @@ export function ThemeSwitcher() {
                   onClick={() => setSelectedMode(mode)}
                   className={`inline-flex min-h-9 items-center justify-center rounded-full px-3 text-xs font-semibold uppercase tracking-[0.14em] transition ${
                     isActive
-                      ? "bg-[color:var(--color-brand-strong)] text-white shadow-[0_8px_20px_rgba(var(--color-shadow-rgb),0.18)]"
-                      : "text-[color:var(--color-text-secondary)]"
+                      ? "bg-(--color-brand-strong) text-white shadow-[0_8px_20px_rgba(var(--color-shadow-rgb),0.18)]"
+                      : "text-(--color-text-secondary)"
                   }`}
                   aria-pressed={isActive}
                 >
@@ -133,7 +133,7 @@ export function ThemeSwitcher() {
                   onClick={() => setSelectedTheme(themeName as ThemeName)}
                   className={`group relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition-transform hover:scale-105 ${
                     isActive
-                      ? "border-[color:var(--color-text-primary)] ring-2 ring-[color:var(--color-brand-accent)] ring-offset-2 ring-offset-[color:var(--color-surface)]"
+                      ? "border-(--color-text-primary) ring-2 ring-(--color-brand-accent) ring-offset-2 ring-offset-(--color-surface)"
                       : "border-white/70"
                   }`}
                   style={{ background: option.swatch }}

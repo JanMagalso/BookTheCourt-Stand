@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
+let browserSupabaseClient: ReturnType<typeof createClient> | null = null;
+
 export function hasSupabaseEnv() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && getPublicSupabaseKey());
 }
@@ -12,7 +14,15 @@ export function createPublicSupabaseClient() {
     throw new Error("Missing Supabase environment variables.");
   }
 
-  return createClient(url, publicKey);
+  if (typeof window === "undefined") {
+    return createClient(url, publicKey);
+  }
+
+  if (!browserSupabaseClient) {
+    browserSupabaseClient = createClient(url, publicKey);
+  }
+
+  return browserSupabaseClient;
 }
 
 export function createSupabaseServiceClient() {

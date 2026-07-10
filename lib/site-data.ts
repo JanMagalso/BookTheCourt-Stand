@@ -3,6 +3,7 @@ import {
   createSupabaseServiceClient,
   hasSupabaseEnv,
 } from "@/lib/supabase";
+import { DEFAULT_BOOKING_WINDOW_DAYS, normalizeBookingWindowDays } from "@/lib/booking-window";
 
 export type Venue = {
   name: string;
@@ -68,6 +69,8 @@ export type BookingSlot = {
   courtId: string;
   startsAt: string;
   endsAt: string;
+  startMinuteOffset?: number;
+  endMinuteOffset?: number;
   status: Exclude<BookingStatus, "available">;
   holdExpiresAt?: string | null;
 };
@@ -87,6 +90,8 @@ export type VenueSnapshot = {
     timeLabel: string;
     startTime: string;
     endTime: string;
+    startMinuteOffset: number;
+    endMinuteOffset: number;
     courts: Array<{
       courtId: string;
       courtName: string;
@@ -356,6 +361,11 @@ export async function getVenueSnapshot(
         courtId: booking.court_id,
         startsAt: formatTimeForSchedule(booking.starts_at),
         endsAt: formatTimeForSchedule(booking.ends_at),
+        startMinuteOffset: getMinuteOffsetForSchedule(
+          resolvedDate,
+          booking.starts_at,
+        ),
+        endMinuteOffset: getMinuteOffsetForSchedule(resolvedDate, booking.ends_at),
         status: normalizeBookingStatus(booking),
         holdExpiresAt: booking.hold_expires_at ?? null,
       }))
@@ -454,7 +464,10 @@ function mapVenueFromWarehouse(
       warehouse.amenities && warehouse.amenities.length > 0
         ? warehouse.amenities
         : fallbackSnapshot.venue.amenities,
-    bookingWindowDays: warehouse.booking_window_days ?? fallbackSnapshot.venue.bookingWindowDays,
+    bookingWindowDays: normalizeBookingWindowDays(
+      warehouse.booking_window_days,
+      DEFAULT_BOOKING_WINDOW_DAYS,
+    ),
     hasNightLighting,
     indoorCourtCount,
     outdoorCourtCount,
@@ -493,12 +506,18 @@ function endOfDayIso(selectedDate: string) {
 }
 
 function formatTimeForSchedule(value: string) {
-  const date = new Date(value);
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Manila",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(value));
 
-  return `${date.getHours().toString().padStart(2, "0")}:${date
-    .getMinutes()
-    .toString()
-    .padStart(2, "0")}`;
+  const hours = parts.find((part) => part.type === "hour")?.value ?? "00";
+  const minutes =
+    parts.find((part) => part.type === "minute")?.value ?? "00";
+
+  return `${hours}:${minutes}`;
 }
 
 function normalizeBookingStatus(booking: BookingRow): Exclude<BookingStatus, "available"> {
@@ -562,8 +581,44 @@ function minutesToLabel(value: number) {
 }
 
 function getScheduleWeekday(dateKey: string) {
-  const day = new Date(`${dateKey}T00:00:00+08:00`).getDay();
-  return Number.isFinite(day) ? day : 0;
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    weekday: "short",
+  }).format(new Date(`${dateKey}T12:00:00+08:00`));
+
+  const map: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+
+  return map[weekday] ?? 0;
+}
+
+function getPricingDayKeyForDateKey(dateKey: string) {
+  const weekday = getScheduleWeekday(dateKey);
+  const map = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+  return map[weekday] ?? "sun";
+}
+
+function shiftDateKey(value: string, offsetDays: number) {
+  const date = new Date(`${value}T12:00:00+08:00`);
+  date.setDate(date.getDate() + offsetDays);
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? "00";
+
+  return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
 function parseOperatingWindowForDay(groups: ScheduleGroup[] | undefined, selectedDate: string) {
@@ -589,40 +644,18 @@ function parseOperatingWindowForDay(groups: ScheduleGroup[] | undefined, selecte
   };
 }
 
-function buildScheduleDateTime(selectedDate: string, hourIndex: number) {
-  const dayStart = new Date(`${selectedDate}T00:00:00+08:00`);
-  return new Date(dayStart.getTime() + hourIndex * 60 * 60 * 1000);
-}
-
-function getPricingDayKey(date: Date) {
-  const weekday = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Manila",
-    weekday: "short",
-  }).format(date);
-
-  const map: Record<string, string> = {
-    Sun: "sun",
-    Mon: "mon",
-    Tue: "tue",
-    Wed: "wed",
-    Thu: "thu",
-    Fri: "fri",
-    Sat: "sat",
-  };
-
-  return map[weekday] ?? "sun";
+function getMinuteOffsetForSchedule(selectedDate: string, value: string) {
+  const dayStart = new Date(`${selectedDate}T00:00:00+08:00`).getTime();
+  const target = new Date(value).getTime();
+  return Math.round((target - dayStart) / (60 * 1000));
 }
 
 function resolveHourlyRate(court: Court, selectedDate: string, hourIndex: number) {
-  const startsAt = buildScheduleDateTime(selectedDate, hourIndex);
-  const hour = Number(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "Asia/Manila",
-      hour: "2-digit",
-      hour12: false,
-    }).format(startsAt),
-  );
-  const dayKey = getPricingDayKey(startsAt);
+  const dayOffset = Math.floor(hourIndex / 24);
+  const shiftedDateKey =
+    dayOffset === 0 ? selectedDate : shiftDateKey(selectedDate, dayOffset);
+  const hour = ((hourIndex % 24) + 24) % 24;
+  const dayKey = getPricingDayKeyForDateKey(shiftedDateKey);
   const matchingRule = [...court.pricingRules]
     .filter((rule) => rule.isActive)
     .sort((left, right) => left.sortOrder - right.sortOrder || left.startHour - right.startHour)
@@ -659,14 +692,16 @@ export function getAvailabilityRows(snapshot: VenueSnapshot) {
       timeLabel: `${minutesToLabel(startMinutes)} - ${minutesToLabel(endMinutes)}`,
       startTime: time,
       endTime,
+      startMinuteOffset: startMinutes,
+      endMinuteOffset: endMinutes,
       courts: snapshot.courts.map((court) => {
         const booking = snapshot.bookings.find((entry) => {
           if (entry.courtId !== court.id) {
             return false;
           }
 
-          const bookingStart = timeToMinutes(entry.startsAt);
-          const bookingEnd = timeToMinutes(entry.endsAt);
+          const bookingStart = entry.startMinuteOffset ?? timeToMinutes(entry.startsAt);
+          const bookingEnd = entry.endMinuteOffset ?? timeToMinutes(entry.endsAt);
 
           return startMinutes >= bookingStart && startMinutes < bookingEnd;
         });
@@ -753,11 +788,16 @@ function getCurrentScheduleContext() {
 }
 
 function formatDateInput(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? "00";
 
-  return `${year}-${month}-${day}`;
+  return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
 function minutesTo24HourString(value: number) {

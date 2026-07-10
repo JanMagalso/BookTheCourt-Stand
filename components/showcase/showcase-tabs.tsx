@@ -59,7 +59,7 @@ export function ShowcaseTabs({ snapshot }: { snapshot: VenueSnapshot }) {
                 key={amenity}
                 className="rounded-full border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-accent)] px-4 py-2 text-sm font-medium text-slate-700"
               >
-                {amenity}
+                {sanitizeAmenityLabel(amenity)}
               </span>
             ))}
           </div>
@@ -122,4 +122,8 @@ export function ShowcaseTabs({ snapshot }: { snapshot: VenueSnapshot }) {
       ) : null}
     </div>
   );
+}
+
+function sanitizeAmenityLabel(value: string) {
+  return value.replace(/^[^A-Za-z0-9]+/u, "").trim();
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactElement, SVGProps } from "react";
 
+import { HeroNav } from "@/components/hero-nav";
 import { LoadingImage } from "@/components/loading-image";
 import { AmenitiesPreview } from "@/components/showcase/amenities-preview";
 import { FacilityPhotoMosaic } from "@/components/showcase/facility-photo-mosaic";
@@ -49,74 +50,13 @@ export default async function Home() {
           <div className="absolute inset-x-[12%] bottom-[24%] h-[160px] rounded-[999px] border border-[color:rgba(213,239,118,0.14)]" />
         </div>
 
-        <div className="relative mx-auto flex min-h-[640px] w-full max-w-[1680px] flex-col px-4 pb-12 pt-3 sm:min-h-[760px] sm:px-6 sm:pb-24 sm:pt-5 lg:px-10">
-          <header className="rounded-[1.6rem] border border-white/10 bg-[rgba(9,27,22,0.58)] px-4 py-3 shadow-[0_18px_48px_rgba(0,0,0,0.2)] backdrop-blur-xl sm:rounded-full sm:px-6">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-center justify-between gap-3">
-                <Link href="/" className="flex min-w-0 items-center gap-3">
-                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[color:rgba(213,239,118,0.28)] bg-[color:rgba(213,239,118,0.14)] text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--color-brand-accent)]">
-                    PG
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                      {venue.name}
-                    </p>
-                    <p className="truncate text-xs text-white/58">
-                      {venue.businessHours}
-                    </p>
-                  </div>
-                </Link>
+        <HeroNav
+          venueName={venue.name}
+          contactPhone={venue.contactPhone}
+        />
 
-                <a
-                  href="#book-now"
-                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-[color:var(--color-brand-accent)] px-4 py-2 text-sm font-semibold text-[color:var(--color-brand-strong)] transition hover:bg-[color:var(--color-brand-accent-hover)] lg:hidden"
-                >
-                  Book
-                </a>
-              </div>
-
-              <nav className="flex flex-wrap items-center gap-2 text-sm text-white/72 lg:justify-center">
-                <a
-                  href="#book-now"
-                  className="rounded-full border border-white/10 bg-white/6 px-4 py-2 transition hover:border-white/24 hover:bg-white/10 hover:text-white"
-                >
-                  Schedule
-                </a>
-                <a
-                  href="#gallery"
-                  className="rounded-full border border-white/10 bg-white/6 px-4 py-2 transition hover:border-white/24 hover:bg-white/10 hover:text-white"
-                >
-                  Photos
-                </a>
-                <a
-                  href="#contact"
-                  className="rounded-full border border-white/10 bg-white/6 px-4 py-2 transition hover:border-white/24 hover:bg-white/10 hover:text-white"
-                >
-                  Contact
-                </a>
-                <a
-                  href="#venue-info"
-                  className="rounded-full border border-white/10 bg-white/6 px-4 py-2 transition hover:border-white/24 hover:bg-white/10 hover:text-white"
-                >
-                  Details
-                </a>
-              </nav>
-
-              <div className="hidden items-center gap-3 lg:flex">
-                <span className="rounded-full border border-white/10 bg-white/6 px-4 py-2 text-sm text-white/68">
-                  {venue.contactPhone ?? "Guest-friendly reservations"}
-                </span>
-                <a
-                  href="#book-now"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[color:var(--color-brand-accent)] px-5 py-2.5 text-sm font-semibold text-[color:var(--color-brand-strong)] transition hover:bg-[color:var(--color-brand-accent-hover)]"
-                >
-                  Reserve now
-                </a>
-              </div>
-            </div>
-          </header>
-
-          <div className="relative z-10 mt-auto max-w-5xl pb-6 pt-10 sm:pb-12 sm:pt-20 lg:pt-28">
+        <div className="relative mx-auto flex min-h-[640px] w-full max-w-[1680px] flex-col px-4 pb-12 pt-24 sm:min-h-[760px] sm:px-6 sm:pb-24 sm:pt-28 lg:px-10 lg:pt-28">
+          <div className="relative z-10 mt-auto max-w-5xl pb-6 pt-8 sm:pb-12 sm:pt-14 lg:pt-16">
             <div className="mb-5 flex flex-wrap items-center gap-2 text-xs text-white/80 sm:mb-6 sm:gap-3 sm:text-sm">
               <span className="rounded-full border border-white/12 bg-white/8 px-3 py-2 backdrop-blur sm:px-4">
                 Reserve Online
@@ -130,9 +70,11 @@ export default async function Home() {
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand-accent)] sm:text-sm">
               {venue.name}
             </p>
-
+            <h2 className="mt-3 sm:text-2xl md:text-3xl lg:text-[3.4rem] font-semibold leading-[0.94]">
+              Reserve your court at
+            </h2>
             <h1 className="mt-3 max-w-[11ch] text-[2.55rem] font-semibold leading-[0.94] tracking-[-0.06em] text-white sm:max-w-4xl sm:text-5xl md:text-6xl lg:text-[6.4rem]">
-              Reserve your court at {venue.name}.
+              {venue.name}.
             </h1>
             <p className="mt-4 max-w-[34ch] text-sm leading-6 text-white/76 sm:mt-6 sm:max-w-3xl sm:text-base sm:leading-7 lg:text-lg">
               {venue.about}
@@ -288,7 +230,7 @@ export default async function Home() {
                         href={venue.contactFacebook}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/70 bg-[rgba(var(--color-surface-rgb),0.52)] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] backdrop-blur-md transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#8bb4ff] bg-[rgba(24,119,242,0.14)] px-5 py-3 text-sm font-semibold text-[#1877f2] backdrop-blur-md transition hover:border-[#1877f2] hover:bg-[rgba(24,119,242,0.2)] hover:text-[#1664d9]"
                       >
                         <FacebookIcon className="mr-2 h-4 w-4" />
                         Facebook
@@ -407,6 +349,51 @@ export default async function Home() {
           </Card>
         </div>
       </section>
+
+      <footer className="px-3 pb-8 pt-2 sm:px-6 lg:px-10">
+        <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-4 rounded-[1.75rem] border border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.7)] px-5 py-5 shadow-[0_16px_48px_rgba(var(--color-shadow-brand-rgb),0.08)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex items-center gap-3">
+            <LoadingImage
+              src="/brand/court-logo.png"
+              alt={venue.name}
+              width={136}
+              height={94}
+              className="h-11 w-auto shrink-0 object-contain"
+              skeletonClassName="bg-[image:var(--gradient-loading-neutral)]"
+            />
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
+                {venue.name}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-secondary)]">
+                Powered by{" "}
+                <span className="font-semibold text-[color:var(--color-text-primary)]">
+                  BookTheCourt
+                </span>
+                .
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 text-sm text-[color:var(--color-text-muted)]">
+            <a
+              href="#book-now"
+              className="rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+            >
+              Book now
+            </a>
+            <a
+              href={venue.googleMapsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+            >
+              Venue location
+            </a>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }

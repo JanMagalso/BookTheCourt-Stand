@@ -18,7 +18,7 @@ export function CardHeader({ className = "", ...props }: CardProps) {
 export function CardTitle({ className = "", ...props }: CardProps) {
   return (
     <div
-      className={`text-xl font-semibold tracking-[-0.03em] text-[color:var(--color-text-primary)] ${className}`.trim()}
+      className={`text-xl font-semibold tracking-[-0.03em] text-(--color-text-primary) ${className}`.trim()}
       {...props}
     />
   );
