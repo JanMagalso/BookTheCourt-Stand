@@ -90,6 +90,8 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
   const mobileChipClassName = isScrolled
     ? "rounded-xl px-3 py-3 text-(--color-text-secondary) hover:bg-[rgba(var(--color-surface-rgb),0.58)] hover:text-(--color-brand)"
     : "rounded-xl px-3 py-3 text-white/82 hover:bg-white/6 hover:text-white";
+  const loginHref = "/login?returnTo=%2F";
+  const registerHref = "/register?returnTo=%2F";
 
   return (
     <>
@@ -207,6 +209,22 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                 >
                   Details
                 </a>
+                <Link
+                  href={loggedInFirstName ? loginHref : loginHref}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`text-left font-medium transition ${mobileChipClassName}`}
+                >
+                  {loggedInFirstName ? "Account" : "Login"}
+                </Link>
+                {!loggedInFirstName ? (
+                  <Link
+                    href={registerHref}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`text-left font-medium transition ${mobileChipClassName}`}
+                  >
+                    Create Account
+                  </Link>
+                ) : null}
               </nav>
 
               <div className="border-t border-inherit px-2 pt-3">
@@ -305,6 +323,29 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                   Hello, {loggedInFirstName}!
                 </span>
               ) : null}
+              {!loggedInFirstName ? (
+                <Link
+                  href={loginHref}
+                  className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+                    isScrolled
+                      ? "border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.52)] text-(--color-text-secondary) hover:border-(--color-brand) hover:text-(--color-brand)"
+                      : "border border-white/10 bg-white/6 text-white/78 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  Login
+                </Link>
+              ) : (
+                <Link
+                  href={loginHref}
+                  className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+                    isScrolled
+                      ? "border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.52)] text-(--color-text-secondary) hover:border-(--color-brand) hover:text-(--color-brand)"
+                      : "border border-white/10 bg-white/6 text-white/78 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  Account
+                </Link>
+              )}
               <span
                 className={`rounded-full px-4 py-2 text-sm transition-colors ${
                   isScrolled

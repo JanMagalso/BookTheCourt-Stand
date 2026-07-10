@@ -802,19 +802,19 @@ export function WarehouseShowcaseBookingBoard({
       }`}
     >
       <div className="w-full">
-        <div className="h-fit w-full min-w-0 max-w-full overflow-hidden rounded-none border-y border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] shadow-[0_16px_40px_rgba(var(--color-shadow-brand-rgb),0.05)] sm:rounded-[1.8rem] sm:border">
-          <div className="border-b border-[color:var(--color-border-muted)] px-4 py-5 sm:px-6">
+        <div className="h-fit w-full min-w-0 max-w-full overflow-hidden rounded-none border-y border-(--color-border) bg-(--color-surface-elevated) shadow-[0_16px_40px_rgba(var(--color-shadow-brand-rgb),0.05)] sm:rounded-[1.8rem] sm:border">
+          <div className="border-b border-(--color-border-muted) px-4 py-5 sm:px-6">
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-soft)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--color-text-soft)">
                     Availability
                   </p>
-                  <h3 className="mt-1 font-serif text-[1.6rem] leading-none tracking-[-0.03em] text-[color:var(--color-text-primary)] sm:text-[1.75rem]">
+                  <h3 className="mt-1 font-serif text-[1.6rem] leading-none tracking-[-0.03em] text-(--color-text-primary) sm:text-[1.75rem]">
                     {formatHeroDate(currentSnapshot.selectedDate)}
                   </h3>
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-[color:var(--color-text-muted)]">
-                    <span className="uppercase tracking-[0.16em] text-[color:var(--color-text-soft)]">
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-(--color-text-muted)">
+                    <span className="uppercase tracking-[0.16em] text-(--color-text-soft)">
                       {formatMonthYear(currentSnapshot.selectedDate)}
                     </span>
                   </div>
@@ -828,7 +828,7 @@ export function WarehouseShowcaseBookingBoard({
                       isDateNavigating ||
                       currentSnapshot.selectedDate <= minSelectableDate
                     }
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--color-border-muted)] bg-[color:var(--color-surface)] text-lg text-[color:var(--color-text-muted)] transition hover:border-[color:var(--color-brand-success-border)] hover:text-[color:var(--color-text-primary)]"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-(--color-border-muted) bg-(--color-surface) text-lg text-(--color-text-muted) transition hover:border-(--color-brand-success-border) hover:text-(--color-text-primary)"
                     aria-label="Show previous dates"
                   >
                     ‹
@@ -841,7 +841,7 @@ export function WarehouseShowcaseBookingBoard({
                       maxSelectableDate !== null &&
                       currentSnapshot.selectedDate >= maxSelectableDate
                     }
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--color-border-muted)] bg-[color:var(--color-surface)] text-lg text-[color:var(--color-text-muted)] transition hover:border-[color:var(--color-brand-success-border)] hover:text-[color:var(--color-text-primary)]"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-(--color-border-muted) bg-(--color-surface) text-lg text-(--color-text-muted) transition hover:border-(--color-brand-success-border) hover:text-(--color-text-primary)"
                     aria-label="Show next dates"
                   >
                     ›
@@ -849,9 +849,9 @@ export function WarehouseShowcaseBookingBoard({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 border-t border-[color:var(--color-border-light)] pt-4">
-                <label className="flex min-w-0 flex-1 items-center gap-3 rounded-[1rem] border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-elevated)] px-4 py-3 text-sm text-[color:var(--color-text-muted)] shadow-[0_10px_24px_rgba(var(--color-shadow-brand-rgb),0.04)]">
-                  <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+              <div className="flex items-center gap-3 border-t border-(--color-border-light) pt-4">
+                <label className="flex min-w-0 flex-1 items-center gap-3 rounded-[1rem] border border-(--color-border-subtle) bg-(--color-surface-elevated) px-4 py-3 text-sm text-(--color-text-muted) shadow-[0_10px_24px_rgba(var(--color-shadow-brand-rgb),0.04)]">
+                  <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-(--color-text-muted)">
                     Play date
                   </span>
                   <input
@@ -863,7 +863,7 @@ export function WarehouseShowcaseBookingBoard({
                     onChange={(event) =>
                       void changeSelectedDate(event.target.value)
                     }
-                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[color:var(--color-brand-strong)] outline-none [color-scheme:light]"
+                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-(--color-brand-strong) outline-none [color-scheme:light]"
                   />
                 </label>
                 <button
@@ -873,7 +873,7 @@ export function WarehouseShowcaseBookingBoard({
                     isDateNavigating ||
                     currentSnapshot.selectedDate <= minSelectableDate
                   }
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[color:var(--color-border-muted)] bg-[color:var(--color-surface)] text-lg text-[color:var(--color-text-muted)] transition hover:border-[color:var(--color-brand-success-border)] hover:text-[color:var(--color-text-primary)] disabled:opacity-50"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--color-border-muted) bg-(--color-surface) text-lg text-(--color-text-muted) transition hover:border-(--color-brand-success-border) hover:text-(--color-text-primary) disabled:opacity-50"
                   aria-label="Show previous date"
                 >
                   ‹
@@ -886,7 +886,7 @@ export function WarehouseShowcaseBookingBoard({
                     maxSelectableDate !== null &&
                     currentSnapshot.selectedDate >= maxSelectableDate
                   }
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[color:var(--color-border-muted)] bg-[color:var(--color-surface)] text-lg text-[color:var(--color-text-muted)] transition hover:border-[color:var(--color-brand-success-border)] hover:text-[color:var(--color-text-primary)] disabled:opacity-50"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--color-border-muted) bg-(--color-surface) text-lg text-(--color-text-muted) transition hover:border-(--color-brand-success-border) hover:text-(--color-text-primary) disabled:opacity-50"
                   aria-label="Show next date"
                 >
                   ›
@@ -1032,12 +1032,12 @@ export function WarehouseShowcaseBookingBoard({
                                   aria-pressed={isSelected}
                                   className={`relative flex h-full min-h-[58px] w-full flex-col items-center justify-center overflow-hidden rounded-[0.8rem] border px-1 text-center transition-all duration-200 ${
                                     isSelected
-                                      ? "border-[color:var(--color-brand-success-strong)] bg-[image:var(--gradient-surface-success)] text-[color:var(--color-brand-success-deep)] shadow-[0_14px_34px_rgba(var(--color-shadow-success-rgb),0.22)] ring-2 ring-[color:var(--color-brand-success-ring)] ring-offset-2 ring-offset-[color:var(--color-surface)]"
-                                      : "border-[color:var(--color-brand-success-border)] bg-[image:var(--gradient-surface-success-soft)] text-[color:var(--color-brand-success-strong)] hover:border-[color:var(--color-brand-success-hover)] hover:shadow-[0_10px_24px_rgba(var(--color-shadow-success-rgb),0.10)]"
+                                      ? "border-(--color-brand-success-strong) bg-[image:var(--gradient-surface-success)] text-(--color-brand-success-deep) shadow-[0_14px_34px_rgba(var(--color-shadow-success-rgb),0.22)] ring-2 ring-(--color-brand-success-ring) ring-offset-2 ring-offset-(--color-surface)"
+                                      : "border-(--color-brand-success-border) bg-[image:var(--gradient-surface-success-soft)] text-(--color-brand-success-strong) hover:border-(--color-brand-success-hover) hover:shadow-[0_10px_24px_rgba(var(--color-shadow-success-rgb),0.10)]"
                                   }`}
                                 >
                                   {isSelected ? (
-                                    <span className="absolute inset-x-0 top-0 h-1.5 bg-[color:var(--color-brand-success-strong)]" />
+                                    <span className="absolute inset-x-0 top-0 h-1.5 bg-(--color-brand-success-strong)" />
                                   ) : null}
                                   <span className="text-[13px] font-bold">
                                     {formatCompactSlotPrice(
@@ -1045,7 +1045,7 @@ export function WarehouseShowcaseBookingBoard({
                                     )}
                                   </span>
                                   <span
-                                    className={`mt-1 text-[10px] font-semibold ${isSelected ? "text-[color:var(--color-brand-success-deep)]" : "text-[color:var(--color-brand-success-muted)]"}`}
+                                    className={`mt-1 text-[10px] font-semibold ${isSelected ? "text-(--color-brand-success-deep)" : "text-(--color-brand-success-muted)"}`}
                                   >
                                     {isSelected ? "Selected" : "Available"}
                                   </span>
@@ -1103,7 +1103,7 @@ export function WarehouseShowcaseBookingBoard({
                           currentSnapshot.selectedDate,
                           row.startTime,
                         ) ? (
-                          <span className="mt-1 inline-flex rounded-full bg-[color:var(--color-surface-accent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--color-brand-success-deep)]">
+                          <span className="mt-1 inline-flex rounded-full bg-(--color-surface-accent) px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-(--color-brand-success-deep)">
                             Now
                           </span>
                         ) : null}
@@ -1113,14 +1113,14 @@ export function WarehouseShowcaseBookingBoard({
                     {effectiveSnapshot.courts.map((court) => (
                       <div className="contents" key={court.id}>
                         <div className="booking-matrix-court-cell">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-soft)] text-[color:var(--color-text-muted)]">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--color-border-subtle) bg-(--color-surface-soft) text-(--color-text-muted)">
                             <span className="text-base">⌗</span>
                           </div>
                           <div className="min-w-0">
-                            <p className="text-lg font-semibold text-[color:var(--color-text-primary)]">
+                            <p className="text-lg font-semibold text-(--color-text-primary)">
                               {court.name}
                             </p>
-                            <p className="text-sm text-[color:var(--color-text-muted)]">
+                            <p className="text-sm text-(--color-text-muted)">
                               Court schedule
                             </p>
                           </div>
@@ -1170,12 +1170,12 @@ export function WarehouseShowcaseBookingBoard({
                                   aria-pressed={isSelected}
                                   className={`relative flex h-full min-h-[72px] w-full flex-col items-center justify-center overflow-hidden rounded-[0.95rem] border px-2 text-center transition-all duration-200 ${
                                     isSelected
-                                      ? "border-[color:var(--color-brand-success-strong)] bg-[image:var(--gradient-surface-success)] text-[color:var(--color-brand-success-deep)] shadow-[0_18px_38px_rgba(var(--color-shadow-success-rgb),0.22)] ring-2 ring-[color:var(--color-brand-success-ring)] ring-offset-2 ring-offset-[color:var(--color-surface)]"
-                                      : "border-[color:var(--color-brand-success-border)] bg-[image:var(--gradient-surface-success-soft)] text-[color:var(--color-brand-success-strong)] hover:border-[color:var(--color-brand-success-hover)] hover:shadow-[0_10px_24px_rgba(var(--color-shadow-success-rgb),0.10)]"
+                                      ? "border-(--color-brand-success-strong) bg-[image:var(--gradient-surface-success)] text-(--color-brand-success-deep) shadow-[0_18px_38px_rgba(var(--color-shadow-success-rgb),0.22)] ring-2 ring-(--color-brand-success-ring) ring-offset-2 ring-offset-(--color-surface)"
+                                      : "border-(--color-brand-success-border) bg-[image:var(--gradient-surface-success-soft)] text-(--color-brand-success-strong) hover:border-(--color-brand-success-hover) hover:shadow-[0_10px_24px_rgba(var(--color-shadow-success-rgb),0.10)]"
                                   }`}
                                 >
                                   {isSelected ? (
-                                    <span className="absolute inset-x-0 top-0 h-2 bg-[color:var(--color-brand-success-strong)]" />
+                                    <span className="absolute inset-x-0 top-0 h-2 bg-(--color-brand-success-strong)" />
                                   ) : null}
                                   <span className="text-lg font-bold">
                                     {formatCompactSlotPrice(
@@ -1183,7 +1183,7 @@ export function WarehouseShowcaseBookingBoard({
                                     )}
                                   </span>
                                   <span
-                                    className={`mt-1 text-xs font-semibold ${isSelected ? "text-[color:var(--color-brand-success-deep)]" : "text-[color:var(--color-brand-success-muted)]"}`}
+                                    className={`mt-1 text-xs font-semibold ${isSelected ? "text-(--color-brand-success-deep)" : "text-(--color-brand-success-muted)"}`}
                                   >
                                     {isSelected ? "Selected" : "Available"}
                                   </span>
@@ -1218,22 +1218,22 @@ export function WarehouseShowcaseBookingBoard({
               )}
             </div>
 
-            <div className="sticky bottom-4 z-20 mt-5 hidden rounded-[1.6rem] border border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.92)] p-4 shadow-[0_18px_50px_rgba(var(--color-shadow-rgb),0.12)] backdrop-blur-md sm:block sm:p-5">
+            <div className="sticky bottom-4 z-20 mt-5 hidden rounded-[1.6rem] border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.92)] p-4 shadow-[0_18px_50px_rgba(var(--color-shadow-rgb),0.12)] backdrop-blur-md sm:block sm:p-5">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                <div className="flex-1 rounded-[1.25rem] border border-[color:var(--color-border-soft)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.96),rgba(var(--color-surface-rgb),0.72))] px-4 py-4">
+                <div className="flex-1 rounded-[1.25rem] border border-(--color-border-soft) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.96),rgba(var(--color-surface-rgb),0.72))] px-4 py-4">
                   {groupedBlocks.length > 0 && (
                     <>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-brand)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-(--color-brand)">
                         Ready to Checkout
                       </p>
-                      <p className="text-[1.8rem] font-semibold leading-none tracking-[-0.04em] text-[color:var(--color-text-primary)]">
+                      <p className="text-[1.8rem] font-semibold leading-none tracking-[-0.04em] text-(--color-text-primary)">
                         {selectedCourtCount} court
                         {selectedCourtCount === 1 ? "" : "s"} selected
                       </p>
-                      <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
+                      <p className="mt-2 text-sm text-(--color-text-muted)">
                         {formatDisplayDate(currentSnapshot.selectedDate)}
                       </p>
-                      <p className="mt-1 text-sm font-semibold text-[color:var(--color-brand-success-deep)]">
+                      <p className="mt-1 text-sm font-semibold text-(--color-brand-success-deep)">
                         {formatCurrency(subtotal)} total · {totalSelectedHours}{" "}
                         hour
                         {totalSelectedHours === 1 ? "" : "s"}
@@ -1243,16 +1243,16 @@ export function WarehouseShowcaseBookingBoard({
 
                   {groupedBlocks.length === 0 && (
                     <>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-soft)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-(--color-text-soft)">
                         Starts from
                       </p>
-                      <p className="mt-2 text-[2rem] font-semibold leading-none tracking-[-0.04em] text-[color:var(--color-text-primary)]">
+                      <p className="mt-2 text-[2rem] font-semibold leading-none tracking-[-0.04em] text-(--color-text-primary)">
                         {formatCurrency(startingRate)}
-                        <span className="ml-1 text-sm font-medium tracking-normal text-[color:var(--color-text-soft)]">
+                        <span className="ml-1 text-sm font-medium tracking-normal text-(--color-text-soft)">
                           /hr
                         </span>
                       </p>
-                      <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
+                      <p className="mt-2 text-sm text-(--color-text-muted)">
                         Select one or more slots to start a reservation.
                       </p>
                     </>
@@ -1261,7 +1261,7 @@ export function WarehouseShowcaseBookingBoard({
 
                 <div className="flex flex-wrap items-center gap-3 xl:justify-end">
                   {hasActiveHold ? (
-                    <span className="rounded-full border border-[color:var(--color-brand-success-border)] bg-[color:var(--color-surface-success-strong)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-brand-success-deep)]">
+                    <span className="rounded-full border border-(--color-brand-success-border) bg-(--color-surface-success-strong) px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-(--color-brand-success-deep)">
                       Hold {holdCountdown.label}
                     </span>
                   ) : null}
@@ -1269,7 +1269,7 @@ export function WarehouseShowcaseBookingBoard({
                   <button
                     type="button"
                     onClick={handleManualRelease}
-                    className="inline-flex min-w-[104px] items-center justify-center rounded-full border border-[color:var(--color-border)] bg-[rgba(var(--color-surface-rgb),0.68)] px-3 py-2.5 text-sm font-semibold text-[color:var(--color-text-secondary)] transition hover:bg-[color:var(--color-surface-soft)] sm:min-w-[132px] sm:px-4 sm:py-3"
+                    className="inline-flex min-w-[104px] items-center justify-center rounded-full border border-(--color-border) bg-[rgba(var(--color-surface-rgb),0.68)] px-3 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:bg-(--color-surface-soft) sm:min-w-[132px] sm:px-4 sm:py-3"
                   >
                     Clear
                   </button>
@@ -1277,7 +1277,7 @@ export function WarehouseShowcaseBookingBoard({
                     type="button"
                     onClick={handleContinueToPayment}
                     disabled={isHoldPending}
-                    className="inline-flex min-w-[132px] items-center justify-center rounded-full bg-[color:var(--color-brand-strong)] px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(23,53,42,0.22)] transition hover:bg-[color:var(--color-brand-strong-hover)] disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[160px] sm:px-5"
+                    className="inline-flex min-w-[132px] items-center justify-center rounded-full bg-(--color-brand-strong) px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(23,53,42,0.22)] transition hover:bg-(--color-brand-strong-hover) disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[160px] sm:px-5"
                   >
                     {getCheckoutButtonLabel(isHoldPending, hasActiveHold)}
                   </button>
@@ -1288,8 +1288,8 @@ export function WarehouseShowcaseBookingBoard({
                 <p
                   className={`mt-4 text-sm ${
                     isErrorStatusMessage(statusMessage)
-                      ? "font-semibold text-[color:var(--color-danger-strong)]"
-                      : "text-[color:var(--color-text-secondary)]"
+                      ? "font-semibold text-(--color-danger-strong)"
+                      : "text-(--color-text-secondary)"
                   }`}
                 >
                   {statusMessage}
@@ -1302,14 +1302,14 @@ export function WarehouseShowcaseBookingBoard({
 
       {shouldShowMobileCheckoutBar ? (
         <BodyPortal>
-          <div className="fixed inset-x-0 bottom-0 z-[1400] border-t border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.96)] px-4 py-4 shadow-[0_-10px_40px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur sm:px-6">
+          <div className="fixed inset-x-0 bottom-0 z-[1400] border-t border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.96)] px-4 py-4 shadow-[0_-10px_40px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur sm:px-6">
             <div className="mx-auto flex w-full max-w-[1680px] items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--color-text-soft)]">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-(--color-text-soft)">
                   {groupedBlocks.length} Selection
                   {groupedBlocks.length === 1 ? "" : "s"}
                 </p>
-                <div className="text-2xl font-bold text-[color:var(--color-text-primary)]">
+                <div className="text-2xl font-bold text-(--color-text-primary)">
                   {formatCurrency(subtotal)}
                 </div>
               </div>
@@ -1319,7 +1319,7 @@ export function WarehouseShowcaseBookingBoard({
                   type="button"
                   onClick={handleManualRelease}
                   disabled={isHoldPending || groupedBlocks.length === 0}
-                  className="inline-flex min-h-10 items-center justify-center rounded-full border border-[color:var(--color-border-soft)] bg-[rgba(var(--color-surface-rgb),0.78)] px-3 py-2 text-xs font-semibold text-[color:var(--color-text-secondary)] transition hover:bg-[color:var(--color-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex min-h-10 items-center justify-center rounded-full border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.78)] px-3 py-2 text-xs font-semibold text-(--color-text-secondary) transition hover:bg-(--color-surface-soft) disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Clear
                 </button>
@@ -1327,7 +1327,7 @@ export function WarehouseShowcaseBookingBoard({
                   type="button"
                   disabled={isHoldPending || groupedBlocks.length === 0}
                   onClick={handleContinueToPayment}
-                  className="inline-flex shrink-0 items-center justify-center rounded-full bg-[color:var(--color-action-secondary)] px-6 py-4 text-base font-bold text-white shadow-[0_16px_32px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-[color:var(--color-action-secondary-hover)] disabled:cursor-not-allowed disabled:bg-[color:var(--color-border-panel)] disabled:text-[color:var(--color-text-soft)] disabled:shadow-none sm:px-8"
+                  className="inline-flex shrink-0 items-center justify-center rounded-full bg-(--color-action-secondary) px-6 py-4 text-base font-bold text-white shadow-[0_16px_32px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-(--color-action-secondary-hover) disabled:cursor-not-allowed disabled:bg-(--color-border-panel) disabled:text-(--color-text-soft) disabled:shadow-none sm:px-8"
                 >
                   {getMobileCheckoutButtonLabel(isHoldPending, hasActiveHold)}
                 </button>
@@ -1340,13 +1340,13 @@ export function WarehouseShowcaseBookingBoard({
       {isPaymentModalOpen ? (
         <BodyPortal>
           <div className="fixed inset-0 z-[1500] flex items-center justify-center overscroll-contain bg-[rgba(var(--color-overlay-rgb),0.42)] p-3 backdrop-blur-sm sm:p-4">
-            <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden overscroll-contain rounded-[2rem] border border-[color:var(--color-border-panel)] bg-[color:var(--color-surface-warm)] shadow-[0_30px_120px_rgba(var(--color-shadow-rgb),0.18)]">
-              <div className="sticky top-0 z-20 flex items-start justify-between border-b border-[color:var(--color-border-panel)] bg-[color:var(--color-surface-warm)] px-5 py-5 sm:px-6 sm:py-6">
+            <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden overscroll-contain rounded-[2rem] border border-(--color-border-panel) bg-(--color-surface-warm) shadow-[0_30px_120px_rgba(var(--color-shadow-rgb),0.18)]">
+              <div className="sticky top-0 z-20 flex items-start justify-between border-b border-(--color-border-panel) bg-(--color-surface-warm) px-5 py-5 sm:px-6 sm:py-6">
                 <div>
-                  <h3 className="text-xl font-semibold tracking-[-0.03em] text-[color:var(--color-text-primary)] sm:text-2xl">
+                  <h3 className="text-xl font-semibold tracking-[-0.03em] text-(--color-text-primary) sm:text-2xl">
                     {getModalTitle(modalStep)}
                   </h3>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--color-text-muted)]">
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-(--color-text-muted)">
                     {getModalDescription(modalStep)}
                   </p>
                 </div>
@@ -1354,7 +1354,7 @@ export function WarehouseShowcaseBookingBoard({
                   type="button"
                   aria-label="Close booking modal"
                   onClick={closePaymentModal}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] text-xl leading-none text-[color:var(--color-text-muted)] transition hover:border-[color:var(--color-border-panel-soft)] hover:text-[color:var(--color-text-primary)]"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-(--color-border-panel) bg-[rgba(var(--color-surface-rgb),0.82)] text-xl leading-none text-(--color-text-muted) transition hover:border-(--color-border-panel-soft) hover:text-(--color-text-primary)"
                 >
                   ×
                 </button>
@@ -1366,16 +1366,16 @@ export function WarehouseShowcaseBookingBoard({
                 onSubmit={submitBookings}
               >
                 <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_340px]">
-                <div className="border-b border-[color:var(--color-border-panel)] px-5 py-5 md:border-b-0 md:border-r md:px-6 md:py-6">
+                <div className="border-b border-(--color-border-panel) px-5 py-5 md:border-b-0 md:border-r md:px-6 md:py-6">
                   <div className="space-y-8">
-                    <div className="flex flex-col gap-4 border-b border-[color:var(--color-border-panel)] pb-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="flex flex-col gap-4 border-b border-(--color-border-panel) pb-5 sm:flex-row sm:items-end sm:justify-between">
                       <div className="flex min-w-0 items-center gap-6">
                         <div className="min-w-0">
                           <p
                             className={`text-sm font-semibold tracking-[-0.02em] ${
                               modalStep === "details"
-                                ? "text-[color:var(--color-text-primary)]"
-                                : "text-[color:var(--color-text-soft)]"
+                                ? "text-(--color-text-primary)"
+                                : "text-(--color-text-soft)"
                             }`}
                           >
                             1. Reservation Details
@@ -1383,8 +1383,8 @@ export function WarehouseShowcaseBookingBoard({
                           <div
                             className={`mt-3 h-1 rounded-full transition ${
                               modalStep === "details"
-                                ? "bg-[color:var(--color-action-primary)]"
-                                : "bg-[color:var(--color-border-panel)]"
+                                ? "bg-(--color-action-primary)"
+                                : "bg-(--color-border-panel)"
                             }`}
                           />
                         </div>
@@ -1392,8 +1392,8 @@ export function WarehouseShowcaseBookingBoard({
                           <p
                             className={`text-sm font-semibold tracking-[-0.02em] ${
                               modalStep === "payment"
-                                ? "text-[color:var(--color-text-primary)]"
-                                : "text-[color:var(--color-text-soft)]"
+                                ? "text-(--color-text-primary)"
+                                : "text-(--color-text-soft)"
                             }`}
                           >
                             2. Payment Proof
@@ -1401,15 +1401,15 @@ export function WarehouseShowcaseBookingBoard({
                           <div
                             className={`mt-3 h-1 rounded-full transition ${
                               modalStep === "payment"
-                                ? "bg-[color:var(--color-action-primary)]"
-                                : "bg-[color:var(--color-border-panel)]"
+                                ? "bg-(--color-action-primary)"
+                                : "bg-(--color-border-panel)"
                             }`}
                           />
                         </div>
                       </div>
 
                       {hasActiveHold ? (
-                        <span className="inline-flex w-fit items-center rounded-full bg-[color:var(--color-surface-danger-soft)] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--color-danger)]">
+                        <span className="inline-flex w-fit items-center rounded-full bg-(--color-surface-danger-soft) px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-(--color-danger)">
                           Hold {holdCountdown.label}
                         </span>
                       ) : null}

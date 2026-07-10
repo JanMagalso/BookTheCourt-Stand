@@ -31,8 +31,8 @@ export default async function Home() {
       ? venue.amenities
       : fallbackAmenities(venue, courtCount);
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[color:var(--background)] text-[color:var(--color-text-primary)]">
-      <section className="relative overflow-hidden bg-[color:var(--color-hero)] text-white">
+    <main className="min-h-screen overflow-x-hidden bg-(--background) text-(--color-text-primary)">
+      <section className="relative overflow-hidden bg-(--color-hero) text-white">
         <div className="absolute inset-0">
           <LoadingImage
             src={heroImage}
@@ -67,7 +67,7 @@ export default async function Home() {
               </span>
             </div>
 
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand-accent)] sm:text-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-(--color-brand-accent) sm:text-sm">
               {venue.name}
             </p>
             <h2 className="mt-3 sm:text-2xl md:text-3xl lg:text-[3.4rem] font-semibold leading-[0.94]">
@@ -83,7 +83,7 @@ export default async function Home() {
             <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:gap-4 sm:flex-row">
               <a
                 href="#book-now"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[color:var(--color-brand-accent)] px-6 py-3 text-sm font-semibold text-[color:var(--color-brand-strong)] transition hover:bg-[color:var(--color-brand-accent-hover)]"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-(--color-brand-accent) px-6 py-3 text-sm font-semibold text-(--color-brand-strong) transition hover:bg-(--color-brand-accent-hover)"
               >
                 Reserve your session
                 <ArrowRightIcon className="ml-2 h-4 w-4" />
@@ -105,9 +105,9 @@ export default async function Home() {
         className="relative z-10 px-3 pb-16 pt-10 sm:px-6 sm:pt-14 lg:px-10 lg:pt-16"
       >
         <div className="mx-auto w-full max-w-[1680px]">
-          <Card className="border-[color:var(--color-border-card)]">
+          <Card className="border-(--color-border-card)">
             <CardHeader className="pb-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
                 Facility Overview
               </p>
               <CardTitle className="mt-2 text-2xl sm:text-3xl lg:text-[2.2rem]">
@@ -132,14 +132,14 @@ export default async function Home() {
       >
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-(--color-brand)">
               Venue Highlights
             </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[color:var(--color-text-primary)] sm:text-3xl lg:text-[2.4rem]">
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-(--color-text-primary) sm:text-3xl lg:text-[2.4rem]">
               Get a feel for the venue before you visit
             </h2>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-[color:var(--color-text-muted)]">
+          <p className="max-w-xl text-sm leading-6 text-(--color-text-muted)">
             Browse the courts, atmosphere, and player areas before you lock in
             your next session.
           </p>
@@ -152,13 +152,13 @@ export default async function Home() {
       <section id="contact" className="px-3 pb-16 pt-8 sm:px-6 lg:px-10">
         <div className="mx-auto w-full max-w-[1680px]">
           <div className="mb-8 max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-(--color-brand)">
               Contact Details
             </p>
-            <h2 className="mt-4 text-[2.4rem] font-semibold leading-[0.95] tracking-[-0.05em] text-[color:var(--color-text-primary)] sm:text-[3.2rem] lg:text-[4.1rem]">
+            <h2 className="mt-4 text-[2.4rem] font-semibold leading-[0.95] tracking-[-0.05em] text-(--color-text-primary) sm:text-[3.2rem] lg:text-[4.1rem]">
               Find {venue.name} with ease.
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-8 text-[color:var(--color-text-secondary)] sm:text-[1.05rem]">
+            <p className="mt-4 max-w-2xl text-base leading-8 text-(--color-text-secondary) sm:text-[1.05rem]">
               View the exact venue location, check the latest contact details,
               and head over when you&apos;re ready to play.
             </p>

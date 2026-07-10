@@ -59,17 +59,17 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
           {mobileAmenities.map((item) => (
             <div
               key={item.label}
-              className="rounded-[1.35rem] border border-[color:var(--color-border-light)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.7),rgba(var(--color-surface-rgb),0.52))] px-4 py-4 shadow-[0_16px_36px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5"
+              className="rounded-[1.35rem] border border-(--color-border-light) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.7),rgba(var(--color-surface-rgb),0.52))] px-4 py-4 shadow-[0_16px_36px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5"
             >
               <div className="flex items-start gap-3">
-                <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--color-border-subtle)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-[color:var(--color-brand)] shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
+                <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-(--color-border-subtle) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-(--color-brand) shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
                   <item.icon className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[color:var(--color-text-primary)]">
+                  <p className="text-sm font-semibold text-(--color-text-primary)">
                     {item.label}
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--color-text-muted)]">
+                  <p className="mt-1 text-xs leading-5 text-(--color-text-muted)">
                     {item.description}
                   </p>
                 </div>
@@ -88,7 +88,7 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
           <div key={group.title}>
             <div className="mb-4 flex items-center gap-3">
               <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(20,137,125,0.22),rgba(20,137,125,0))]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
                 {group.title}
               </p>
               <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(20,137,125,0),rgba(20,137,125,0.22))]" />
@@ -97,15 +97,15 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
               {group.items.map((item) => (
                 <div
                   key={`${group.title}-${item.label}`}
-                  className="rounded-[1.75rem] border border-[color:var(--color-border-light)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.72),rgba(var(--color-surface-rgb),0.54))] px-5 py-5 shadow-[0_16px_40px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5"
+                  className="rounded-[1.75rem] border border-(--color-border-light) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.72),rgba(var(--color-surface-rgb),0.54))] px-5 py-5 shadow-[0_16px_40px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5"
                 >
                   <div className="flex h-full items-start gap-4">
-                    <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--color-border-subtle)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-[color:var(--color-brand)] shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
+                    <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-(--color-border-subtle) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-(--color-brand) shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
                       <item.icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-[color:var(--color-text-primary)]">{item.label}</p>
-                      <p className="mt-1 text-sm leading-6 text-[color:var(--color-text-muted)]">
+                      <p className="font-semibold text-(--color-text-primary)">{item.label}</p>
+                      <p className="mt-1 text-sm leading-6 text-(--color-text-muted)">
                         {item.description}
                       </p>
                     </div>
@@ -117,7 +117,7 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
         ))}
 
         {hasMoreDesktopAmenities ? (
-          <div className="flex justify-center border-t border-[color:var(--color-border-lighter)] pt-2">
+          <div className="flex justify-center border-t border-(--color-border-lighter) pt-2">
             <AllAmenitiesDrawer groups={groups} totalAmenities={totalAmenities} />
           </div>
         ) : null}
@@ -135,12 +135,12 @@ function AllAmenitiesDrawer({
 }) {
   return (
     <Drawer>
-      <DrawerTrigger className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border-light)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.62))] px-5 py-3 text-sm font-semibold text-[color:var(--color-brand)] shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand-bright)]">
+      <DrawerTrigger className="inline-flex min-h-11 items-center justify-center rounded-full border border-(--color-border-light) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.62))] px-5 py-3 text-sm font-semibold text-(--color-brand) shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition hover:border-(--color-brand) hover:text-(--color-brand-bright)">
         View All {totalAmenities} Amenities
       </DrawerTrigger>
       <DrawerContent className="h-[100dvh] overflow-y-auto pt-20 md:mb-8 md:h-auto md:max-h-[84vh] md:max-w-[880px] md:rounded-[2rem] md:pt-0">
-        <DrawerHeader className="border-b border-[color:var(--color-border-lighter)]">
-          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[color:var(--color-border-soft)]" />
+        <DrawerHeader className="border-b border-(--color-border-lighter)">
+          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-(--color-border-soft)" />
           <DrawerTitle>All Venue Amenities</DrawerTitle>
           <DrawerDescription className="mt-2">
             Browse the full amenity list without crowding the main page.
@@ -150,24 +150,24 @@ function AllAmenitiesDrawer({
         <div className="space-y-6 px-5 py-5">
           {groups.map((group) => (
             <div key={group.title}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
                 {group.title}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 {group.items.map((item) => (
                   <div
                     key={`${group.title}-${item.label}`}
-                    className="rounded-[1.25rem] border border-[color:var(--color-border-light)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.72),rgba(var(--color-surface-rgb),0.54))] px-4 py-4 shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.06)] backdrop-blur-md"
+                    className="rounded-[1.25rem] border border-(--color-border-light) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.72),rgba(var(--color-surface-rgb),0.54))] px-4 py-4 shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.06)] backdrop-blur-md"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--color-border-subtle)] bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-[color:var(--color-brand)]">
+                      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-(--color-border-subtle) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-(--color-brand)">
                         <item.icon className="h-4.5 w-4.5" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[color:var(--color-text-primary)]">
+                        <p className="text-sm font-semibold text-(--color-text-primary)">
                           {item.label}
                         </p>
-                        <p className="mt-1 text-xs leading-5 text-[color:var(--color-text-muted)]">
+                        <p className="mt-1 text-xs leading-5 text-(--color-text-muted)">
                           {item.description}
                         </p>
                       </div>
@@ -178,7 +178,7 @@ function AllAmenitiesDrawer({
             </div>
           ))}
 
-          <DrawerClose className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[color:var(--color-brand-strong)] px-5 py-3 text-sm font-semibold text-white">
+          <DrawerClose className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-(--color-brand-strong) px-5 py-3 text-sm font-semibold text-white">
             Done
           </DrawerClose>
         </div>

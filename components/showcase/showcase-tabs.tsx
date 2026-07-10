@@ -35,8 +35,8 @@ export function ShowcaseTabs({ snapshot }: { snapshot: VenueSnapshot }) {
             onClick={() => setActiveTab(tab.id)}
             className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
               activeTab === tab.id
-                ? "bg-[color:var(--color-brand-strong)] text-white"
-                : "border border-[color:var(--color-border)] bg-[color:var(--color-surface)] text-slate-700 hover:border-[color:var(--color-brand-bright)] hover:text-[color:var(--color-brand-strong)]"
+                ? "bg-(--color-brand-strong) text-white"
+                : "border border-(--color-border) bg-(--color-surface) text-slate-700 hover:border-(--color-brand-bright) hover:text-(--color-brand-strong)"
             }`}
           >
             {tab.label}
@@ -49,7 +49,7 @@ export function ShowcaseTabs({ snapshot }: { snapshot: VenueSnapshot }) {
       {activeTab === "about" ? (
         <ShowcaseInfoCard>
           <ShowcaseSectionEyebrow>About This Venue</ShowcaseSectionEyebrow>
-          <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[color:var(--color-text-primary)]">
+          <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-(--color-text-primary)">
             Live facility description
           </h3>
           <p className="mt-4 text-base leading-7 text-slate-600">{snapshot.venue.about}</p>
@@ -57,7 +57,7 @@ export function ShowcaseTabs({ snapshot }: { snapshot: VenueSnapshot }) {
             {snapshot.venue.amenities.map((amenity) => (
               <span
                 key={amenity}
-                className="rounded-full border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface-accent)] px-4 py-2 text-sm font-medium text-slate-700"
+                className="rounded-full border border-(--color-border-subtle) bg-(--color-surface-accent) px-4 py-2 text-sm font-medium text-slate-700"
               >
                 {sanitizeAmenityLabel(amenity)}
               </span>
@@ -69,7 +69,7 @@ export function ShowcaseTabs({ snapshot }: { snapshot: VenueSnapshot }) {
       {activeTab === "photos" ? (
         <ShowcaseInfoCard>
           <ShowcaseSectionEyebrow>Photo Gallery</ShowcaseSectionEyebrow>
-          <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[color:var(--color-text-primary)]">
+          <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-(--color-text-primary)">
             Facility photos
           </h3>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -91,27 +91,27 @@ export function ShowcaseTabs({ snapshot }: { snapshot: VenueSnapshot }) {
       {activeTab === "contact" ? (
         <ShowcaseInfoCard>
           <ShowcaseSectionEyebrow>Contact Details</ShowcaseSectionEyebrow>
-          <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[color:var(--color-text-primary)]">
+          <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-(--color-text-primary)">
             Public contact information
           </h3>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-[1.25rem] bg-[color:var(--color-surface-soft)] p-5">
+            <div className="rounded-[1.25rem] bg-(--color-surface-soft) p-5">
               <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Location</p>
               <p className="mt-2 text-sm leading-6 text-slate-700">{snapshot.venue.address}</p>
             </div>
-            <div className="rounded-[1.25rem] bg-[color:var(--color-surface-soft)] p-5">
+            <div className="rounded-[1.25rem] bg-(--color-surface-soft) p-5">
               <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Phone</p>
               <p className="mt-2 text-sm leading-6 text-slate-700">
                 {snapshot.venue.contactPhone ?? "Unavailable"}
               </p>
             </div>
-            <div className="rounded-[1.25rem] bg-[color:var(--color-surface-soft)] p-5">
+            <div className="rounded-[1.25rem] bg-(--color-surface-soft) p-5">
               <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Email</p>
               <p className="mt-2 text-sm leading-6 text-slate-700">
                 {snapshot.venue.contactEmail ?? "Unavailable"}
               </p>
             </div>
-            <div className="rounded-[1.25rem] bg-[color:var(--color-surface-soft)] p-5">
+            <div className="rounded-[1.25rem] bg-(--color-surface-soft) p-5">
               <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Facebook</p>
               <p className="mt-2 break-all text-sm leading-6 text-slate-700">
                 {snapshot.venue.contactFacebook ?? "Unavailable"}
