@@ -315,7 +315,6 @@ export async function getVenueSnapshot(
       supabase
         .from("bookings")
         .select("id, court_id, reservation_name, starts_at, ends_at, status, hold_expires_at, payment_receipt_url")
-        .in("status", ["on_hold", "pending", "confirmed", "booked"])
         .gte("starts_at", startOfDayIso(resolvedDate))
         .lt("starts_at", endOfDayIso(resolvedDate)),
       warehouse.owner_id
@@ -354,7 +353,11 @@ export async function getVenueSnapshot(
     });
     const allowedCourtIds = new Set(normalizedCourts.map((court) => court.id));
     const normalizedBookings: BookingSlot[] = ((bookings ?? []) as BookingRow[])
-      .filter((booking) => allowedCourtIds.has(booking.court_id))
+      .filter(
+        (booking) =>
+          allowedCourtIds.has(booking.court_id) &&
+          shouldRenderBookingStatus(booking.status),
+      )
       .map((booking) => ({
         bookingReference: booking.id.slice(0, 8).toUpperCase(),
         reservationName: booking.reservation_name ?? "Reserved",
@@ -521,24 +524,44 @@ function formatTimeForSchedule(value: string) {
 }
 
 function normalizeBookingStatus(booking: BookingRow): Exclude<BookingStatus, "available"> {
-  if (booking.status === "on_hold") {
+  const normalizedStatus = booking.status.trim().toLowerCase();
+
+  if (normalizedStatus === "on_hold" || normalizedStatus === "hold") {
     return "hold";
   }
 
   if (
-    booking.status === "pending" &&
+    normalizedStatus === "pending" &&
     booking.hold_expires_at &&
     new Date(booking.hold_expires_at).getTime() > Date.now() &&
     !booking.payment_receipt_url
   ) {
-    return "hold";
-  }
-
-  if (booking.status === "pending") {
     return "pending";
   }
 
+  if (
+    normalizedStatus === "pending" ||
+    normalizedStatus === "reserved" ||
+    normalizedStatus === "awaiting_payment" ||
+    normalizedStatus === "pending_verification"
+  ) {
+    return "pending";
+  }
+
+  if (
+    normalizedStatus === "confirmed" ||
+    normalizedStatus === "booked" ||
+    normalizedStatus === "rebooked"
+  ) {
+    return "booked";
+  }
+
   return "booked";
+}
+
+function shouldRenderBookingStatus(status: string) {
+  const normalizedStatus = status.trim().toLowerCase();
+  return normalizedStatus !== "cancelled";
 }
 
 function isExpiredHold(value: string | null) {
