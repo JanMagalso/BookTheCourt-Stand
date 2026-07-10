@@ -14,6 +14,7 @@ type HeroNavProps = {
 export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loggedInFirstName, setLoggedInFirstName] = useState<string | null>(
     null,
   );
@@ -66,8 +67,13 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
-      setLoggedInFirstName(getSessionFirstName(session?.user?.user_metadata));
+      await syncAuthenticatedUserState(
+        supabase,
+        session?.user?.id ?? null,
+        session?.user?.user_metadata,
+        setIsAuthenticated,
+        setLoggedInFirstName,
+      );
     };
 
     void syncGreeting();
@@ -75,7 +81,13 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setLoggedInFirstName(getSessionFirstName(session?.user?.user_metadata));
+      void syncAuthenticatedUserState(
+        supabase,
+        session?.user?.id ?? null,
+        session?.user?.user_metadata,
+        setIsAuthenticated,
+        setLoggedInFirstName,
+      );
     });
 
     return () => {
@@ -124,18 +136,14 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
               <div className="min-w-0">
                 <p
                   className={`truncate text-sm font-semibold uppercase tracking-[0.18em] transition-colors ${
-                    isScrolled
-                      ? "text-(--color-text-primary)"
-                      : "text-white"
+                    isScrolled ? "text-(--color-text-primary)" : "text-white"
                   }`}
                 >
                   {venueName}
                 </p>
                 <p
                   className={`truncate text-xs transition-colors ${
-                    isScrolled
-                      ? "text-(--color-text-muted)"
-                      : "text-white/58"
+                    isScrolled ? "text-(--color-text-muted)" : "text-white/58"
                   }`}
                 >
                   {venueName}
@@ -210,13 +218,13 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                   Details
                 </a>
                 <Link
-                  href={loggedInFirstName ? loginHref : loginHref}
+                  href={loginHref}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`text-left font-medium transition ${mobileChipClassName}`}
                 >
-                  {loggedInFirstName ? "Account" : "Login"}
+                  {isAuthenticated ? "Account" : "Login"}
                 </Link>
-                {!loggedInFirstName ? (
+                {!isAuthenticated ? (
                   <Link
                     href={registerHref}
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -251,9 +259,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                 <div className="min-w-0">
                   <p
                     className={`truncate text-sm transition-colors ${
-                      isScrolled
-                        ? "text-(--color-text-muted)"
-                        : "text-white/58"
+                      isScrolled ? "text-(--color-text-muted)" : "text-white/58"
                     }`}
                   >
                     {venueName}
@@ -264,17 +270,13 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
 
             <nav
               className={`flex flex-wrap items-center gap-2 text-sm transition-colors lg:justify-center ${
-                isScrolled
-                  ? "text-(--color-text-secondary)"
-                  : "text-white/72"
+                isScrolled ? "text-(--color-text-secondary)" : "text-white/72"
               }`}
             >
               <a
                 href="#book-now"
                 className={`px-3 py-2 font-medium transition ${
-                  isScrolled
-                    ? "hover:text-(--color-brand)"
-                    : "hover:text-white"
+                  isScrolled ? "hover:text-(--color-brand)" : "hover:text-white"
                 }`}
               >
                 Schedule
@@ -282,9 +284,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
               <a
                 href="#gallery"
                 className={`px-3 py-2 font-medium transition ${
-                  isScrolled
-                    ? "hover:text-(--color-brand)"
-                    : "hover:text-white"
+                  isScrolled ? "hover:text-(--color-brand)" : "hover:text-white"
                 }`}
               >
                 Photos
@@ -292,9 +292,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
               <a
                 href="#contact"
                 className={`px-3 py-2 font-medium transition ${
-                  isScrolled
-                    ? "hover:text-(--color-brand)"
-                    : "hover:text-white"
+                  isScrolled ? "hover:text-(--color-brand)" : "hover:text-white"
                 }`}
               >
                 Contact
@@ -302,9 +300,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
               <a
                 href="#venue-info"
                 className={`px-3 py-2 font-medium transition ${
-                  isScrolled
-                    ? "hover:text-(--color-brand)"
-                    : "hover:text-white"
+                  isScrolled ? "hover:text-(--color-brand)" : "hover:text-white"
                 }`}
               >
                 Details
@@ -312,6 +308,15 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
             </nav>
 
             <div className="hidden items-center gap-3 lg:flex">
+              <span
+                className={`rounded-full px-4 py-2 text-sm transition-colors ${
+                  isScrolled
+                    ? "border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.52)] text-(--color-text-secondary)"
+                    : "border border-white/10 bg-white/6 text-white/68"
+                }`}
+              >
+                {contactPhone ?? "Guest-friendly reservations"}
+              </span>
               {loggedInFirstName ? (
                 <span
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
@@ -323,7 +328,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                   Hello, {loggedInFirstName}!
                 </span>
               ) : null}
-              {!loggedInFirstName ? (
+              {!isAuthenticated ? (
                 <Link
                   href={loginHref}
                   className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold transition ${
@@ -346,15 +351,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                   Account
                 </Link>
               )}
-              <span
-                className={`rounded-full px-4 py-2 text-sm transition-colors ${
-                  isScrolled
-                    ? "border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.52)] text-(--color-text-secondary)"
-                    : "border border-white/10 bg-white/6 text-white/68"
-                }`}
-              >
-                {contactPhone ?? "Guest-friendly reservations"}
-              </span>
+
               <a
                 href="#book-now"
                 className="inline-flex min-h-11 items-center justify-center rounded-full bg-(--color-brand-accent) px-5 py-2.5 text-sm font-semibold text-(--color-brand-strong) transition hover:bg-(--color-brand-accent-hover)"
@@ -367,6 +364,30 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
       </header>
     </>
   );
+}
+
+async function syncAuthenticatedUserState(
+  supabase: ReturnType<typeof createPublicSupabaseClient>,
+  userId: string | null,
+  userMetadata: unknown,
+  setIsAuthenticated: (value: boolean) => void,
+  setLoggedInFirstName: (value: string | null) => void,
+) {
+  if (!userId) {
+    setIsAuthenticated(false);
+    setLoggedInFirstName(null);
+    return;
+  }
+
+  setIsAuthenticated(true);
+
+  const metadataFirstName = getSessionFirstName(userMetadata);
+  if (metadataFirstName) {
+    setLoggedInFirstName(metadataFirstName);
+    return;
+  }
+
+  setLoggedInFirstName(await fetchProfileFirstName(supabase, userId));
 }
 
 function getSessionFirstName(userMetadata: unknown) {
@@ -388,4 +409,49 @@ function getSessionFirstName(userMetadata: unknown) {
 
   const firstName = displayName.trim().split(/\s+/)[0];
   return firstName || null;
+}
+
+async function fetchProfileFirstName(
+  supabase: ReturnType<typeof createPublicSupabaseClient>,
+  userId: string,
+) {
+  try {
+    const { data } = await supabase
+      .from("profiles")
+      .select("first_name,last_name,full_name,display_name,name")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!data || typeof data !== "object") {
+      return null;
+    }
+
+    const profile = data as Record<string, unknown>;
+    const displayName =
+      stringOrNull(profile.full_name) ||
+      joinNameParts(profile.first_name, profile.last_name) ||
+      stringOrNull(profile.display_name) ||
+      stringOrNull(profile.name);
+
+    if (!displayName) {
+      return null;
+    }
+
+    const firstName = displayName.split(/\s+/)[0]?.trim();
+    return firstName || null;
+  } catch {
+    return null;
+  }
+}
+
+function stringOrNull(value: unknown) {
+  const normalized = typeof value === "string" ? value.trim() : "";
+  return normalized || null;
+}
+
+function joinNameParts(firstName: unknown, lastName: unknown) {
+  const parts = [stringOrNull(firstName), stringOrNull(lastName)].filter(
+    Boolean,
+  );
+  return parts.join(" ").trim() || null;
 }
