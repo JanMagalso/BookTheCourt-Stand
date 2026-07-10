@@ -536,7 +536,7 @@ function normalizeBookingStatus(booking: BookingRow): Exclude<BookingStatus, "av
     new Date(booking.hold_expires_at).getTime() > Date.now() &&
     !booking.payment_receipt_url
   ) {
-    return "pending";
+    return "hold";
   }
 
   if (
@@ -576,8 +576,9 @@ async function releaseExpiredHolds(
   await supabase
     .from("bookings")
     .delete()
-    .eq("status", "on_hold")
-    .lte("hold_expires_at", nowIso);
+    .in("status", ["on_hold", "hold", "pending"])
+    .lte("hold_expires_at", nowIso)
+    .is("payment_receipt_url", null);
 }
 
 export function formatCurrency(value: number) {

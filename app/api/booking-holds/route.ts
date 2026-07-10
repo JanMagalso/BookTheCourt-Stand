@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     );
   }
 
-    const rows = selectedBlocks.map((block) => ({
+  const rows = selectedBlocks.map((block) => ({
     court_id: block.courtId,
     player_id: playerResult.playerId,
     reservation_name: reservationName,
@@ -239,7 +239,7 @@ async function findOverlappingBookings(
     .from("bookings")
     .select("court_id, starts_at, ends_at, status, hold_expires_at, payment_receipt_url")
     .in("court_id", courtIds)
-    .in("status", ["on_hold", "pending", "confirmed", "booked"])
+    .in("status", ["on_hold", "hold", "pending", "confirmed", "booked", "rebooked", "reserved"])
     .lt("starts_at", latestEnd ?? earliestStart)
     .gt("ends_at", earliestStart ?? latestEnd);
 
@@ -248,13 +248,16 @@ async function findOverlappingBookings(
   }
 
   return (data ?? []).some((booking) => {
+    const normalizedStatus = String(booking.status ?? "").trim().toLowerCase();
     const activeStatus =
-      (booking.status === "on_hold" &&
+      ((normalizedStatus === "on_hold" || normalizedStatus === "hold") &&
         Boolean(booking.hold_expires_at) &&
         new Date(booking.hold_expires_at).getTime() > Date.now()) ||
-      booking.status === "confirmed" ||
-      booking.status === "booked" ||
-      (booking.status === "pending" &&
+      normalizedStatus === "confirmed" ||
+      normalizedStatus === "booked" ||
+      normalizedStatus === "rebooked" ||
+      normalizedStatus === "reserved" ||
+      (normalizedStatus === "pending" &&
         (!booking.hold_expires_at ||
           new Date(booking.hold_expires_at).getTime() > Date.now() ||
           booking.payment_receipt_url));

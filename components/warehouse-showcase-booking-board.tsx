@@ -1012,6 +1012,8 @@ export function WarehouseShowcaseBookingBoard({
                           );
                           const isSelected =
                             selectedCourtIds.has(selectedSlotKey);
+                          const isHeldSelection =
+                            hasActiveHold && isSelected;
                           const selectedSlot = {
                             courtId: courtSlot.courtId,
                             courtName: courtSlot.courtName,
@@ -1025,7 +1027,8 @@ export function WarehouseShowcaseBookingBoard({
 
                           return (
                             <div key={slotKey} className="daily-grid-cell">
-                              {courtSlot.status === "available" ? (
+                              {courtSlot.status === "available" &&
+                              !isHeldSelection ? (
                                 <button
                                   type="button"
                                   onClick={() => toggleSlot(selectedSlot)}
@@ -1053,19 +1056,23 @@ export function WarehouseShowcaseBookingBoard({
                               ) : (
                                 <div
                                   className={`flex h-full min-h-[58px] w-full flex-col items-center justify-center rounded-[0.8rem] border px-1 text-center ${getSlotStatusClasses(
-                                    courtSlot.status,
+                                    isHeldSelection ? "hold" : courtSlot.status,
                                   )}`}
                                 >
                                   <span className="line-clamp-2 text-[10px] font-semibold">
                                     {getSlotDisplayLabel(
-                                      courtSlot.status,
-                                      courtSlot.label,
+                                      isHeldSelection ? "hold" : courtSlot.status,
+                                      isHeldSelection
+                                        ? formState.reservationName || courtSlot.label
+                                        : courtSlot.label,
                                     )}
                                   </span>
                                   <span className="mt-1 text-[9px] font-medium opacity-80">
                                     {getSlotStatusDetail(
-                                      courtSlot.status,
-                                      courtSlot.label,
+                                      isHeldSelection ? "hold" : courtSlot.status,
+                                      isHeldSelection
+                                        ? formState.reservationName || courtSlot.label
+                                        : courtSlot.label,
                                     )}
                                   </span>
                                 </div>
@@ -1147,6 +1154,8 @@ export function WarehouseShowcaseBookingBoard({
                           );
                           const isSelected =
                             selectedCourtIds.has(selectedSlotKey);
+                          const isHeldSelection =
+                            hasActiveHold && isSelected;
                           const selectedSlot = {
                             courtId: courtSlot.courtId,
                             courtName: courtSlot.courtName,
@@ -1163,7 +1172,8 @@ export function WarehouseShowcaseBookingBoard({
                               key={slotKey}
                               className="booking-matrix-slot-cell"
                             >
-                              {courtSlot.status === "available" ? (
+                              {courtSlot.status === "available" &&
+                              !isHeldSelection ? (
                                 <button
                                   type="button"
                                   onClick={() => toggleSlot(selectedSlot)}
@@ -1191,19 +1201,23 @@ export function WarehouseShowcaseBookingBoard({
                               ) : (
                                 <div
                                   className={`flex h-full min-h-[72px] w-full flex-col items-center justify-center rounded-[0.95rem] border px-2 text-center ${getSlotStatusClasses(
-                                    courtSlot.status,
+                                    isHeldSelection ? "hold" : courtSlot.status,
                                   )}`}
                                 >
                                   <span className="line-clamp-2 text-sm font-semibold">
                                     {getSlotDisplayLabel(
-                                      courtSlot.status,
-                                      courtSlot.label,
+                                      isHeldSelection ? "hold" : courtSlot.status,
+                                      isHeldSelection
+                                        ? formState.reservationName || courtSlot.label
+                                        : courtSlot.label,
                                     )}
                                   </span>
                                   <span className="mt-1 text-[11px] font-medium opacity-80">
                                     {getSlotStatusDetail(
-                                      courtSlot.status,
-                                      courtSlot.label,
+                                      isHeldSelection ? "hold" : courtSlot.status,
+                                      isHeldSelection
+                                        ? formState.reservationName || courtSlot.label
+                                        : courtSlot.label,
                                     )}
                                   </span>
                                 </div>
