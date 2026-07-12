@@ -130,6 +130,10 @@ export function WarehouseShowcaseBookingBoard({
     holdExpiresAt && holdCountdown.totalSeconds > 0,
   );
   const effectiveSnapshot = useMemo(() => {
+    if (bookings === currentSnapshot.bookings) {
+      return currentSnapshot;
+    }
+
     const nextSnapshot = {
       ...currentSnapshot,
       bookings,
