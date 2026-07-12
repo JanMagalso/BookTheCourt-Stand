@@ -418,7 +418,7 @@ async function fetchProfileFirstName(
   try {
     const { data } = await supabase
       .from("profiles")
-      .select("first_name,last_name,full_name,display_name,name")
+      .select("first_name,last_name,full_name,display_name")
       .eq("id", userId)
       .maybeSingle();
 
@@ -430,8 +430,7 @@ async function fetchProfileFirstName(
     const displayName =
       stringOrNull(profile.full_name) ||
       joinNameParts(profile.first_name, profile.last_name) ||
-      stringOrNull(profile.display_name) ||
-      stringOrNull(profile.name);
+      stringOrNull(profile.display_name);
 
     if (!displayName) {
       return null;

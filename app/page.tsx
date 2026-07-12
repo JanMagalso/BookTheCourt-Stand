@@ -55,8 +55,8 @@ export default async function Home() {
           contactPhone={venue.contactPhone}
         />
 
-        <div className="relative mx-auto flex min-h-[640px] w-full max-w-[1680px] flex-col px-4 pb-12 pt-24 sm:min-h-[760px] sm:px-6 sm:pb-24 sm:pt-28 lg:px-10 lg:pt-28">
-          <div className="relative z-10 mt-auto max-w-5xl pb-6 pt-8 sm:pb-12 sm:pt-14 lg:pt-16">
+        <div className="relative mx-auto flex min-h-[640px] w-full max-w-[1680px] flex-col px-4 pb-12 pt-20 sm:min-h-[760px] sm:px-6 sm:pb-24 sm:pt-28 lg:px-10 lg:pt-28">
+          <div className="relative z-10 mt-8 max-w-5xl pb-6 pt-6 sm:mt-auto sm:pb-12 sm:pt-14 lg:pt-16">
             <div className="mb-5 flex flex-wrap items-center gap-2 text-xs text-white/80 sm:mb-6 sm:gap-3 sm:text-sm">
               <span className="rounded-full border border-white/12 bg-white/8 px-3 py-2 backdrop-blur sm:px-4">
                 Reserve Online

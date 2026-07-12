@@ -144,17 +144,6 @@ export function WarehouseShowcaseBookingBoard({
     return nextSnapshot;
   }, [bookings, currentSnapshot]);
   const scheduleRows = effectiveSnapshot.availabilityRows;
-  const totalSelectedHours = groupedBlocks.reduce(
-    (sum, block) => sum + block.hours,
-    0,
-  );
-  const selectedCourtCount = new Set(
-    groupedBlocks.map((block) => block.courtId),
-  ).size;
-  const startingRate = effectiveSnapshot.courts.reduce(
-    (lowest, court) => Math.min(lowest, court.hourlyRatePhp),
-    effectiveSnapshot.courts[0]?.hourlyRatePhp ?? 0,
-  );
   const minSelectableDate = getTodayDateKey();
   const normalizedBookingWindowDays = normalizeBookingWindowDays(
     effectiveSnapshot.venue.bookingWindowDays,
@@ -794,15 +783,17 @@ export function WarehouseShowcaseBookingBoard({
       getSelectedSlotKey(slot.courtId, slot.startTime),
     ),
   );
-  const shouldShowMobileCheckoutBar =
-    isCompactMobile &&
-    (groupedBlocks.length > 0 || hasActiveHold) &&
-    !isPaymentModalOpen;
+  const shouldShowCheckoutBar =
+    (groupedBlocks.length > 0 || hasActiveHold) && !isPaymentModalOpen;
 
   return (
     <div
       className={`space-y-5 ${
-        shouldShowMobileCheckoutBar ? "pb-24" : "pb-6 sm:pb-0"
+        shouldShowCheckoutBar
+          ? isCompactMobile
+            ? "pb-24"
+            : "pb-8"
+          : "pb-6 sm:pb-0"
       }`}
     >
       <div className="w-full">
@@ -1236,75 +1227,60 @@ export function WarehouseShowcaseBookingBoard({
               )}
             </div>
 
-            <div className="sticky bottom-4 z-20 mt-5 hidden rounded-[1.6rem] border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.92)] p-4 shadow-[0_18px_50px_rgba(var(--color-shadow-rgb),0.12)] backdrop-blur-md sm:block sm:p-5">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                <div className="flex-1 rounded-[1.25rem] border border-(--color-border-soft) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.96),rgba(var(--color-surface-rgb),0.72))] px-4 py-4">
-                  {groupedBlocks.length > 0 && (
-                    <>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-(--color-brand)">
-                        Ready to Checkout
-                      </p>
-                      <p className="text-[1.8rem] font-semibold leading-none tracking-[-0.04em] text-(--color-text-primary)">
-                        {selectedCourtCount} court
-                        {selectedCourtCount === 1 ? "" : "s"} selected
-                      </p>
-                      <p className="mt-2 text-sm text-(--color-text-muted)">
-                        {formatDisplayDate(currentSnapshot.selectedDate)}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-(--color-brand-success-deep)">
-                        {formatCurrency(subtotal)} total · {totalSelectedHours}{" "}
-                        hour
-                        {totalSelectedHours === 1 ? "" : "s"}
-                      </p>
-                    </>
-                  )}
+          </div>
+        </div>
+      </div>
 
-                  {groupedBlocks.length === 0 && (
-                    <>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-(--color-text-soft)">
-                        Starts from
-                      </p>
-                      <p className="mt-2 text-[2rem] font-semibold leading-none tracking-[-0.04em] text-(--color-text-primary)">
-                        {formatCurrency(startingRate)}
-                        <span className="ml-1 text-sm font-medium tracking-normal text-(--color-text-soft)">
-                          /hr
-                        </span>
-                      </p>
-                      <p className="mt-2 text-sm text-(--color-text-muted)">
-                        Select one or more slots to start a reservation.
-                      </p>
-                    </>
-                  )}
+      {shouldShowCheckoutBar ? (
+        <BodyPortal>
+          <div className="fixed inset-x-0 bottom-0 z-[1400] border-t border-(--color-border-soft) bg-[linear-gradient(90deg,rgba(var(--color-surface-rgb),0.98),rgba(var(--color-surface-elevated-rgb,var(--color-surface-rgb)),0.96))] px-4 py-4 shadow-[0_-18px_50px_rgba(var(--color-shadow-rgb),0.12)] backdrop-blur-md sm:px-6">
+            <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-3">
+              <div className="flex items-center justify-between gap-3 sm:gap-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-(--color-text-soft)">
+                      {groupedBlocks.length} selection
+                      {groupedBlocks.length === 1 ? "" : "s"}
+                    </p>
+                    {hasActiveHold ? (
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-(--color-brand-success-deep)">
+                        Hold {holdCountdown.label}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="text-2xl font-bold leading-none text-(--color-text-primary) sm:text-[3rem]">
+                    {formatCurrency(subtotal)}
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 xl:justify-end">
-                  {hasActiveHold ? (
-                    <span className="rounded-full border border-(--color-brand-success-border) bg-(--color-surface-success-strong) px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-(--color-brand-success-deep)">
-                      Hold {holdCountdown.label}
-                    </span>
-                  ) : null}
-
+                <div className="flex shrink-0 items-center gap-2 sm:gap-4">
                   <button
                     type="button"
                     onClick={handleManualRelease}
-                    className="inline-flex min-w-[104px] items-center justify-center rounded-full border border-(--color-border) bg-[rgba(var(--color-surface-rgb),0.68)] px-3 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:bg-(--color-surface-soft) sm:min-w-[132px] sm:px-4 sm:py-3"
+                    disabled={isHoldPending || groupedBlocks.length === 0}
+                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.5)] px-5 py-3 text-sm font-semibold text-(--color-text-secondary) transition hover:bg-(--color-surface-soft) disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-14 sm:px-7 sm:text-base"
                   >
                     Clear
                   </button>
                   <button
                     type="button"
+                    disabled={isHoldPending || groupedBlocks.length === 0}
                     onClick={handleContinueToPayment}
-                    disabled={isHoldPending}
-                    className="inline-flex min-w-[132px] items-center justify-center rounded-full bg-(--color-brand-strong) px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(23,53,42,0.22)] transition hover:bg-(--color-brand-strong-hover) disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[160px] sm:px-5"
+                    className="inline-flex min-h-12 items-center justify-center rounded-full bg-(--color-action-secondary) px-7 py-3 text-base font-bold text-white shadow-[0_16px_32px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-(--color-action-secondary-hover) disabled:cursor-not-allowed disabled:bg-(--color-border-panel) disabled:text-(--color-text-soft) disabled:shadow-none sm:min-h-14 sm:px-10 sm:text-[1.05rem]"
                   >
-                    {getCheckoutButtonLabel(isHoldPending, hasActiveHold)}
+                    {isCompactMobile
+                      ? getMobileCheckoutButtonLabel(
+                          isHoldPending,
+                          hasActiveHold,
+                        )
+                      : getCheckoutButtonLabel(isHoldPending, hasActiveHold)}
                   </button>
                 </div>
               </div>
 
               {statusMessage ? (
                 <p
-                  className={`mt-4 text-sm ${
+                  className={`text-sm ${
                     isErrorStatusMessage(statusMessage)
                       ? "font-semibold text-(--color-danger-strong)"
                       : "text-(--color-text-secondary)"
@@ -1313,43 +1289,6 @@ export function WarehouseShowcaseBookingBoard({
                   {statusMessage}
                 </p>
               ) : null}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {shouldShowMobileCheckoutBar ? (
-        <BodyPortal>
-          <div className="fixed inset-x-0 bottom-0 z-[1400] border-t border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.96)] px-4 py-4 shadow-[0_-10px_40px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur sm:px-6">
-            <div className="mx-auto flex w-full max-w-[1680px] items-center justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-(--color-text-soft)">
-                  {groupedBlocks.length} Selection
-                  {groupedBlocks.length === 1 ? "" : "s"}
-                </p>
-                <div className="text-2xl font-bold text-(--color-text-primary)">
-                  {formatCurrency(subtotal)}
-                </div>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleManualRelease}
-                  disabled={isHoldPending || groupedBlocks.length === 0}
-                  className="inline-flex min-h-10 items-center justify-center rounded-full border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.78)] px-3 py-2 text-xs font-semibold text-(--color-text-secondary) transition hover:bg-(--color-surface-soft) disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Clear
-                </button>
-                <button
-                  type="button"
-                  disabled={isHoldPending || groupedBlocks.length === 0}
-                  onClick={handleContinueToPayment}
-                  className="inline-flex shrink-0 items-center justify-center rounded-full bg-(--color-action-secondary) px-6 py-4 text-base font-bold text-white shadow-[0_16px_32px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-(--color-action-secondary-hover) disabled:cursor-not-allowed disabled:bg-(--color-border-panel) disabled:text-(--color-text-soft) disabled:shadow-none sm:px-8"
-                >
-                  {getMobileCheckoutButtonLabel(isHoldPending, hasActiveHold)}
-                </button>
-              </div>
             </div>
           </div>
         </BodyPortal>
@@ -2032,7 +1971,7 @@ async function fetchSignedInProfileDetails(
   try {
     const { data } = await supabase
       .from("profiles")
-      .select("*")
+      .select("first_name,last_name,full_name,display_name,contact_number,phone,mobile")
       .eq("id", userId)
       .maybeSingle();
 
@@ -2044,8 +1983,6 @@ async function fetchSignedInProfileDetails(
     const reservationName =
       stringOrEmpty(profile.full_name) ||
       joinNameParts(profile.first_name, profile.last_name) ||
-      stringOrEmpty(profile.display_name) ||
-      stringOrEmpty(profile.name) ||
       stringOrEmpty(profile.display_name);
     const contactNumber =
       stringOrEmpty(profile.contact_number) ||
