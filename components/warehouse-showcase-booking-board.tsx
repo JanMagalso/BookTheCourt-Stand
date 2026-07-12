@@ -1971,7 +1971,7 @@ async function fetchSignedInProfileDetails(
   try {
     const { data } = await supabase
       .from("profiles")
-      .select("first_name,last_name,full_name,display_name,contact_number,phone,mobile")
+      .select("display_name")
       .eq("id", userId)
       .maybeSingle();
 
@@ -1980,14 +1980,8 @@ async function fetchSignedInProfileDetails(
     }
 
     const profile = data as Record<string, unknown>;
-    const reservationName =
-      stringOrEmpty(profile.full_name) ||
-      joinNameParts(profile.first_name, profile.last_name) ||
-      stringOrEmpty(profile.display_name);
-    const contactNumber =
-      stringOrEmpty(profile.contact_number) ||
-      stringOrEmpty(profile.phone) ||
-      stringOrEmpty(profile.mobile);
+    const reservationName = stringOrEmpty(profile.display_name);
+    const contactNumber = "";
 
     return { reservationName, contactNumber };
   } catch {
@@ -1997,13 +1991,6 @@ async function fetchSignedInProfileDetails(
 
 function stringOrEmpty(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function joinNameParts(firstName: unknown, lastName: unknown) {
-  const parts = [stringOrEmpty(firstName), stringOrEmpty(lastName)].filter(
-    Boolean,
-  );
-  return parts.join(" ").trim();
 }
 
 function saveReservationResumeState(state: ReservationResumeState) {

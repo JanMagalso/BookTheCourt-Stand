@@ -104,6 +104,9 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
     : "rounded-xl px-3 py-3 text-white/82 hover:bg-white/6 hover:text-white";
   const loginHref = "/login?returnTo=%2F";
   const registerHref = "/register?returnTo=%2F";
+  const bookingsHref = isAuthenticated
+    ? "/my-bookings"
+    : "/login?returnTo=%2Fmy-bookings";
 
   return (
     <>
@@ -218,12 +221,21 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                   Details
                 </a>
                 <Link
-                  href={loginHref}
+                  href={bookingsHref}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`text-left font-medium transition ${mobileChipClassName}`}
                 >
-                  {isAuthenticated ? "Account" : "Login"}
+                  My Bookings
                 </Link>
+                {!isAuthenticated ? (
+                  <Link
+                    href={loginHref}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`text-left font-medium transition ${mobileChipClassName}`}
+                  >
+                    Login
+                  </Link>
+                ) : null}
                 {!isAuthenticated ? (
                   <Link
                     href={registerHref}
@@ -341,14 +353,14 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                 </Link>
               ) : (
                 <Link
-                  href={loginHref}
+                  href={bookingsHref}
                   className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold transition ${
                     isScrolled
                       ? "border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.52)] text-(--color-text-secondary) hover:border-(--color-brand) hover:text-(--color-brand)"
                       : "border border-white/10 bg-white/6 text-white/78 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  Account
+                  My Bookings
                 </Link>
               )}
 
@@ -418,7 +430,7 @@ async function fetchProfileFirstName(
   try {
     const { data } = await supabase
       .from("profiles")
-      .select("first_name,last_name,full_name,display_name")
+      .select("display_name")
       .eq("id", userId)
       .maybeSingle();
 
@@ -427,10 +439,7 @@ async function fetchProfileFirstName(
     }
 
     const profile = data as Record<string, unknown>;
-    const displayName =
-      stringOrNull(profile.full_name) ||
-      joinNameParts(profile.first_name, profile.last_name) ||
-      stringOrNull(profile.display_name);
+    const displayName = stringOrNull(profile.display_name);
 
     if (!displayName) {
       return null;
@@ -446,11 +455,4 @@ async function fetchProfileFirstName(
 function stringOrNull(value: unknown) {
   const normalized = typeof value === "string" ? value.trim() : "";
   return normalized || null;
-}
-
-function joinNameParts(firstName: unknown, lastName: unknown) {
-  const parts = [stringOrNull(firstName), stringOrNull(lastName)].filter(
-    Boolean,
-  );
-  return parts.join(" ").trim() || null;
 }

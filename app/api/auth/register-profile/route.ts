@@ -4,9 +4,7 @@ import { createSupabaseServiceClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type RegisterProfilePayload = {
   userId?: string;
-  firstName?: string;
-  lastName?: string;
-  contactNumber?: string;
+  displayName?: string;
 };
 
 export async function POST(request: Request) {
@@ -19,11 +17,9 @@ export async function POST(request: Request) {
 
   const payload = (await request.json()) as RegisterProfilePayload;
   const userId = String(payload.userId ?? "").trim();
-  const firstName = String(payload.firstName ?? "").trim();
-  const lastName = String(payload.lastName ?? "").trim();
-  const contactNumber = String(payload.contactNumber ?? "").trim();
+  const displayName = String(payload.displayName ?? "").trim();
 
-  if (!userId || !firstName || !lastName || !contactNumber) {
+  if (!userId || !displayName) {
     return NextResponse.json(
       { error: "Missing required profile details." },
       { status: 400 },
@@ -31,16 +27,12 @@ export async function POST(request: Request) {
   }
 
   const supabaseAdmin = createSupabaseServiceClient();
-  const fullName = `${firstName} ${lastName}`.trim();
 
   const { error } = await supabaseAdmin.from("profiles").upsert(
     {
       id: userId,
       role: "player",
-      first_name: firstName,
-      last_name: lastName,
-      full_name: fullName,
-      contact_number: contactNumber,
+      display_name: displayName,
     },
     { onConflict: "id" },
   );

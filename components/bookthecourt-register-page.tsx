@@ -27,8 +27,7 @@ export function BookTheCourtRegisterPage({
     const searchParams = new URLSearchParams(window.location.search);
     return sanitizeReturnPath(searchParams.get("returnTo"));
   });
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,8 +46,7 @@ export function BookTheCourtRegisterPage({
     }
 
     if (
-      !firstName.trim() ||
-      !lastName.trim() ||
+      !displayName.trim() ||
       !contactNumber.trim() ||
       !email.trim() ||
       !password
@@ -70,20 +68,17 @@ export function BookTheCourtRegisterPage({
     setIsPending(true);
     setStatusMessage("");
 
-    const trimmedFirstName = firstName.trim();
-    const trimmedLastName = lastName.trim();
+    const trimmedDisplayName = displayName.trim();
     const trimmedContactNumber = contactNumber.trim();
     const trimmedEmail = email.trim();
-    const fullName = `${trimmedFirstName} ${trimmedLastName}`.trim();
 
     const { data, error } = await supabase.auth.signUp({
       email: trimmedEmail,
       password,
       options: {
         data: {
-          full_name: fullName,
-          first_name: trimmedFirstName,
-          last_name: trimmedLastName,
+          display_name: trimmedDisplayName,
+          full_name: trimmedDisplayName,
           contact_number: trimmedContactNumber,
           phone: trimmedContactNumber,
         },
@@ -103,8 +98,7 @@ export function BookTheCourtRegisterPage({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         userId: data.user.id,
-        firstName: trimmedFirstName,
-        lastName: trimmedLastName,
+        displayName: trimmedDisplayName,
         contactNumber: trimmedContactNumber,
       }),
     });
@@ -205,28 +199,16 @@ export function BookTheCourtRegisterPage({
             </div>
 
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="grid gap-2 text-sm font-medium text-(--color-text-secondary)">
-                  First name
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(event) => setFirstName(event.target.value)}
-                    placeholder="Juan"
-                    className="h-12 rounded-xl border border-(--color-border-panel) bg-[rgba(var(--color-surface-rgb),0.82)] px-4 text-(--color-text-primary) outline-none transition placeholder:text-(--color-text-soft) focus:border-(--color-action-primary) focus:ring-2 focus:ring-(--color-action-info-soft)"
-                  />
-                </label>
-                <label className="grid gap-2 text-sm font-medium text-(--color-text-secondary)">
-                  Last name
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(event) => setLastName(event.target.value)}
-                    placeholder="Dela Cruz"
-                    className="h-12 rounded-xl border border-(--color-border-panel) bg-[rgba(var(--color-surface-rgb),0.82)] px-4 text-(--color-text-primary) outline-none transition placeholder:text-(--color-text-soft) focus:border-(--color-action-primary) focus:ring-2 focus:ring-(--color-action-info-soft)"
-                  />
-                </label>
-              </div>
+              <label className="grid gap-2 text-sm font-medium text-(--color-text-secondary)">
+                Full name
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  placeholder="Juan Dela Cruz"
+                  className="h-12 rounded-xl border border-(--color-border-panel) bg-[rgba(var(--color-surface-rgb),0.82)] px-4 text-(--color-text-primary) outline-none transition placeholder:text-(--color-text-soft) focus:border-(--color-action-primary) focus:ring-2 focus:ring-(--color-action-info-soft)"
+                />
+              </label>
 
               <label className="grid gap-2 text-sm font-medium text-(--color-text-secondary)">
                 Contact number
