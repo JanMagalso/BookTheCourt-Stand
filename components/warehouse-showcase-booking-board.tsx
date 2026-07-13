@@ -13,10 +13,12 @@ import {
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
+import { LoadingImage } from "@/components/loading-image";
 import {
   formatCurrency,
   getAvailabilityRows,
   type BookingSlot,
+  type PaymentOption,
   type VenueSnapshot,
 } from "@/lib/site-data";
 import { createPublicSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
@@ -110,6 +112,7 @@ export function WarehouseShowcaseBookingBoard({
   const [isHoldPending, setIsHoldPending] = useState(false);
   const [isDateNavigating, setIsDateNavigating] = useState(false);
   const [isUploadDragging, setIsUploadDragging] = useState(false);
+  const [isPaymentMethodSwitching, setIsPaymentMethodSwitching] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("guest");
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [authStatusMessage, setAuthStatusMessage] = useState("");
@@ -160,6 +163,22 @@ export function WarehouseShowcaseBookingBoard({
     formState.acceptedTerms &&
     formState.acceptedProceed &&
     formState.acceptedFeePolicy;
+  const paymentOptions = useMemo(
+    () => getDisplayPaymentOptions(currentSnapshot),
+    [currentSnapshot],
+  );
+  const selectedPaymentMethodKey =
+    paymentOptions.find((option) => option.methodKey === formState.paymentMethod)
+      ?.methodKey ??
+    paymentOptions[0]?.methodKey ??
+    formState.paymentMethod;
+  const selectedPaymentOption = useMemo(
+    () =>
+      paymentOptions.find(
+        (option) => option.methodKey === selectedPaymentMethodKey,
+      ) ?? paymentOptions[0],
+    [paymentOptions, selectedPaymentMethodKey],
+  );
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 640px)");
@@ -170,6 +189,18 @@ export function WarehouseShowcaseBookingBoard({
 
     return () => mediaQuery.removeEventListener("change", syncViewport);
   }, []);
+
+  useEffect(() => {
+    if (!isPaymentMethodSwitching) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setIsPaymentMethodSwitching(false);
+    }, 900);
+
+    return () => window.clearTimeout(timeout);
+  }, [isPaymentMethodSwitching]);
 
   useEffect(() => {
     if (!supabase) {
@@ -631,6 +662,15 @@ export function WarehouseShowcaseBookingBoard({
     setFormState((current) => ({ ...current, [key]: value }));
   }
 
+  function updatePaymentMethod(methodKey: string) {
+    if (methodKey === formState.paymentMethod) {
+      return;
+    }
+
+    setIsPaymentMethodSwitching(true);
+    updateField("paymentMethod", methodKey);
+  }
+
   async function continueToPaymentStep() {
     setStatusMessage("");
 
@@ -774,7 +814,7 @@ export function WarehouseShowcaseBookingBoard({
         payload.set("fullName", formState.reservationName);
         payload.set("contactEmail", formState.contactEmail);
         payload.set("contactNumber", formState.contactNumber);
-        payload.set("paymentMethod", formState.paymentMethod);
+        payload.set("paymentMethod", selectedPaymentMethodKey);
         payload.set("paymentReference", formState.paymentReference);
         payload.set("notes", "");
         payload.set("acceptedTerms", String(formState.acceptedTerms));
@@ -1689,21 +1729,107 @@ export function WarehouseShowcaseBookingBoard({
                       </>
                     ) : (
                       <>
-                        <div className="grid gap-5 md:grid-cols-2">
-                          <label className="grid gap-2 text-sm font-medium text-[color:var(--color-text-secondary)]">
-                            Payment method
-                            <select
-                              value={formState.paymentMethod}
-                              onChange={(event) =>
-                                updateField("paymentMethod", event.target.value)
-                              }
-                              className="h-12 rounded-lg border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] px-4 text-[color:var(--color-text-primary)] outline-none transition focus:border-[color:var(--color-action-primary)] focus:ring-2 focus:ring-[color:var(--color-action-info-soft)]"
-                            >
-                              <option value="gcash">GCash</option>
-                              <option value="paymaya">PayMaya</option>
-                              <option value="bank">Bank Transfer</option>
-                            </select>
-                          </label>
+                        <div className="grid gap-5">
+                          <div className="grid gap-2 text-sm font-medium text-[color:var(--color-text-secondary)]">
+                            <p>Payment method</p>
+                            <div className="flex flex-wrap gap-2">
+                              {paymentOptions.map((option) => {
+                                const isSelected =
+                                  option.methodKey ===
+                                  selectedPaymentOption?.methodKey;
+
+                                return (
+                                  <button
+                                    key={option.methodKey}
+                                    type="button"
+                                    onClick={() =>
+                                      updatePaymentMethod(option.methodKey)
+                                    }
+                                    aria-pressed={isSelected}
+                                    className={`inline-flex min-h-11 items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                                      isSelected
+                                        ? "border-[color:var(--color-action-primary)] bg-[color:var(--color-action-primary)] text-white shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.18)]"
+                                        : "border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-action-primary)] hover:text-[color:var(--color-text-primary)]"
+                                    }`}
+                                  >
+                                    {option.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="grid gap-3 rounded-[1.25rem] border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] p-4 sm:p-5">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-[color:var(--color-text-primary)]">
+                                  Scan to pay with{" "}
+                                  {selectedPaymentOption?.label ??
+                                    "your selected method"}
+                                </p>
+                                <p className="mt-1 text-xs leading-5 text-[color:var(--color-text-muted)]">
+                                  The QR updates when you choose a different
+                                  payment pill.
+                                </p>
+                              </div>
+                              {isPaymentMethodSwitching ? (
+                                <span className="inline-flex items-center rounded-full bg-[color:var(--color-surface-info)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-action-primary)]">
+                                  Loading...
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <div className="relative overflow-hidden rounded-[1rem] border border-[color:var(--color-border-panel-soft)] bg-[color:var(--color-surface-soft)]">
+                              <div
+                                className={`absolute inset-0 z-10 flex items-center justify-center bg-[rgba(var(--color-surface-rgb),0.72)] backdrop-blur-[2px] transition ${
+                                  isPaymentMethodSwitching
+                                    ? "pointer-events-auto opacity-100"
+                                    : "pointer-events-none opacity-0"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 rounded-full border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.92)] px-4 py-2 text-sm font-semibold text-[color:var(--color-text-primary)] shadow-[0_10px_24px_rgba(var(--color-shadow-rgb),0.08)]">
+                                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[color:var(--color-action-primary)]" />
+                                  Switching payment method
+                                </div>
+                              </div>
+
+                              {selectedPaymentOption?.qrUrl ? (
+                                <LoadingImage
+                                  src={selectedPaymentOption.qrUrl}
+                                  alt={`${selectedPaymentOption.label} QR code`}
+                                  width={720}
+                                  height={720}
+                                  unoptimized
+                                  wrapperClassName="aspect-square w-full bg-white"
+                                  className="h-full w-full object-contain"
+                                  skeletonClassName="bg-[image:var(--gradient-loading-neutral)]"
+                                  onLoad={() =>
+                                    setIsPaymentMethodSwitching(false)
+                                  }
+                                  onError={() =>
+                                    setIsPaymentMethodSwitching(false)
+                                  }
+                                />
+                              ) : (
+                                <div className="flex aspect-square w-full flex-col items-center justify-center px-6 py-8 text-center">
+                                  <div className="rounded-full bg-[color:var(--color-surface-info)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-action-primary)]">
+                                    QR unavailable
+                                  </div>
+                                  <p className="mt-4 text-sm font-semibold text-[color:var(--color-text-primary)]">
+                                    No QR image has been uploaded for{" "}
+                                    {selectedPaymentOption?.label ??
+                                      "this payment method"}
+                                    .
+                                  </p>
+                                  <p className="mt-2 max-w-xs text-xs leading-5 text-[color:var(--color-text-muted)]">
+                                    The user can still upload proof after paying
+                                    manually, but adding the QR in BookTheCourt
+                                    owner settings will make checkout smoother.
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
 
                           <label className="grid gap-2 text-sm font-medium text-[color:var(--color-text-secondary)]">
                             Reference ID (optional)
@@ -1791,11 +1917,7 @@ export function WarehouseShowcaseBookingBoard({
                           <p className="mt-2 leading-6">
                             Upload the screenshot of your payment after sending
                             the amount through{" "}
-                            {formState.paymentMethod === "gcash"
-                              ? "GCash"
-                              : formState.paymentMethod === "paymaya"
-                                ? "PayMaya"
-                                : "Bank Transfer"}
+                            {selectedPaymentOption?.label ?? "your selected method"}
                             . Your reservation will be marked pending until the
                             venue verifies it.
                           </p>
@@ -2440,6 +2562,18 @@ function getSlotStatusClasses(
   }
 
   return "border-[color:var(--color-border-neutral-100)] bg-[repeating-linear-gradient(-45deg,color-mix(in srgb,var(--color-surface) 92%, transparent),color-mix(in srgb,var(--color-surface) 92%, transparent)_10px,color-mix(in srgb,var(--color-surface-soft) 92%, transparent)_10px,color-mix(in srgb,var(--color-surface-soft) 92%, transparent)_20px)] text-[color:var(--color-text-secondary)]";
+}
+
+function getDisplayPaymentOptions(snapshot: VenueSnapshot): PaymentOption[] {
+  if (snapshot.venue.paymentOptions.length > 0) {
+    return snapshot.venue.paymentOptions;
+  }
+
+  return [
+    { methodKey: "gcash", label: "GCash", qrUrl: null },
+    { methodKey: "paymaya", label: "PayMaya", qrUrl: null },
+    { methodKey: "bank", label: "Bank Transfer", qrUrl: null },
+  ];
 }
 
 function timeToMinutes(value: string) {

@@ -16,6 +16,7 @@ export type Venue = {
   socialLinks: Array<{ label: string; href: string }>;
   galleryImages: string[];
   paymentMethod: string;
+  paymentOptions: PaymentOption[];
   cancellationPolicy: string;
   contactEmail?: string | null;
   contactPhone?: string | null;
@@ -78,6 +79,12 @@ export type BookingSlot = {
 export type FaqEntry = {
   question: string;
   answer: string;
+};
+
+export type PaymentOption = {
+  methodKey: string;
+  label: string;
+  qrUrl?: string | null;
 };
 
 export type VenueSnapshot = {
@@ -149,6 +156,7 @@ type BookingRow = {
 type OwnerPaymentMethodRow = {
   label: string | null;
   method_key: string;
+  qr_url?: string | null;
 };
 
 type CourtPricingRuleRow = {
@@ -186,6 +194,11 @@ const fallbackSnapshot: VenueSnapshot = {
     ],
     galleryImages: [],
     paymentMethod: "GCash",
+    paymentOptions: [
+      { methodKey: "gcash", label: "GCash", qrUrl: null },
+      { methodKey: "paymaya", label: "PayMaya", qrUrl: null },
+      { methodKey: "bank", label: "Bank Transfer", qrUrl: null },
+    ],
     cancellationPolicy:
       "Reservations are final once payment has been confirmed. Rescheduling can be reviewed for severe weather or other exceptional circumstances.",
     contactEmail: null,
@@ -319,8 +332,8 @@ export async function getVenueSnapshot(
         .lt("starts_at", endOfDayIso(resolvedDate)),
       warehouse.owner_id
         ? supabase
-            .from("owner_payment_methods")
-            .select("label, method_key")
+          .from("owner_payment_methods")
+            .select("label, method_key, qr_url")
             .eq("owner_id", warehouse.owner_id)
             .eq("is_active", true)
             .order("sort_order", { ascending: true })
@@ -408,6 +421,7 @@ function cloneSnapshotForDate(snapshot: VenueSnapshot, selectedDate: string): Ve
       ...snapshot.venue,
       socialLinks: [...snapshot.venue.socialLinks],
       galleryImages: [...snapshot.venue.galleryImages],
+      paymentOptions: snapshot.venue.paymentOptions.map((option) => ({ ...option })),
       amenities: [...snapshot.venue.amenities],
       operatingHours: snapshot.venue.operatingHours
         ? snapshot.venue.operatingHours.map((group) => ({ ...group, days: [...group.days] }))
@@ -439,6 +453,14 @@ function mapVenueFromWarehouse(
     fallbackSnapshot.venue.hourlyRate;
   const paymentMethod =
     paymentMethods[0]?.label ?? paymentMethods[0]?.method_key ?? fallbackSnapshot.venue.paymentMethod;
+  const paymentOptions =
+    paymentMethods.length > 0
+      ? paymentMethods.map((method) => ({
+          methodKey: method.method_key,
+          label: method.label?.trim() || humanizePaymentMethodKey(method.method_key),
+          qrUrl: method.qr_url?.trim() || null,
+        }))
+      : fallbackSnapshot.venue.paymentOptions;
   const indoorCourtCount = courts.filter((court) => court.is_indoor === true).length;
   const outdoorCourtCount = Math.max(0, courts.length - indoorCourtCount);
   const hasNightLighting = courts.some((court) => court.has_night_lighting === true);
@@ -459,6 +481,7 @@ function mapVenueFromWarehouse(
         ? warehouse.gallery_urls
         : fallbackSnapshot.venue.galleryImages,
     paymentMethod,
+    paymentOptions,
     cancellationPolicy: fallbackSnapshot.venue.cancellationPolicy,
     contactEmail: warehouse.contact_email,
     contactPhone: warehouse.contact_phone,
@@ -476,6 +499,28 @@ function mapVenueFromWarehouse(
     outdoorCourtCount,
     operatingHours: normalizeOperatingHours(warehouse.operating_hours),
   };
+}
+
+function humanizePaymentMethodKey(methodKey: string) {
+  const normalized = methodKey.trim().toLowerCase();
+
+  if (normalized === "gcash") {
+    return "GCash";
+  }
+
+  if (normalized === "paymaya") {
+    return "PayMaya";
+  }
+
+  if (normalized === "bank") {
+    return "Bank Transfer";
+  }
+
+  return methodKey
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
 }
 
 function formatOperatingHours(value: unknown) {
