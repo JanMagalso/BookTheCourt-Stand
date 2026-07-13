@@ -36,6 +36,20 @@ type BookingRequestPayload = {
   holdIds: string[];
 };
 
+type OwnerNotificationInput = {
+  warehouseId: string;
+  payload: BookingRequestPayload;
+  bookings: Array<{
+    id: string;
+    court_id: string;
+    reservation_name: string | null;
+    starts_at: string;
+    ends_at: string;
+    status: string;
+  }>;
+  paymentReceiptUrl: string;
+};
+
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
     return NextResponse.json(
@@ -138,7 +152,12 @@ export async function POST(request: Request) {
     const bookingMutation = buildBookingMutation(payload, uploadResult);
     const bookingRows =
       payload.holdIds.length > 0
-        ? await updateHeldBookings(supabaseAdmin, payload.holdIds, bookingMutation)
+        ? await updateHeldBookings(
+            supabaseAdmin,
+            payload.holdIds,
+            bookingMutation,
+            playerResult.playerId,
+          )
         : await insertPendingBookings(
             supabaseAdmin,
             payload,
@@ -152,6 +171,15 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    void sendOwnerBookingNotification(supabaseAdmin, {
+      warehouseId,
+      payload,
+      bookings: bookingRows.bookings,
+      paymentReceiptUrl: uploadResult.paymentReceiptUrl,
+    }).catch((error) => {
+      console.error("owner booking notification failed", error);
+    });
 
     return NextResponse.json({
       message: "Booking submitted. Payment proof uploaded and pending verification.",
@@ -262,6 +290,133 @@ function validatePaymentProof(file: File) {
   }
 
   return { ok: true as const };
+}
+
+async function sendOwnerBookingNotification(
+  supabaseAdmin: ReturnType<typeof createSupabaseServiceClient>,
+  input: OwnerNotificationInput,
+) {
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  const fromEmail =
+    process.env.OWNER_NOTIFICATION_FROM_EMAIL?.trim() ||
+    process.env.RESEND_FROM_EMAIL?.trim();
+
+  if (!resendApiKey || !fromEmail) {
+    return;
+  }
+
+  const { data: warehouse } = await supabaseAdmin
+    .from("warehouses")
+    .select("id,name,contact_email")
+    .eq("id", input.warehouseId)
+    .maybeSingle();
+
+  const recipientEmail = String(warehouse?.contact_email ?? "").trim();
+  if (!recipientEmail) {
+    return;
+  }
+
+  const courtIds = Array.from(
+    new Set(input.bookings.map((booking) => String(booking.court_id ?? ""))),
+  ).filter(Boolean);
+
+  const { data: courts } = courtIds.length
+    ? await supabaseAdmin.from("courts").select("id,name").in("id", courtIds)
+    : { data: [] as Array<{ id: string; name: string | null }> };
+
+  const courtNameById = new Map(
+    (courts ?? []).map((court) => [court.id, court.name ?? "Court"]),
+  );
+
+  const venueName = String(warehouse?.name ?? "BookTheCourt Venue").trim();
+  const bookingReference =
+    input.bookings[0] ? String(input.bookings[0].id).slice(0, 8).toUpperCase() : "PENDING";
+
+  const slots = input.bookings.map((booking) => {
+    const courtName =
+      courtNameById.get(String(booking.court_id ?? "")) ?? "Court";
+    return `${courtName}: ${formatOwnerEmailDateTimeRange(
+      booking.starts_at,
+      booking.ends_at,
+    )}`;
+  });
+
+  const subject = `New reservation pending for ${venueName} (${bookingReference})`;
+  const text = [
+    "A new reservation has been submitted and is pending owner approval.",
+    "",
+    `Venue: ${venueName}`,
+    `Booking reference: ${bookingReference}`,
+    `Reservation name: ${input.payload.reservationName}`,
+    `Contact email: ${input.payload.contactEmail || "Not provided"}`,
+    `Contact number: ${input.payload.contactNumber || "Not provided"}`,
+    `Payment method: ${input.payload.paymentMethod || "Not provided"}`,
+    `Payment reference: ${input.payload.paymentReference || "Not provided"}`,
+    "Status: Pending",
+    "",
+    "Selected slots:",
+    ...(slots.length ? slots : ["No slots listed"]),
+    "",
+    `Payment proof: ${input.paymentReceiptUrl}`,
+  ].join("\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937;">
+      <h2 style="margin-bottom: 12px;">New reservation pending approval</h2>
+      <p>A new reservation has been submitted and is pending owner approval.</p>
+      <table style="border-collapse: collapse; margin: 16px 0;">
+        <tbody>
+          <tr><td style="padding: 4px 12px 4px 0;"><strong>Venue</strong></td><td>${escapeHtml(venueName)}</td></tr>
+          <tr><td style="padding: 4px 12px 4px 0;"><strong>Booking reference</strong></td><td>${escapeHtml(bookingReference)}</td></tr>
+          <tr><td style="padding: 4px 12px 4px 0;"><strong>Reservation name</strong></td><td>${escapeHtml(input.payload.reservationName)}</td></tr>
+          <tr><td style="padding: 4px 12px 4px 0;"><strong>Contact email</strong></td><td>${escapeHtml(input.payload.contactEmail || "Not provided")}</td></tr>
+          <tr><td style="padding: 4px 12px 4px 0;"><strong>Contact number</strong></td><td>${escapeHtml(input.payload.contactNumber || "Not provided")}</td></tr>
+          <tr><td style="padding: 4px 12px 4px 0;"><strong>Payment method</strong></td><td>${escapeHtml(input.payload.paymentMethod || "Not provided")}</td></tr>
+          <tr><td style="padding: 4px 12px 4px 0;"><strong>Payment reference</strong></td><td>${escapeHtml(input.payload.paymentReference || "Not provided")}</td></tr>
+          <tr><td style="padding: 4px 12px 4px 0;"><strong>Status</strong></td><td>Pending</td></tr>
+        </tbody>
+      </table>
+      <h3 style="margin: 20px 0 8px;">Selected slots</h3>
+      <ul style="padding-left: 18px;">
+        ${input.bookings
+          .map((booking) => {
+            const courtName =
+              courtNameById.get(String(booking.court_id ?? "")) ?? "Court";
+            return `<li>${escapeHtml(courtName)}: ${escapeHtml(
+              formatOwnerEmailDateTimeRange(booking.starts_at, booking.ends_at),
+            )}</li>`;
+          })
+          .join("")}
+      </ul>
+      <p style="margin-top: 20px;"><a href="${escapeHtml(input.paymentReceiptUrl)}">View payment proof</a></p>
+    </div>
+  `;
+
+  const replyTo =
+    input.payload.contactEmail || process.env.OWNER_NOTIFICATION_REPLY_TO?.trim();
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: fromEmail,
+      to: [recipientEmail],
+      subject,
+      text,
+      html,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(
+      `Resend API returned ${response.status}${errorText ? `: ${errorText}` : ""}`,
+    );
+  }
 }
 
 async function resolveWarehouseId(
@@ -385,10 +540,14 @@ async function updateHeldBookings(
   supabaseAdmin: ReturnType<typeof createSupabaseServiceClient>,
   holdIds: string[],
   mutation: Record<string, unknown>,
+  playerId: string,
 ) {
   const { data, error } = await supabaseAdmin
     .from("bookings")
-    .update(mutation)
+    .update({
+      ...mutation,
+      player_id: playerId,
+    })
     .in("id", holdIds)
     .select("id, court_id, reservation_name, starts_at, ends_at, status");
 
@@ -523,6 +682,33 @@ function formatTimeForSchedule(value: string) {
     parts.find((part) => part.type === "minute")?.value ?? "00";
 
   return `${hours}:${minutes}`;
+}
+
+function formatOwnerEmailDateTimeRange(startValue: string, endValue: string) {
+  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const timeFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  return `${dateFormatter.format(new Date(startValue))}, ${timeFormatter.format(
+    new Date(startValue),
+  )} - ${timeFormatter.format(new Date(endValue))}`;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function getMinuteOffsetForSchedule(playDate: string, value: string) {

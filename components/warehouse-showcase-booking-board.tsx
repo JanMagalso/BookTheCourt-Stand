@@ -56,6 +56,7 @@ type AuthState = {
   email: string;
   accessToken: string;
   displayName: string | null;
+  contactNumber: string;
 };
 
 type ReservationResumeState = {
@@ -116,6 +117,7 @@ export function WarehouseShowcaseBookingBoard({
   const paymentProofInputId = useId();
   const pendingResumeStateRef = useRef<ReservationResumeState | null>(null);
   const paymentModalScrollRef = useRef<HTMLFormElement | null>(null);
+  const skipExpiredHoldReleaseRef = useRef(false);
 
   const groupedBlocks = useMemo(
     () => groupSelectedSlots(selectedSlots),
@@ -205,23 +207,28 @@ export function WarehouseShowcaseBookingBoard({
               ? session.user.user_metadata.mobile
               : (session.user.phone ?? "");
 
-      setAuthState({
-        id: session.user.id,
-        email: session.user.email,
-        accessToken: session.access_token,
-        displayName,
-      });
-      setAuthMode("login");
-      setAuthStatusMessage("Your BookTheCourt account is connected.");
-
       const profileDetails = await fetchSignedInProfileDetails(
         supabase,
         session.user.id,
       );
+      if (!isMounted) {
+        return;
+      }
+
       const resolvedReservationName =
         profileDetails.reservationName || displayName || "";
       const resolvedContactNumber =
         profileDetails.contactNumber || contactNumber;
+
+      setAuthState({
+        id: session.user.id,
+        email: session.user.email,
+        accessToken: session.access_token,
+        displayName: resolvedReservationName || displayName,
+        contactNumber: resolvedContactNumber,
+      });
+      setAuthMode("login");
+      setAuthStatusMessage("Your BookTheCourt account is connected.");
 
       setFormState((current) => ({
         ...current,
@@ -550,6 +557,14 @@ export function WarehouseShowcaseBookingBoard({
   }
 
   useEffect(() => {
+    if (
+      skipExpiredHoldReleaseRef.current ||
+      hasActiveHold ||
+      activeHoldIds.length === 0
+    ) {
+      return;
+    }
+
     if (!hasActiveHold && activeHoldIds.length > 0) {
       const releaseExpiredHold = async () => {
         try {
@@ -582,6 +597,12 @@ export function WarehouseShowcaseBookingBoard({
     }
   }, [activeHoldIds, hasActiveHold, selectedSlots]);
 
+  useEffect(() => {
+    if (activeHoldIds.length === 0) {
+      skipExpiredHoldReleaseRef.current = false;
+    }
+  }, [activeHoldIds]);
+
   function continueToPayment() {
     if (selectedSlots.length === 0) {
       setStatusMessage("Select at least one available slot to continue.");
@@ -613,11 +634,6 @@ export function WarehouseShowcaseBookingBoard({
   async function continueToPaymentStep() {
     setStatusMessage("");
 
-    if (authMode === "login" && !authState) {
-      setStatusMessage("Sign in first or continue as a guest.");
-      return;
-    }
-
     if (!formState.reservationName.trim()) {
       setStatusMessage("Please add the reservation name before continuing.");
       return;
@@ -636,6 +652,48 @@ export function WarehouseShowcaseBookingBoard({
       return;
     }
 
+    let restorableSelection = selectedSlots;
+
+    try {
+      const response = await fetch(
+        `/api/venue-snapshot?date=${encodeURIComponent(
+          currentSnapshot.selectedDate,
+        )}`,
+      );
+      const latestSnapshot = (await response.json()) as VenueSnapshot;
+
+      if (!response.ok || !latestSnapshot?.selectedDate) {
+        setStatusMessage("We could not refresh the latest availability yet.");
+        return;
+      }
+
+      restorableSelection = filterRestorableSlots(
+        selectedSlots,
+        latestSnapshot.availabilityRows,
+      );
+
+      setCurrentSnapshot(latestSnapshot);
+      setBookings(latestSnapshot.bookings);
+
+      if (restorableSelection.length !== selectedSlots.length) {
+        setSelectedSlots(restorableSelection);
+        setStatusMessage(
+          restorableSelection.length > 0
+            ? "Some selected slots were no longer available, so we refreshed your selection."
+            : "Those selected slots are no longer available. Please choose another slot.",
+        );
+      }
+    } catch {
+      setStatusMessage("We could not refresh the latest availability yet.");
+      return;
+    }
+
+    if (restorableSelection.length === 0) {
+      return;
+    }
+
+    const latestGroupedBlocks = groupSelectedSlots(restorableSelection);
+
     setIsHoldPending(true);
 
     try {
@@ -646,7 +704,7 @@ export function WarehouseShowcaseBookingBoard({
           playDate: currentSnapshot.selectedDate,
           reservationName: formState.reservationName,
           authAccessToken: authState?.accessToken ?? "",
-          selectedBlocks: groupedBlocks.map((block) => ({
+          selectedBlocks: latestGroupedBlocks.map((block) => ({
             courtId: block.courtId,
             startTime: block.startTime,
             endTime: block.endTime,
@@ -763,11 +821,21 @@ export function WarehouseShowcaseBookingBoard({
           );
         }
 
+        const nextFormState = authState
+          ? {
+              ...initialFormState,
+              reservationName: authState.displayName || "",
+              contactEmail: authState.email || "",
+              contactNumber: authState.contactNumber || "",
+            }
+          : initialFormState;
+
+        skipExpiredHoldReleaseRef.current = true;
         setStatusMessage(result.message ?? "Booking request saved.");
         setSelectedSlots([]);
-        setFormState(initialFormState);
-        setHoldExpiresAt(null);
+        setFormState(nextFormState);
         setActiveHoldIds([]);
+        setHoldExpiresAt(null);
         setPaymentProofFile(null);
         setIsUploadDragging(false);
         setIsPaymentModalOpen(false);
