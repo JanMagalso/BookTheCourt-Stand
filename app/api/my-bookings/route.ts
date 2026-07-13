@@ -95,28 +95,96 @@ export async function GET(request: Request) {
       warehouse.name ?? "Venue",
     ]),
   );
+  const activeWarehouseId = await resolveActiveWarehouseId(supabaseAdmin);
 
-  return NextResponse.json({
-    bookings: (bookings ?? []).map((booking) => {
-      const court = courtMap.get(String(booking.court_id ?? ""));
-      const venueName = court?.warehouseId
-        ? warehouseMap.get(court.warehouseId) ?? "Venue"
-        : "Venue";
+  const groupedBookings = new Map<
+    string,
+    {
+      id: string;
+      bookingReference: string;
+      reservationName: string;
+      venueName: string;
+      startsAt: string;
+      endsAt: string;
+      status: string;
+      holdExpiresAt: string | null;
+      paymentReceiptUrl: string | null;
+      courts: Array<{
+        courtName: string;
+        startsAt: string;
+        endsAt: string;
+      }>;
+    }
+  >();
 
-      return {
-        id: booking.id,
+  for (const booking of bookings ?? []) {
+    const court = courtMap.get(String(booking.court_id ?? ""));
+    if (!court?.warehouseId || court.warehouseId !== activeWarehouseId) {
+      continue;
+    }
+    const venueName = court?.warehouseId
+      ? warehouseMap.get(court.warehouseId) ?? "Venue"
+      : "Venue";
+    const normalizedStatus = normalizeStatus(booking.status);
+    const receiptKey = String(booking.payment_receipt_url ?? "").trim();
+    const groupingKey = receiptKey || `single:${booking.id}`;
+
+    const existing = groupedBookings.get(groupingKey);
+    const courtEntry = {
+      courtName: court?.name ?? "Court",
+      startsAt: booking.starts_at,
+      endsAt: booking.ends_at,
+    };
+
+    if (!existing) {
+      groupedBookings.set(groupingKey, {
+        id: groupingKey,
         bookingReference: String(booking.id).slice(0, 8).toUpperCase(),
         reservationName: booking.reservation_name ?? "Reservation",
-        courtName: court?.name ?? "Court",
         venueName,
         startsAt: booking.starts_at,
         endsAt: booking.ends_at,
-        status: normalizeStatus(booking.status),
+        status: normalizedStatus,
         holdExpiresAt: booking.hold_expires_at ?? null,
         paymentReceiptUrl: booking.payment_receipt_url ?? null,
-      };
-    }),
+        courts: [courtEntry],
+      });
+      continue;
+    }
+
+    existing.startsAt =
+      new Date(booking.starts_at).getTime() < new Date(existing.startsAt).getTime()
+        ? booking.starts_at
+        : existing.startsAt;
+    existing.endsAt =
+      new Date(booking.ends_at).getTime() > new Date(existing.endsAt).getTime()
+        ? booking.ends_at
+        : existing.endsAt;
+    existing.courts.push(courtEntry);
+  }
+
+  return NextResponse.json({
+    bookings: [...groupedBookings.values()].sort(
+      (left, right) =>
+        new Date(right.startsAt).getTime() - new Date(left.startsAt).getTime(),
+    ),
   });
+}
+
+async function resolveActiveWarehouseId(
+  supabaseAdmin: ReturnType<typeof createSupabaseServiceClient>,
+) {
+  const preferredWarehouseId = process.env.BOOKING_WAREHOUSE_ID?.trim();
+  const warehouseQuery = supabaseAdmin
+    .from("warehouses")
+    .select("id")
+    .eq("booking_enabled", true);
+
+  const { data: warehouse } = preferredWarehouseId
+    ? await warehouseQuery.eq("id", preferredWarehouseId).maybeSingle()
+    : await warehouseQuery.order("created_at", { ascending: true }).limit(1).maybeSingle();
+
+  return warehouse?.id ?? "";
 }
 
 function getBearerToken(authorizationHeader: string | null) {

@@ -11,5 +11,10 @@ export const metadata: Metadata = {
 export default async function MyBookingsPage() {
   const snapshot = await getVenueSnapshot();
 
-  return <BookTheCourtMyBookingsPage venueName={snapshot.venue.name} />;
+  return (
+    <BookTheCourtMyBookingsPage
+      venueName={snapshot.venue.name}
+      contactPhone={snapshot.venue.contactPhone}
+    />
+  );
 }

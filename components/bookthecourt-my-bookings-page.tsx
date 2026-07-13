@@ -4,27 +4,40 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { HeroNav } from "@/components/hero-nav";
 import { createPublicSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type BookTheCourtMyBookingsPageProps = {
   venueName: string;
+  contactPhone?: string | null;
 };
 
 type Reservation = {
   id: string;
   bookingReference: string;
   reservationName: string;
-  courtName: string;
   venueName: string;
   startsAt: string;
   endsAt: string;
   status: string;
   holdExpiresAt: string | null;
   paymentReceiptUrl: string | null;
+  courts: Array<{
+    courtName: string;
+    startsAt: string;
+    endsAt: string;
+  }>;
 };
+
+type ReservationApiRecord = Reservation & {
+  courtName?: string;
+};
+
+type BookingStatusTab = "all" | "pending" | "booked" | "hold" | "cancelled";
 
 export function BookTheCourtMyBookingsPage({
   venueName,
+  contactPhone,
 }: BookTheCourtMyBookingsPageProps) {
   const isSupabaseConfigured = hasSupabaseEnv();
   const supabase = useMemo(
@@ -39,7 +52,7 @@ export function BookTheCourtMyBookingsPage({
       ? ""
       : "BookTheCourt reservations are not available until Supabase auth is configured.",
   );
-  const [currentTime] = useState(() => Date.now());
+  const [activeTab, setActiveTab] = useState<BookingStatusTab>("all");
 
   useEffect(() => {
     if (!supabase) {
@@ -73,7 +86,7 @@ export function BookTheCourtMyBookingsPage({
         });
         const result = (await response.json()) as {
           error?: string;
-          bookings?: Reservation[];
+          bookings?: ReservationApiRecord[];
         };
 
         if (!response.ok) {
@@ -93,7 +106,7 @@ export function BookTheCourtMyBookingsPage({
           return;
         }
 
-        setReservations(result.bookings ?? []);
+        setReservations((result.bookings ?? []).map(normalizeReservation));
         setStatusMessage("");
       } catch {
         if (!isMounted) {
@@ -131,12 +144,14 @@ export function BookTheCourtMyBookingsPage({
     };
   }, [supabase]);
 
-  const upcomingReservations = reservations.filter(
-    (reservation) => new Date(reservation.endsAt).getTime() >= currentTime,
+  const sortedReservations = [...reservations].sort(
+    (left, right) =>
+      new Date(right.startsAt).getTime() - new Date(left.startsAt).getTime(),
   );
-  const pastReservations = reservations.filter(
-    (reservation) => new Date(reservation.endsAt).getTime() < currentTime,
+  const filteredReservations = sortedReservations.filter((reservation) =>
+    matchesStatusTab(reservation.status, activeTab),
   );
+  const activeTabCount = filteredReservations.length;
 
   async function handleSignOut() {
     if (!supabase) {
@@ -151,10 +166,16 @@ export function BookTheCourtMyBookingsPage({
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-(--background) text-(--color-text-primary)">
+      <HeroNav
+        venueName={venueName}
+        contactPhone={contactPhone}
+        sectionBasePath="/"
+        solidOnLoad
+      />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(var(--color-shadow-brand-rgb),0.16),transparent_28%),linear-gradient(135deg,rgba(var(--color-surface-rgb),0.98),rgba(var(--color-surface-rgb),0.82))]" />
       <div className="absolute inset-0 opacity-60 [background-image:var(--gradient-hero-grid)] [background-position:center_center] [background-size:118px_118px]" />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1680px] px-4 py-10 sm:px-6 lg:px-10">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1680px] px-4 pb-10 pt-28 sm:px-6 sm:pb-10 sm:pt-32 lg:px-10 lg:pt-36">
         <div className="w-full">
           <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -257,19 +278,15 @@ export function BookTheCourtMyBookingsPage({
               </section>
 
               <BookingSection
-                title="Upcoming Reservations"
-                description="Sessions that are still active, pending, or upcoming."
-                bookings={upcomingReservations}
+                title="Reservation Status"
+                description="Switch tabs to quickly review pending, booked, on-hold, or cancelled reservations."
+                bookings={filteredReservations}
                 isLoading={isLoading}
-                emptyMessage="You do not have any upcoming BookTheCourt reservations yet."
-              />
-
-              <BookingSection
-                title="Past Reservations"
-                description="Your earlier sessions stay here for quick reference."
-                bookings={pastReservations}
-                isLoading={isLoading}
-                emptyMessage="No past reservations were found for this account yet."
+                emptyMessage={`No ${getEmptyStateLabel(activeTab)} reservations were found for this account yet.`}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                counts={getReservationTabCounts(sortedReservations)}
+                totalCount={activeTabCount}
               />
             </div>
           )}
@@ -285,13 +302,29 @@ function BookingSection({
   bookings,
   isLoading,
   emptyMessage,
+  activeTab,
+  onTabChange,
+  counts,
+  totalCount,
 }: {
   title: string;
   description: string;
   bookings: Reservation[];
   isLoading: boolean;
   emptyMessage: string;
+  activeTab: BookingStatusTab;
+  onTabChange: (tab: BookingStatusTab) => void;
+  counts: Record<BookingStatusTab, number>;
+  totalCount: number;
 }) {
+  const tabs: Array<{ id: BookingStatusTab; label: string }> = [
+    { id: "all", label: "All" },
+    { id: "pending", label: "Pending" },
+    { id: "booked", label: "Booked" },
+    { id: "hold", label: "On Hold" },
+    { id: "cancelled", label: "Cancelled" },
+  ];
+
   return (
     <section className="rounded-[2rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.86)] p-6 shadow-[0_28px_90px_rgba(var(--color-shadow-brand-rgb),0.16)] backdrop-blur-2xl sm:p-8">
       <div className="mb-5">
@@ -300,6 +333,35 @@ function BookingSection({
         </p>
         <p className="mt-2 text-sm leading-6 text-(--color-text-secondary)">
           {description}
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onTabChange(tab.id)}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                activeTab === tab.id
+                  ? "border-(--color-brand) bg-(--color-brand-strong) text-white"
+                  : "border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.72)] text-(--color-text-secondary) hover:border-(--color-brand) hover:text-(--color-brand)"
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs ${
+                  activeTab === tab.id
+                    ? "bg-white/16 text-white"
+                    : "bg-[rgba(var(--color-surface-rgb),0.82)] text-(--color-text-soft)"
+                }`}
+              >
+                {counts[tab.id]}
+              </span>
+            </button>
+          ))}
+        </div>
+        <p className="mt-4 text-sm font-medium text-(--color-text-secondary)">
+          {totalCount} {totalCount === 1 ? "reservation" : "reservations"} in{" "}
+          {getTabLabel(activeTab)}.
         </p>
       </div>
 
@@ -330,7 +392,7 @@ function BookingSection({
                   </div>
 
                   <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-(--color-text-primary)">
-                    {booking.courtName}
+                    {formatReservationTitle(booking.courts)}
                   </h3>
                   <p className="mt-1 text-sm text-(--color-text-secondary)">
                     {booking.venueName}
@@ -338,17 +400,36 @@ function BookingSection({
                   <p className="mt-3 text-sm leading-6 text-(--color-text-secondary)">
                     Reserved under {booking.reservationName}
                   </p>
+                  <div className="mt-4 grid gap-2">
+                    {booking.courts.map((court) => (
+                      <div
+                        key={`${court.courtName}-${court.startsAt}-${court.endsAt}`}
+                        className="rounded-[1rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.52)] px-4 py-3"
+                      >
+                        <p className="text-sm font-semibold text-(--color-text-primary)">
+                          {court.courtName}
+                        </p>
+                        <p className="mt-1 text-sm text-(--color-text-secondary)">
+                          {formatDateLabel(court.startsAt)} ·{" "}
+                          {formatTimeRange(court.startsAt, court.endsAt)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="min-w-0 rounded-[1.2rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.72)] px-4 py-3 lg:min-w-[260px]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-(--color-text-soft)">
-                    Schedule
+                    Booking Summary
                   </p>
                   <p className="mt-2 text-sm font-semibold text-(--color-text-primary)">
                     {formatDateLabel(booking.startsAt)}
                   </p>
                   <p className="mt-1 text-sm text-(--color-text-secondary)">
                     {formatTimeRange(booking.startsAt, booking.endsAt)}
+                  </p>
+                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-(--color-text-soft)">
+                    {booking.courts.length} {booking.courts.length === 1 ? "court" : "courts"} in this booking
                   </p>
                   {booking.status === "hold" && booking.holdExpiresAt ? (
                     <p className="mt-2 text-xs font-medium text-(--color-warning)">
@@ -405,6 +486,36 @@ function formatTimeRange(startValue: string, endValue: string) {
   return `${formatter.format(new Date(startValue))} - ${formatter.format(new Date(endValue))}`;
 }
 
+function formatReservationTitle(
+  courts: Array<{ courtName: string; startsAt: string; endsAt: string }>,
+) {
+  const courtNames = Array.from(new Set(courts.map((court) => court.courtName)));
+
+  if (courtNames.length <= 2) {
+    return courtNames.join(" + ");
+  }
+
+  return `${courtNames.length} Courts`;
+}
+
+function normalizeReservation(reservation: ReservationApiRecord): Reservation {
+  const normalizedCourts =
+    Array.isArray(reservation.courts) && reservation.courts.length > 0
+      ? reservation.courts
+      : [
+          {
+            courtName: reservation.courtName?.trim() || "Court",
+            startsAt: reservation.startsAt,
+            endsAt: reservation.endsAt,
+          },
+        ];
+
+  return {
+    ...reservation,
+    courts: normalizedCourts,
+  };
+}
+
 function getStatusLabel(status: string) {
   if (status === "hold") {
     return "On Hold";
@@ -422,6 +533,10 @@ function getStatusLabel(status: string) {
 }
 
 function getStatusClasses(status: string) {
+  if (status === "cancelled") {
+    return "border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.72)] text-(--color-text-secondary)";
+  }
+
   if (status === "hold") {
     return "border border-(--color-brand-success-border) bg-(--color-surface-success-strong) text-(--color-brand-success-deep)";
   }
@@ -435,4 +550,67 @@ function getStatusClasses(status: string) {
   }
 
   return "border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.72)] text-(--color-text-secondary)";
+}
+
+function normalizeReservationStatus(status: string): Exclude<BookingStatusTab, "all"> {
+  const normalized = status.trim().toLowerCase();
+
+  if (normalized === "hold" || normalized === "on_hold") {
+    return "hold";
+  }
+
+  if (normalized === "pending") {
+    return "pending";
+  }
+
+  if (normalized === "booked" || normalized === "confirmed" || normalized === "reserved") {
+    return "booked";
+  }
+
+  if (normalized === "cancelled") {
+    return "cancelled";
+  }
+
+  return "booked";
+}
+
+function matchesStatusTab(status: string, tab: BookingStatusTab) {
+  if (tab === "all") {
+    return true;
+  }
+
+  return normalizeReservationStatus(status) === tab;
+}
+
+function getReservationTabCounts(reservations: Reservation[]) {
+  return reservations.reduce<Record<BookingStatusTab, number>>(
+    (counts, reservation) => {
+      counts.all += 1;
+      counts[normalizeReservationStatus(reservation.status)] += 1;
+      return counts;
+    },
+    {
+      all: 0,
+      pending: 0,
+      booked: 0,
+      hold: 0,
+      cancelled: 0,
+    },
+  );
+}
+
+function getTabLabel(tab: BookingStatusTab) {
+  if (tab === "all") {
+    return "All";
+  }
+
+  if (tab === "hold") {
+    return "On Hold";
+  }
+
+  return tab.charAt(0).toUpperCase() + tab.slice(1);
+}
+
+function getEmptyStateLabel(tab: BookingStatusTab) {
+  return tab === "all" ? "" : getTabLabel(tab).toLowerCase();
 }

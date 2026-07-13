@@ -2,17 +2,30 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import type { SVGProps } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { createPublicSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type HeroNavProps = {
   venueName: string;
   contactPhone?: string | null;
+  sectionBasePath?: string;
+  solidOnLoad?: boolean;
 };
 
-export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
+export function HeroNav({
+  venueName,
+  contactPhone,
+  sectionBasePath = "",
+  solidOnLoad = false,
+}: HeroNavProps) {
+  const isSupabaseConfigured = hasSupabaseEnv();
+  const supabase = useMemo(
+    () => (isSupabaseConfigured ? createPublicSupabaseClient() : null),
+    [isSupabaseConfigured],
+  );
+  const [isScrolled, setIsScrolled] = useState(solidOnLoad);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loggedInFirstName, setLoggedInFirstName] = useState<string | null>(
@@ -21,14 +34,14 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
 
   useEffect(() => {
     const syncScrollState = () => {
-      setIsScrolled(window.scrollY > 18);
+      setIsScrolled(solidOnLoad || window.scrollY > 18);
     };
 
     syncScrollState();
     window.addEventListener("scroll", syncScrollState, { passive: true });
 
     return () => window.removeEventListener("scroll", syncScrollState);
-  }, []);
+  }, [solidOnLoad]);
 
   useEffect(() => {
     const closeMenuOnResize = () => {
@@ -57,11 +70,9 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
   }, [isMobileMenuOpen]);
 
   useEffect(() => {
-    if (!hasSupabaseEnv()) {
+    if (!supabase) {
       return;
     }
-
-    const supabase = createPublicSupabaseClient();
 
     const syncGreeting = async () => {
       const {
@@ -93,7 +104,16 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
+
+  async function handleSignOut() {
+    if (!supabase) {
+      return;
+    }
+
+    await supabase.auth.signOut();
+    setIsMobileMenuOpen(false);
+  }
 
   const mobilePanelClassName = isScrolled
     ? "border-t border-(--color-border-soft) bg-transparent text-(--color-text-secondary) shadow-none"
@@ -107,6 +127,10 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
   const bookingsHref = isAuthenticated
     ? "/my-bookings"
     : "/login?returnTo=%2Fmy-bookings";
+  const scheduleHref = `${sectionBasePath}#book-now`;
+  const photosHref = `${sectionBasePath}#gallery`;
+  const contactHref = `${sectionBasePath}#contact`;
+  const detailsHref = `${sectionBasePath}#venue-info`;
 
   return (
     <>
@@ -193,68 +217,76 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
             >
               <nav className="grid gap-y-1 px-1 text-sm">
                 <a
-                  href="#book-now"
+                  href={scheduleHref}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-left font-medium transition ${mobileChipClassName}`}
+                  className={`flex items-center gap-3 text-left font-medium transition ${mobileChipClassName}`}
                 >
+                  <CalendarIcon className="h-4 w-4 shrink-0" />
                   Schedule
                 </a>
                 <a
-                  href="#gallery"
+                  href={photosHref}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-left font-medium transition ${mobileChipClassName}`}
+                  className={`flex items-center gap-3 text-left font-medium transition ${mobileChipClassName}`}
                 >
+                  <PhotoIcon className="h-4 w-4 shrink-0" />
                   Photos
                 </a>
                 <a
-                  href="#contact"
+                  href={contactHref}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-left font-medium transition ${mobileChipClassName}`}
+                  className={`flex items-center gap-3 text-left font-medium transition ${mobileChipClassName}`}
                 >
+                  <PhoneIcon className="h-4 w-4 shrink-0" />
                   Contact
                 </a>
                 <a
-                  href="#venue-info"
+                  href={detailsHref}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-left font-medium transition ${mobileChipClassName}`}
+                  className={`flex items-center gap-3 text-left font-medium transition ${mobileChipClassName}`}
                 >
+                  <InfoIcon className="h-4 w-4 shrink-0" />
                   Details
                 </a>
                 <Link
                   href={bookingsHref}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-left font-medium transition ${mobileChipClassName}`}
+                  className={`flex items-center gap-3 text-left font-medium transition ${mobileChipClassName}`}
                 >
+                  <TicketIcon className="h-4 w-4 shrink-0" />
                   My Bookings
                 </Link>
+                {isAuthenticated ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleSignOut()}
+                    className={`flex items-center gap-3 text-left font-medium transition ${mobileChipClassName}`}
+                  >
+                    <LogoutIcon className="h-4 w-4 shrink-0" />
+                    Sign out
+                  </button>
+                ) : null}
                 {!isAuthenticated ? (
                   <Link
                     href={loginHref}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`text-left font-medium transition ${mobileChipClassName}`}
+                    className={`flex items-center gap-3 text-left font-medium transition ${mobileChipClassName}`}
                   >
-                    Login
+                    <LoginIcon className="h-4 w-4 shrink-0" />
+                    Sign in
                   </Link>
                 ) : null}
                 {!isAuthenticated ? (
                   <Link
                     href={registerHref}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`text-left font-medium transition ${mobileChipClassName}`}
+                    className={`flex items-center gap-3 text-left font-medium transition ${mobileChipClassName}`}
                   >
+                    <UserPlusIcon className="h-4 w-4 shrink-0" />
                     Create Account
                   </Link>
                 ) : null}
               </nav>
-
-              <div className="border-t border-inherit px-2 pt-3">
-                <p className="text-xs uppercase tracking-[0.16em] text-(--color-text-soft)">
-                  Venue Line
-                </p>
-                <p className="mt-1 text-sm text-inherit">
-                  {contactPhone ?? "Guest-friendly reservations"}
-                </p>
-              </div>
             </div>
           ) : null}
 
@@ -286,7 +318,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
               }`}
             >
               <a
-                href="#book-now"
+                href={scheduleHref}
                 className={`px-3 py-2 font-medium transition ${
                   isScrolled ? "hover:text-(--color-brand)" : "hover:text-white"
                 }`}
@@ -294,7 +326,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                 Schedule
               </a>
               <a
-                href="#gallery"
+                href={photosHref}
                 className={`px-3 py-2 font-medium transition ${
                   isScrolled ? "hover:text-(--color-brand)" : "hover:text-white"
                 }`}
@@ -302,7 +334,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                 Photos
               </a>
               <a
-                href="#contact"
+                href={contactHref}
                 className={`px-3 py-2 font-medium transition ${
                   isScrolled ? "hover:text-(--color-brand)" : "hover:text-white"
                 }`}
@@ -310,7 +342,7 @@ export function HeroNav({ venueName, contactPhone }: HeroNavProps) {
                 Contact
               </a>
               <a
-                href="#venue-info"
+                href={detailsHref}
                 className={`px-3 py-2 font-medium transition ${
                   isScrolled ? "hover:text-(--color-brand)" : "hover:text-white"
                 }`}
@@ -455,4 +487,83 @@ async function fetchProfileFirstName(
 function stringOrNull(value: unknown) {
   const normalized = typeof value === "string" ? value.trim() : "";
   return normalized || null;
+}
+
+function CalendarIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M8 2v4" />
+      <path d="M16 2v4" />
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18" />
+    </svg>
+  );
+}
+
+function PhotoIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="10" r="1.5" />
+      <path d="M21 16l-5-5-7 7" />
+    </svg>
+  );
+}
+
+function PhoneIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72l.34 2.7a2 2 0 0 1-.57 1.7l-1.3 1.3a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 1.7-.57l2.7.34A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
+
+function InfoIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 10v6" />
+      <path d="M12 7h.01" />
+    </svg>
+  );
+}
+
+function TicketIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7z" />
+      <path d="M12 5v14" strokeDasharray="2 3" />
+    </svg>
+  );
+}
+
+function LoginIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+    </svg>
+  );
+}
+
+function LogoutIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  );
+}
+
+function UserPlusIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+      <circle cx="9.5" cy="7" r="4" />
+      <path d="M19 8v6" />
+      <path d="M16 11h6" />
+    </svg>
+  );
 }
