@@ -65,6 +65,10 @@ type ReservationResumeState = {
   selectedDate: string;
   selectedSlots: SelectedSlot[];
   formState: BookingFormState;
+  holdExpiresAt?: string | null;
+  activeHoldIds?: string[];
+  modalStep?: ModalStep;
+  isPaymentModalOpen?: boolean;
 };
 
 type ModalStep = "details" | "payment";
@@ -291,13 +295,23 @@ export function WarehouseShowcaseBookingBoard({
     }
 
     const params = new URLSearchParams(window.location.search);
-    if (params.get("resumeReservation") !== "1") {
+    const shouldRestoreAfterLogin = params.get("resumeReservation") === "1";
+    const saved = readReservationResumeState();
+
+    if (!saved) {
+      if (shouldRestoreAfterLogin) {
+        clearResumeReservationQueryParam();
+      }
       return;
     }
 
-    const saved = readReservationResumeState();
-    if (!saved) {
-      clearResumeReservationQueryParam();
+    const hasActiveSavedHold =
+      saved.holdExpiresAt &&
+      new Date(saved.holdExpiresAt).getTime() > Date.now() &&
+      Array.isArray(saved.activeHoldIds) &&
+      saved.activeHoldIds.length > 0;
+
+    if (!shouldRestoreAfterLogin && !hasActiveSavedHold) {
       return;
     }
 
@@ -376,18 +390,59 @@ export function WarehouseShowcaseBookingBoard({
         current.contactEmail,
     }));
     setAuthMode(authState ? "login" : "guest");
-    setIsPaymentModalOpen(true);
-    setModalStep("details");
+    setHoldExpiresAt(pendingResumeState.holdExpiresAt ?? null);
+    setActiveHoldIds(pendingResumeState.activeHoldIds ?? []);
+    setIsPaymentModalOpen(
+      pendingResumeState.isPaymentModalOpen ?? filteredSlots.length > 0,
+    );
+    setModalStep(pendingResumeState.modalStep ?? "details");
     setStatusMessage(
-      filteredSlots.length > 0
-        ? "Your reservation details were restored after login."
-        : "We restored your details, but some selected slots are no longer available.",
+      pendingResumeState.holdExpiresAt &&
+        new Date(pendingResumeState.holdExpiresAt).getTime() > Date.now()
+        ? "Your payment session was restored after refresh."
+        : filteredSlots.length > 0
+          ? "Your reservation details were restored after login."
+          : "We restored your details, but some selected slots are no longer available.",
     );
 
     pendingResumeStateRef.current = null;
-    clearReservationResumeState();
+    if (
+      !pendingResumeState.holdExpiresAt ||
+      new Date(pendingResumeState.holdExpiresAt).getTime() <= Date.now()
+    ) {
+      clearReservationResumeState();
+    }
     clearResumeReservationQueryParam();
   }, [authState, currentSnapshot.selectedDate, isDateNavigating, scheduleRows]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (!hasActiveHold || activeHoldIds.length === 0 || selectedSlots.length === 0) {
+      return;
+    }
+
+    saveReservationResumeState({
+      selectedDate: currentSnapshot.selectedDate,
+      selectedSlots,
+      formState,
+      holdExpiresAt,
+      activeHoldIds,
+      modalStep,
+      isPaymentModalOpen,
+    });
+  }, [
+    activeHoldIds,
+    currentSnapshot.selectedDate,
+    formState,
+    hasActiveHold,
+    holdExpiresAt,
+    isPaymentModalOpen,
+    modalStep,
+    selectedSlots,
+  ]);
 
   useEffect(() => {
     if (!isPaymentModalOpen) {
@@ -573,6 +628,7 @@ export function WarehouseShowcaseBookingBoard({
     setBookings((current) =>
       removeBookingSlotsBySelection(current, selectedSlots),
     );
+    clearReservationResumeState();
     setSelectedSlots([]);
     setHoldExpiresAt(null);
     setActiveHoldIds([]);
@@ -609,6 +665,7 @@ export function WarehouseShowcaseBookingBoard({
         setBookings((current) =>
           removeBookingSlotsBySelection(current, selectedSlots),
         );
+        clearReservationResumeState();
         setSelectedSlots([]);
         setHoldExpiresAt(null);
         setActiveHoldIds([]);
@@ -2234,6 +2291,15 @@ function readReservationResumeState() {
         acceptedProceed: Boolean(parsed.formState?.acceptedProceed),
         acceptedFeePolicy: Boolean(parsed.formState?.acceptedFeePolicy),
       },
+      holdExpiresAt: parsed.holdExpiresAt
+        ? String(parsed.holdExpiresAt)
+        : null,
+      activeHoldIds: Array.isArray(parsed.activeHoldIds)
+        ? parsed.activeHoldIds.map((id) => String(id)).filter(Boolean)
+        : [],
+      modalStep:
+        parsed.modalStep === "payment" ? "payment" : "details",
+      isPaymentModalOpen: Boolean(parsed.isPaymentModalOpen),
     };
   } catch {
     return null;
