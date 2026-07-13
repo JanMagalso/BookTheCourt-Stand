@@ -5,6 +5,7 @@ import {
   formatBookingWindowRestrictionMessage,
   normalizeBookingWindowDays,
 } from "@/lib/booking-window";
+import { toManilaBookingTimestamp } from "@/lib/booking-time";
 import { isWithinOnlineBookingWindow } from "@/lib/facility-status-overrides";
 import { createSupabaseServiceClient, hasSupabaseEnv } from "@/lib/supabase";
 
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
   if (
     selectedBlocks.some((block) =>
       !isWithinOnlineBookingWindow(
-        new Date(toBookingTimestamp(playDate, block.startTime)),
+        new Date(toManilaBookingTimestamp(playDate, block.startTime)),
         new Date(),
         bookingWindowResult.bookingWindowDays,
       ),
@@ -100,8 +101,8 @@ export async function POST(request: Request) {
     court_id: block.courtId,
     player_id: playerResult.playerId,
     reservation_name: reservationName,
-    starts_at: toBookingTimestamp(playDate, block.startTime),
-    ends_at: toBookingTimestamp(playDate, block.endTime),
+    starts_at: toManilaBookingTimestamp(playDate, block.startTime),
+    ends_at: toManilaBookingTimestamp(playDate, block.endTime),
     status: "on_hold",
     hold_expires_at: holdExpiresAt,
     applied_hourly_rate_php: block.hourlyRatePhp ?? 0,
@@ -230,8 +231,12 @@ async function findOverlappingBookings(
   blocks: BookingBlock[],
 ) {
   const courtIds = Array.from(new Set(blocks.map((block) => block.courtId)));
-  const blockStarts = blocks.map((block) => toBookingTimestamp(playDate, block.startTime));
-  const blockEnds = blocks.map((block) => toBookingTimestamp(playDate, block.endTime));
+  const blockStarts = blocks.map((block) =>
+    toManilaBookingTimestamp(playDate, block.startTime),
+  );
+  const blockEnds = blocks.map((block) =>
+    toManilaBookingTimestamp(playDate, block.endTime),
+  );
   const earliestStart = [...blockStarts].sort()[0];
   const latestEnd = [...blockEnds].sort().at(-1);
 
@@ -274,8 +279,12 @@ async function findOverlappingBookings(
         return false;
       }
 
-      const blockStart = new Date(toBookingTimestamp(playDate, block.startTime)).getTime();
-      const blockEnd = new Date(toBookingTimestamp(playDate, block.endTime)).getTime();
+      const blockStart = new Date(
+        toManilaBookingTimestamp(playDate, block.startTime),
+      ).getTime();
+      const blockEnd = new Date(
+        toManilaBookingTimestamp(playDate, block.endTime),
+      ).getTime();
 
       return blockStart < bookingEnd && blockEnd > bookingStart;
     });
@@ -329,13 +338,6 @@ async function resolveWarehouseBookingWindowDays(
       DEFAULT_BOOKING_WINDOW_DAYS,
     ),
   };
-}
-
-function toBookingTimestamp(playDate: string, time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
-  const baseDate = new Date(`${playDate}T00:00:00+08:00`);
-  baseDate.setHours(hours, minutes, 0, 0);
-  return baseDate.toISOString();
 }
 
 function formatTimeForSchedule(value: string) {

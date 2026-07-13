@@ -7,6 +7,7 @@ import {
   formatBookingWindowRestrictionMessage,
   normalizeBookingWindowDays,
 } from "@/lib/booking-window";
+import { toManilaBookingTimestamp } from "@/lib/booking-time";
 import { isWithinOnlineBookingWindow } from "@/lib/facility-status-overrides";
 import { createSupabaseServiceClient, hasSupabaseEnv } from "@/lib/supabase";
 
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
     if (
       payload.selectedBlocks.some((block) =>
         !isWithinOnlineBookingWindow(
-          new Date(toBookingTimestamp(payload.playDate, block.startTime)),
+          new Date(toManilaBookingTimestamp(payload.playDate, block.startTime)),
           new Date(),
           bookingWindowDays,
         ),
@@ -566,8 +567,11 @@ async function insertPendingBookings(
 ) {
   const rows = payload.selectedBlocks.map((block) => {
     const hourlyRatePhp = block.hourlyRatePhp ?? 400;
-    const startsAt = toBookingTimestamp(payload.playDate, block.startTime);
-    const endsAt = toBookingTimestamp(payload.playDate, block.endTime);
+    const startsAt = toManilaBookingTimestamp(
+      payload.playDate,
+      block.startTime,
+    );
+    const endsAt = toManilaBookingTimestamp(payload.playDate, block.endTime);
     const durationHours = diffHours(block.startTime, block.endTime);
 
     return {
@@ -660,13 +664,6 @@ async function resolveFallbackPlayerId(
     .maybeSingle();
 
   return data?.id ?? null;
-}
-
-function toBookingTimestamp(playDate: string, time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
-  const baseDate = new Date(`${playDate}T00:00:00+08:00`);
-  baseDate.setHours(hours, minutes, 0, 0);
-  return baseDate.toISOString();
 }
 
 function formatTimeForSchedule(value: string) {
