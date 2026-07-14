@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import type { ReactElement, SVGProps } from "react";
 
 import { HeroNav } from "@/components/hero-nav";
@@ -16,6 +17,7 @@ import { formatBookingWindowLabel } from "@/lib/booking-window";
 import { getVenueSnapshot } from "@/lib/site-data";
 
 export default async function Home() {
+  await connection();
   const snapshot = await getVenueSnapshot();
   const { venue, courts, faqs } = snapshot;
   const courtCount = courts.length;
@@ -41,13 +43,10 @@ export default async function Home() {
           />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(var(--color-overlay-rgb),0.7)_0%,rgba(var(--color-overlay-rgb),0.36)_44%,rgba(var(--color-overlay-rgb),0.12)_100%)]" />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(var(--color-overlay-rgb),0.38)_0%,rgba(var(--color-overlay-rgb),0.06)_32%,rgba(var(--color-overlay-rgb),0.18)_64%,rgba(var(--color-overlay-rgb),0.78)_100%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,var(--background))]" />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,transparent,var(--background))]" />
         </div>
 
-        <HeroNav
-          venueName={venue.name}
-          contactPhone={venue.contactPhone}
-        />
+        <HeroNav venueName={venue.name} />
 
         <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1680px] flex-col justify-end px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:justify-center lg:px-10 lg:pb-16 lg:pt-24">
           <div className="hero-copy relative z-10 max-w-[46rem] lg:mt-8">

@@ -116,7 +116,9 @@ export function WarehouseShowcaseBookingBoard({
   const [isCompactMobile, setIsCompactMobile] = useState(false);
   const [currentSnapshot, setCurrentSnapshot] =
     useState<VenueSnapshot>(snapshot);
-  const [bookings, setBookings] = useState<BookingSlot[]>(snapshot.bookings);
+  const [bookings, setBookings] = useState<BookingSlot[]>(() =>
+    filterLiveBookingSlots(snapshot.bookings),
+  );
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([]);
   const [formState, setFormState] =
     useState<BookingFormState>(initialFormState);
@@ -214,6 +216,62 @@ export function WarehouseShowcaseBookingBoard({
 
     return () => mediaQuery.removeEventListener("change", syncViewport);
   }, []);
+
+  useEffect(() => {
+    if (isDateNavigating) {
+      return;
+    }
+
+    let isCancelled = false;
+    let isRefreshing = false;
+
+    const refreshAvailability = async () => {
+      if (isRefreshing || document.visibilityState === "hidden") {
+        return;
+      }
+
+      isRefreshing = true;
+
+      try {
+        const response = await fetch(
+          `/api/venue-snapshot?date=${encodeURIComponent(
+            currentSnapshot.selectedDate,
+          )}`,
+          { cache: "no-store" },
+        );
+        const nextSnapshot = (await response.json()) as VenueSnapshot;
+
+        if (isCancelled || !response.ok || !nextSnapshot?.selectedDate) {
+          return;
+        }
+
+        setCurrentSnapshot(nextSnapshot);
+        setBookings(filterLiveBookingSlots(nextSnapshot.bookings));
+      } catch {
+        // Keep the currently visible schedule when a silent refresh fails.
+      } finally {
+        isRefreshing = false;
+      }
+    };
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshAvailability();
+      }
+    };
+
+    void refreshAvailability();
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    const interval = window.setInterval(refreshAvailability, 30_000);
+
+    return () => {
+      isCancelled = true;
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      window.clearInterval(interval);
+    };
+  }, [currentSnapshot.selectedDate, isDateNavigating]);
 
   useEffect(() => {
     if (!isPaymentMethodSwitching) {
@@ -356,6 +414,7 @@ export function WarehouseShowcaseBookingBoard({
             `/api/venue-snapshot?date=${encodeURIComponent(
               pendingResumeState.selectedDate,
             )}`,
+            { cache: "no-store" },
           );
           const nextSnapshot = (await response.json()) as VenueSnapshot;
 
@@ -368,7 +427,7 @@ export function WarehouseShowcaseBookingBoard({
           }
 
           setCurrentSnapshot(nextSnapshot);
-          setBookings(nextSnapshot.bookings);
+          setBookings(filterLiveBookingSlots(nextSnapshot.bookings));
           setSelectedSlots([]);
           setHoldExpiresAt(null);
           setActiveHoldIds([]);
@@ -563,6 +622,7 @@ export function WarehouseShowcaseBookingBoard({
     try {
       const response = await fetch(
         `/api/venue-snapshot?date=${encodeURIComponent(nextDate)}`,
+        { cache: "no-store" },
       );
       const nextSnapshot = (await response.json()) as VenueSnapshot;
 
@@ -572,7 +632,7 @@ export function WarehouseShowcaseBookingBoard({
       }
 
       setCurrentSnapshot(nextSnapshot);
-      setBookings(nextSnapshot.bookings);
+      setBookings(filterLiveBookingSlots(nextSnapshot.bookings));
       setSelectedSlots([]);
       setHoldExpiresAt(null);
       setActiveHoldIds([]);
@@ -806,6 +866,7 @@ export function WarehouseShowcaseBookingBoard({
         `/api/venue-snapshot?date=${encodeURIComponent(
           currentSnapshot.selectedDate,
         )}`,
+        { cache: "no-store" },
       );
       const latestSnapshot = (await response.json()) as VenueSnapshot;
 
@@ -820,7 +881,7 @@ export function WarehouseShowcaseBookingBoard({
       );
 
       setCurrentSnapshot(latestSnapshot);
-      setBookings(latestSnapshot.bookings);
+      setBookings(filterLiveBookingSlots(latestSnapshot.bookings));
 
       if (restorableSelection.length !== selectedSlots.length) {
         setSelectedSlots(restorableSelection);
@@ -3145,6 +3206,23 @@ function filterRestorableSlots(
   return slots.filter((slot) =>
     restorableKeys.has(getSelectedSlotKey(slot.courtId, slot.startTime)),
   );
+}
+
+function filterLiveBookingSlots(bookings: BookingSlot[]) {
+  const now = Date.now();
+
+  return bookings.filter((booking) => {
+    if (booking.status !== "hold") {
+      return true;
+    }
+
+    if (!booking.holdExpiresAt) {
+      return false;
+    }
+
+    const expiresAt = new Date(booking.holdExpiresAt).getTime();
+    return Number.isFinite(expiresAt) && expiresAt > now;
+  });
 }
 
 function isErrorStatusMessage(message: string) {

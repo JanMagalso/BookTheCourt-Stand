@@ -610,7 +610,12 @@ function shouldRenderBookingStatus(status: string) {
 }
 
 function isExpiredHold(value: string | null) {
-  return Boolean(value && new Date(value).getTime() <= Date.now());
+  if (!value) {
+    return true;
+  }
+
+  const expiresAt = new Date(value).getTime();
+  return !Number.isFinite(expiresAt) || expiresAt <= Date.now();
 }
 
 async function releaseExpiredHolds(

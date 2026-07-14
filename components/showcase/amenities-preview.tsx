@@ -305,7 +305,9 @@ function resolveAmenityIcon(value: string) {
   if (value.includes("parking")) return ParkingIcon;
   if (value.includes("rental") || value.includes("gear")) return PaddleIcon;
   if (value.includes("locker")) return LockerIcon;
-  if (value.includes("cafe")) return CupIcon;
+  if (value.includes("cafe") || value.includes("cafeteria")) return CupIcon;
+  if (value.includes("pro shop") || value.includes("shop")) return BagIcon;
+  if (value.includes("restroom") || value.includes("toilet")) return RestroomIcon;
   if (value.includes("camera") || value.includes("stream")) return CameraIcon;
   return SparkIcon;
 }
@@ -318,7 +320,9 @@ function amenityDescription(value: string) {
   if (value.includes("parking")) return "Arrival is easy for drivers and group meetups.";
   if (value.includes("rental") || value.includes("gear")) return "Travel light and still get on court fast.";
   if (value.includes("locker")) return "Secure essentials while you focus on the match.";
-  if (value.includes("cafe")) return "Grab recovery drinks and light snacks on site.";
+  if (value.includes("cafe") || value.includes("cafeteria")) return "Grab recovery drinks and light snacks on site.";
+  if (value.includes("pro shop") || value.includes("shop")) return "Pick up balls, grips, and extras without leaving the venue.";
+  if (value.includes("restroom") || value.includes("toilet")) return "Clean facilities close to the courts.";
   if (value.includes("camera") || value.includes("stream")) return "Useful for recording drills, highlights, or coaching review.";
   return "Part of the complete venue experience for players and guests.";
 }
@@ -419,6 +423,26 @@ function CameraIcon(props: SVGProps<SVGSVGElement>) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
       <path d="M4 7h3l2-2h6l2 2h3v12H4Z" />
       <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+function BagIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+      <path d="M6 7h12l1 13H5L6 7Z" />
+      <path d="M9 7a3 3 0 0 1 6 0" />
+    </svg>
+  );
+}
+
+function RestroomIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+      <circle cx="8" cy="5" r="2" />
+      <path d="M6 22V10h4v12" />
+      <circle cx="16" cy="5" r="2" />
+      <path d="M14 10h4l1.5 5H18v7h-4v-7h-1.5L14 10Z" />
     </svg>
   );
 }
