@@ -42,8 +42,7 @@ export default async function Home() {
             skeletonClassName="bg-[image:var(--gradient-hero-skeleton)]"
           />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(var(--color-overlay-rgb),0.7)_0%,rgba(var(--color-overlay-rgb),0.36)_44%,rgba(var(--color-overlay-rgb),0.12)_100%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(var(--color-overlay-rgb),0.38)_0%,rgba(var(--color-overlay-rgb),0.06)_32%,rgba(var(--color-overlay-rgb),0.18)_64%,rgba(var(--color-overlay-rgb),0.78)_100%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,transparent,var(--background))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(var(--color-overlay-rgb),0.38)_0%,rgba(var(--color-overlay-rgb),0.06)_32%,rgba(var(--color-overlay-rgb),0.18)_64%,rgba(var(--color-overlay-rgb),0.55)_100%)]" />
         </div>
 
         <HeroNav venueName={venue.name} />

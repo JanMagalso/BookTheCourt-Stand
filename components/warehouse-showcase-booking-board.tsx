@@ -1255,14 +1255,13 @@ export function WarehouseShowcaseBookingBoard({
           </div>
 
           <div className="flex flex-col gap-3 border-b border-[color:var(--color-border-soft)] bg-[linear-gradient(180deg,rgba(var(--color-shadow-success-rgb),0.08),rgba(var(--color-surface-rgb),0))] px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="xl:visible hidden">
+            <div>
               <p className="text-sm font-medium text-[color:var(--color-text-secondary)]">
-                Real-time availability across active courts.
+                Tap an available slot to start booking.
               </p>
               <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">
-                Vibrant slots are live and bookable. Muted cells are held,
-                pending verification, already booked, or outside operating
-                hours.
+                Bright cells are open. Muted cells are held, pending, booked, or
+                outside operating hours.
               </p>
             </div>
 
@@ -2399,6 +2398,54 @@ export function WarehouseShowcaseBookingBoard({
                     ×
                   </button>
                 </div>
+
+                <div className="relative mt-6 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsReceiptPreviewOpen(true)}
+                    className="inline-flex min-h-12 items-center justify-center rounded-[0.9rem] border border-white/18 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/16"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="3" />
+                      <path d="m7 15 3-3 2 2 3-4 2 3" />
+                    </svg>
+                    Preview receipt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        authState
+                          ? "/my-bookings"
+                          : "/login?returnTo=%2Fmy-bookings",
+                      )
+                    }
+                    className="inline-flex min-h-12 items-center justify-center rounded-[0.9rem] bg-(--color-brand-accent) px-5 py-3 text-sm font-semibold text-(--color-brand-strong) transition hover:bg-(--color-brand-accent-hover)"
+                  >
+                    {authState ? "Check My Bookings" : "Sign in to check booking"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingConfirmation(null)}
+                    className="inline-flex min-h-11 items-center justify-center rounded-[0.9rem] border border-white/14 bg-transparent px-5 py-2.5 text-sm font-semibold text-white/78 transition hover:bg-white/10 hover:text-white sm:col-span-2"
+                  >
+                    Back to schedule
+                  </button>
+                </div>
+                {confirmationDownloadError ? (
+                  <p className="relative mt-3 rounded-xl border border-white/16 bg-black/20 px-4 py-3 text-sm font-medium text-white/86">
+                    {confirmationDownloadError}
+                  </p>
+                ) : null}
               </div>
 
               <div className="px-6 py-6 sm:px-8 sm:py-7">
@@ -2451,54 +2498,6 @@ export function WarehouseShowcaseBookingBoard({
                     {formatCurrency(bookingConfirmation.totalPhp)}
                   </p>
                 </div>
-
-                <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => setBookingConfirmation(null)}
-                    className="inline-flex min-h-12 items-center justify-center rounded-[0.9rem] border border-(--color-border-soft) bg-(--color-surface) px-5 py-3 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
-                  >
-                    Back to schedule
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsReceiptPreviewOpen(true)}
-                    className="inline-flex min-h-12 items-center justify-center rounded-[0.9rem] border border-(--color-brand) bg-(--color-surface) px-4 py-3 text-sm font-semibold text-(--color-brand) transition hover:bg-(--color-surface-soft) disabled:cursor-wait disabled:opacity-60"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="mr-2 h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <rect x="3" y="3" width="18" height="18" rx="3" />
-                      <path d="m7 15 3-3 2 2 3-4 2 3" />
-                    </svg>
-                    Preview receipt
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        authState
-                          ? "/my-bookings"
-                          : "/login?returnTo=%2Fmy-bookings",
-                      )
-                    }
-                    className="inline-flex min-h-12 items-center justify-center rounded-[0.9rem] bg-(--color-action-primary) px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(var(--color-shadow-brand-rgb),0.2)] transition hover:-translate-y-0.5 hover:bg-(--color-action-primary-hover) sm:col-span-2"
-                  >
-                    {authState ? "Check My Bookings" : "Sign in to check booking"}
-                  </button>
-                </div>
-                {confirmationDownloadError ? (
-                  <p className="mt-3 rounded-xl border border-(--color-border-danger) bg-(--color-surface-danger-soft) px-4 py-3 text-sm font-medium text-(--color-danger-strong)">
-                    {confirmationDownloadError}
-                  </p>
-                ) : null}
               </div>
             </div>
           </div>
@@ -2537,26 +2536,11 @@ export function WarehouseShowcaseBookingBoard({
                 </button>
               </div>
 
-              <div className="border-y border-(--color-border-soft) bg-(--color-surface-soft) p-3 sm:p-5">
-                <BookingReceiptPreviewCard
-                  confirmation={bookingConfirmation}
-                  venueName={currentSnapshot.venue.name}
-                  venueLocation={currentSnapshot.venue.address}
-                />
-              </div>
-
-              <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+              <div className="flex flex-col gap-3 border-b border-(--color-border-soft) px-5 pb-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-7">
                 <p className="font-mono text-xs font-semibold text-(--color-text-soft)">
                   {bookingConfirmation.receiptId}
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setIsReceiptPreviewOpen(false)}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-(--color-border-soft) bg-(--color-surface) px-5 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
-                  >
-                    Close
-                  </button>
                   <button
                     type="button"
                     onClick={() => void handleSaveReceiptToPhotos()}
@@ -2589,13 +2573,28 @@ export function WarehouseShowcaseBookingBoard({
                       ? "Preparing image..."
                       : "Download image"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsReceiptPreviewOpen(false)}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-(--color-border-soft) bg-(--color-surface) px-5 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
               {confirmationDownloadError ? (
-                <p className="mx-5 mb-5 rounded-xl border border-(--color-border-danger) bg-(--color-surface-danger-soft) px-4 py-3 text-sm font-medium text-(--color-danger-strong) sm:mx-7">
+                <p className="mx-5 mt-4 rounded-xl border border-(--color-border-danger) bg-(--color-surface-danger-soft) px-4 py-3 text-sm font-medium text-(--color-danger-strong) sm:mx-7">
                   {confirmationDownloadError}
                 </p>
               ) : null}
+
+              <div className="bg-(--color-surface-soft) p-3 sm:p-5">
+                <BookingReceiptPreviewCard
+                  confirmation={bookingConfirmation}
+                  venueName={currentSnapshot.venue.name}
+                  venueLocation={currentSnapshot.venue.address}
+                />
+              </div>
             </div>
           </div>
         </BodyPortal>
