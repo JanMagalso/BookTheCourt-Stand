@@ -17,7 +17,7 @@ export function ShowcaseInfoCard({
 }) {
   return (
     <div
-      className={`rounded-[2rem] border border-white/65 bg-[rgba(var(--color-surface-rgb),0.52)] p-6 shadow-[0_20px_56px_rgba(var(--color-shadow-brand-rgb),0.08)] backdrop-blur-2xl ${className}`.trim()}
+      className={`relative overflow-hidden rounded-[2rem] border border-(--color-border-card) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.66))] p-6 shadow-[0_24px_72px_rgba(var(--color-shadow-brand-rgb),0.1)] backdrop-blur-2xl ${className}`.trim()}
     >
       {children}
     </div>
@@ -32,7 +32,7 @@ export function ShowcaseMiniCard({
   value: ReactNode;
 }) {
   return (
-    <div className="rounded-[1.25rem] border border-white/60 bg-[rgba(var(--color-surface-rgb),0.56)] p-4 backdrop-blur-md">
+    <div className="rounded-[1.25rem] border border-(--color-border-card) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.68))] p-4 shadow-[0_14px_36px_rgba(var(--color-shadow-brand-rgb),0.06)] backdrop-blur-md">
       <p className="text-xs uppercase tracking-[0.16em] text-[color:var(--color-text-soft)]">
         {label}
       </p>
@@ -54,10 +54,10 @@ export function ShowcaseHeroStatCard({
 }) {
   return (
     <div
-      className={`rounded-[1.5rem] border border-white/12 bg-white/10 px-5 py-4 text-white backdrop-blur-sm ${className}`.trim()}
+      className={`rounded-[1.5rem] border border-white/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))] px-5 py-4 text-white shadow-[0_18px_44px_rgba(0,0,0,0.12)] ring-1 ring-[rgba(255,255,255,0.12)] backdrop-blur-md lg:px-6 lg:py-5 ${className}`.trim()}
     >
       <p className="text-[11px] uppercase tracking-[0.18em] text-white/48">{label}</p>
-      <p className="mt-2 text-3xl font-semibold">{value}</p>
+      <p className="mt-2 text-3xl font-semibold lg:text-[2rem]">{value}</p>
     </div>
   );
 }
@@ -72,7 +72,7 @@ export function ShowcaseFeatureCard({
   description: string;
 }) {
   return (
-    <div className="rounded-[1.8rem] border border-white/65 bg-[rgba(var(--color-surface-rgb),0.52)] p-5 shadow-[0_18px_48px_rgba(var(--color-shadow-brand-rgb),0.08)] backdrop-blur-xl">
+    <div className="relative overflow-hidden rounded-[1.8rem] border border-(--color-border-card) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.68))] p-5 shadow-[0_20px_54px_rgba(var(--color-shadow-brand-rgb),0.08)] backdrop-blur-xl">
       <div className="flex items-center gap-3 text-[color:var(--color-brand-strong)]">
         <Icon className="h-5 w-5" />
         <p className="text-sm font-semibold uppercase tracking-[0.16em]">{title}</p>

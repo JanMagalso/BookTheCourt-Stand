@@ -59,10 +59,10 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
           {mobileAmenities.map((item) => (
             <div
               key={item.label}
-              className="rounded-[1.35rem] border border-(--color-border-light) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.7),rgba(var(--color-surface-rgb),0.52))] px-4 py-4 shadow-[0_16px_36px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5"
+              className="rounded-[1.35rem] border border-(--color-border-card) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.64))] px-4 py-4 shadow-[0_16px_36px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition duration-200 hover:-translate-y-1 hover:border-(--color-brand) hover:shadow-[0_20px_46px_rgba(var(--color-shadow-brand-rgb),0.12)]"
             >
               <div className="flex items-start gap-3">
-                <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-(--color-border-subtle) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-(--color-brand) shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
+                <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-(--color-border-subtle) bg-(--color-surface-accent) text-(--color-brand) shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
                   <item.icon className="h-4.5 w-4.5" />
                 </div>
                 <div>
@@ -83,29 +83,35 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
         ) : null}
       </div>
 
-      <div className="hidden space-y-8 md:block">
+      <div className="hidden md:block">
         {desktopPreviewGroups.map((group) => (
-          <div key={group.title}>
-            <div className="mb-4 flex items-center gap-3">
-              <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(20,137,125,0.22),rgba(20,137,125,0))]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
+          <div
+            key={group.title}
+            className="grid gap-5 border-t border-(--color-border-soft) py-7 first:border-t-0 first:pt-0 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-8"
+          >
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
                 {group.title}
               </p>
-              <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(20,137,125,0),rgba(20,137,125,0.22))]" />
+              <p className="mt-2 max-w-[16rem] text-sm leading-6 text-(--color-text-muted)">
+                {getCategoryDescription(group.title)}
+              </p>
             </div>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {group.items.map((item) => (
                 <div
                   key={`${group.title}-${item.label}`}
-                  className="rounded-[1.75rem] border border-(--color-border-light) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.72),rgba(var(--color-surface-rgb),0.54))] px-5 py-5 shadow-[0_16px_40px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5"
+                  className="group rounded-[1.35rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.58)] px-4 py-4 transition duration-200 hover:-translate-y-0.5 hover:border-(--color-brand) hover:bg-[rgba(var(--color-surface-rgb),0.82)] hover:shadow-[0_16px_42px_rgba(var(--color-shadow-brand-rgb),0.1)]"
                 >
-                  <div className="flex h-full items-start gap-4">
-                    <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-(--color-border-subtle) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.94),rgba(var(--color-surface-rgb),0.62))] text-(--color-brand) shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
-                      <item.icon className="h-5 w-5" />
+                  <div className="flex h-full items-start gap-3">
+                    <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--color-surface-accent) text-(--color-brand) transition group-hover:bg-(--color-brand) group-hover:text-white">
+                      <item.icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="font-semibold text-(--color-text-primary)">{item.label}</p>
-                      <p className="mt-1 text-sm leading-6 text-(--color-text-muted)">
+                      <p className="text-sm font-semibold text-(--color-text-primary)">
+                        {item.label}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-(--color-text-muted)">
                         {item.description}
                       </p>
                     </div>
@@ -117,7 +123,7 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
         ))}
 
         {hasMoreDesktopAmenities ? (
-          <div className="flex justify-center border-t border-(--color-border-lighter) pt-2">
+          <div className="flex justify-center border-t border-(--color-border-lighter) pt-6">
             <AllAmenitiesDrawer groups={groups} totalAmenities={totalAmenities} />
           </div>
         ) : null}
@@ -209,6 +215,17 @@ function buildAmenityGroups(amenities: string[]) {
     title,
     items: grouped.get(title) ?? [],
   })).filter((group) => group.items.length > 0);
+}
+
+function getCategoryDescription(category: AmenityCategory) {
+  const descriptions: Record<AmenityCategory, string> = {
+    Comfort: "Everyday essentials for an easier visit.",
+    "Gear & Coaching": "Support for training, play, and equipment.",
+    "Tech & Lighting": "Facilities that keep every session running well.",
+    "Access & Play": "Practical details for getting on court faster.",
+  };
+
+  return descriptions[category];
 }
 
 function sanitizeAmenityLabel(value: string) {

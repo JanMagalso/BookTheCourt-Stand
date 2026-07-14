@@ -152,7 +152,7 @@ export function HeroNav({
       >
         <div className="relative z-10 mx-auto w-full max-w-[1680px] px-4 py-3 sm:px-6 sm:py-4 lg:px-10">
           <div className="flex items-center justify-between gap-3 lg:hidden">
-            <Link href="/" className="flex min-w-0 items-center gap-3">
+            <Link href="/" className="flex min-w-0 items-center gap-2.5">
               <Image
                 src="/brand/court-logo.png"
                 alt={venueName}
@@ -160,22 +160,13 @@ export function HeroNav({
                 height={80}
                 className="h-10 w-auto shrink-0"
               />
-              <div className="min-w-0">
-                <p
-                  className={`truncate text-sm font-semibold uppercase tracking-[0.18em] transition-colors ${
-                    isScrolled ? "text-(--color-text-primary)" : "text-white"
-                  }`}
-                >
-                  {venueName}
-                </p>
-                <p
-                  className={`truncate text-xs transition-colors ${
-                    isScrolled ? "text-(--color-text-muted)" : "text-white/58"
-                  }`}
-                >
-                  {venueName}
-                </p>
-              </div>
+              <p
+                className={`truncate text-sm font-semibold tracking-[-0.02em] transition-colors ${
+                  isScrolled ? "text-(--color-text-primary)" : "text-white"
+                }`}
+              >
+                {venueName}
+              </p>
             </Link>
 
             <div className="flex items-center gap-2">
@@ -300,15 +291,13 @@ export function HeroNav({
                   height={153}
                   className="h-14 w-auto shrink-0"
                 />
-                <div className="min-w-0">
-                  <p
-                    className={`truncate text-sm transition-colors ${
-                      isScrolled ? "text-(--color-text-muted)" : "text-white/58"
-                    }`}
-                  >
-                    {venueName}
-                  </p>
-                </div>
+                <p
+                  className={`truncate text-base font-semibold tracking-[-0.02em] transition-colors ${
+                    isScrolled ? "text-(--color-text-primary)" : "text-white"
+                  }`}
+                >
+                  {venueName}
+                </p>
               </Link>
             </div>
 

@@ -12,13 +12,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { formatBookingWindowLabel } from "@/lib/booking-window";
 import { getVenueSnapshot } from "@/lib/site-data";
 
 export default async function Home() {
@@ -30,24 +24,27 @@ export default async function Home() {
     venue.amenities.length > 0
       ? venue.amenities
       : fallbackAmenities(venue, courtCount);
+  const bookingWindowLabel = formatBookingWindowLabel(venue.bookingWindowDays);
   return (
-    <main className="min-h-screen overflow-x-hidden bg-(--background) text-(--color-text-primary)">
-      <section className="relative overflow-hidden bg-(--color-hero) text-white">
+    <main className="relative min-h-screen overflow-x-hidden bg-transparent text-(--color-text-primary)">
+      <section className="relative min-h-[100svh] overflow-hidden bg-(--color-hero) text-white">
         <div className="absolute inset-0">
           <LoadingImage
             src={heroImage}
             alt={venue.name}
             fill
             priority
-            wrapperClassName="absolute inset-0"
-            className="object-cover opacity-24"
+            wrapperClassName="absolute inset-0 hero-media-animate origin-center"
+            className="object-cover object-[center_35%]"
             sizes="100vw"
             skeletonClassName="bg-[image:var(--gradient-hero-skeleton)]"
           />
-          <div className="absolute inset-0 bg-[image:var(--gradient-hero-overlay)]" />
-          <div className="absolute inset-0 opacity-35 [background-image:var(--gradient-hero-grid)] [background-position:center_center] [background-size:118px_118px]" />
-          <div className="absolute left-1/2 top-[-12%] h-[620px] w-[620px] -translate-x-1/2 rounded-full border border-white/8" />
-          <div className="absolute inset-x-[12%] bottom-[24%] h-[160px] rounded-[999px] border border-[color:rgba(213,239,118,0.14)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(var(--color-overlay-rgb),0.84)_0%,rgba(var(--color-overlay-rgb),0.56)_45%,rgba(var(--color-overlay-rgb),0.18)_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(var(--color-overlay-rgb),0.5)_0%,rgba(var(--color-overlay-rgb),0.04)_32%,rgba(var(--color-overlay-rgb),0.2)_58%,rgba(var(--color-overlay-rgb),0.9)_100%)]" />
+          <div className="absolute inset-0 bg-[image:var(--gradient-hero-overlay)] opacity-25" />
+          <div className="hero-grid absolute inset-0 opacity-25" />
+          <div className="absolute -right-24 top-[18%] h-[32rem] w-[32rem] rounded-full border border-white/10" />
+          <div className="absolute -right-2 top-[28%] h-[20rem] w-[20rem] rounded-full border border-white/8" />
         </div>
 
         <HeroNav
@@ -55,331 +52,274 @@ export default async function Home() {
           contactPhone={venue.contactPhone}
         />
 
-        <div className="relative mx-auto flex min-h-[640px] w-full max-w-[1680px] flex-col px-4 pb-12 pt-20 sm:min-h-[760px] sm:px-6 sm:pb-24 sm:pt-28 lg:px-10 lg:pt-28">
-          <div className="relative z-10 mt-8 max-w-5xl pb-6 pt-6 sm:mt-auto sm:pb-12 sm:pt-14 lg:pt-16">
-            <div className="mb-5 flex flex-wrap items-center gap-2 text-xs text-white/80 sm:mb-6 sm:gap-3 sm:text-sm">
-              <span className="rounded-full border border-white/12 bg-white/8 px-3 py-2 backdrop-blur sm:px-4">
-                Reserve Online
-              </span>
-              <span className="flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-3 py-2 backdrop-blur sm:px-4">
-                <MapPinIcon className="h-4 w-4" />
-                {venue.address}
-              </span>
-            </div>
+        <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1680px] flex-col px-4 pb-6 pt-28 sm:px-6 sm:pb-8 sm:pt-32 lg:px-10 lg:pt-28">
+          <div className="flex flex-1 items-center py-14 sm:py-16 lg:py-20">
+            <div className="hero-copy relative z-10 max-w-[50rem]">
+              <div className="mb-6 flex flex-wrap items-center gap-2.5">
+                <span className="rounded-full border border-white/16 bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/82 backdrop-blur-md">
+                  Online reservations
+                </span>
+                <span className="rounded-full border border-white/12 bg-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/66 backdrop-blur-md">
+                  Live court schedule
+                </span>
+              </div>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-(--color-brand-accent)">
+                Your next game starts here
+              </p>
+              <h1 className="max-w-[11ch] text-[3.5rem] font-semibold leading-[0.88] tracking-[-0.07em] text-white drop-shadow-[0_12px_40px_rgba(0,0,0,0.35)] sm:text-[5rem] md:text-[5.8rem] lg:text-[6.6rem]">
+                {venue.name}
+              </h1>
+              <p className="mt-6 max-w-[26ch] text-xl font-medium leading-[1.15] tracking-[-0.03em] text-white sm:mt-7 sm:text-[1.7rem] md:text-[1.9rem]">
+                Find a court. Pick a time. Come ready to play.
+              </p>
+              <p className="mt-4 max-w-[34rem] text-[0.98rem] leading-7 text-white/76 sm:text-base sm:leading-8">
+                Check live availability, reserve online, and send your payment
+                proof in one clear booking flow.
+              </p>
 
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-(--color-brand-accent) sm:text-sm">
-              {venue.name}
-            </p>
-            <h2 className="mt-3 sm:text-2xl md:text-3xl lg:text-[3.4rem] font-semibold leading-[0.94]">
-              Reserve your court at
-            </h2>
-            <h1 className="mt-3 max-w-[11ch] text-[2.55rem] font-semibold leading-[0.94] tracking-[-0.06em] text-white sm:max-w-4xl sm:text-5xl md:text-6xl lg:text-[6.4rem]">
-              {venue.name}.
-            </h1>
-            <p className="mt-4 max-w-[34ch] text-sm leading-6 text-white/76 sm:mt-6 sm:max-w-3xl sm:text-base sm:leading-7 lg:text-lg">
-              {venue.about}
-            </p>
-
-            <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:gap-4 sm:flex-row">
-              <a
-                href="#book-now"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-(--color-brand-accent) px-6 py-3 text-sm font-semibold text-(--color-brand-strong) transition hover:bg-(--color-brand-accent-hover)"
-              >
-                Reserve your session
-                <ArrowRightIcon className="ml-2 h-4 w-4" />
-              </a>
-              <a
-                href={venue.googleMapsUrl}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/16 bg-white/8 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:border-white/28 hover:bg-white/12"
-              >
-                View venue location
-                <ExternalLinkIcon className="ml-2 h-4 w-4" />
-              </a>
+              <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:items-center sm:gap-5">
+                <a
+                  href="#book-now"
+                  className="hero-cta-primary inline-flex min-h-12 items-center justify-center rounded-full bg-(--color-brand-accent) px-7 py-3 text-sm font-semibold text-(--color-brand-strong) shadow-[0_18px_42px_rgba(0,0,0,0.32)] transition hover:bg-(--color-brand-accent-hover)"
+                >
+                  Reserve your session
+                  <ArrowRightIcon className="ml-2 h-4 w-4" />
+                </a>
+                <a
+                  href={venue.googleMapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-12 items-center justify-center px-1 text-sm font-semibold text-white/88 underline-offset-4 transition hover:text-white hover:underline sm:px-2"
+                >
+                  View venue location
+                  <ExternalLinkIcon className="ml-2 h-4 w-4" />
+                </a>
+              </div>
             </div>
+          </div>
+
+          <div className="relative z-10 hidden overflow-hidden rounded-[1.6rem] border border-white/14 bg-black/16 backdrop-blur-xl sm:grid sm:grid-cols-2 lg:grid-cols-4">
+            <VenueFact
+              label="Courts"
+              value={String(
+                courtCount || venue.indoorCourtCount + venue.outdoorCourtCount,
+              )}
+            />
+            <VenueFact label="Booking Window" value={bookingWindowLabel} />
+            <VenueFact label="Primary Payment" value={venue.paymentMethod} />
+            <VenueFact
+              label="Venue Ready"
+              value={venue.hasNightLighting ? "Night play" : "Day play"}
+            />
           </div>
         </div>
       </section>
 
       <section
         id="venue-info"
-        className="relative z-10 px-3 pb-16 pt-10 sm:px-6 sm:pt-14 lg:px-10 lg:pt-16"
+        className="page-section relative z-10 px-4 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
       >
         <div className="mx-auto w-full max-w-[1680px]">
-          <Card className="border-(--color-border-card)">
-            <CardHeader className="pb-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
-                Facility Overview
-              </p>
-              <CardTitle className="mt-2 text-2xl sm:text-3xl lg:text-[2.2rem]">
-                Everything players need before they book
-              </CardTitle>
-              <CardDescription className="mt-3 max-w-3xl text-base leading-7">
-                Amenities are grouped for quick scanning, so guests can check
-                what matters most before choosing a session.
-              </CardDescription>
-            </CardHeader>
+          <div className="section-heading max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
+              Amenities
+            </p>
+            <h2 className="mt-3 text-[2rem] font-semibold leading-[1.05] tracking-[-0.045em] text-(--color-text-primary) sm:text-[2.6rem]">
+              What players find on site
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-(--color-text-secondary)">
+              Everything you need for a comfortable session, collected in one
+              quick view.
+            </p>
+          </div>
 
-            <CardContent className="space-y-8">
-              <AmenitiesPreview amenities={amenityList} />
-            </CardContent>
-          </Card>
+          <div className="mt-10">
+            <AmenitiesPreview amenities={amenityList} />
+          </div>
         </div>
       </section>
 
       <section
         id="gallery"
-        className="mx-auto w-full max-w-[1680px] px-3 pb-16 sm:px-6 lg:px-10"
+        className="page-section page-section-tinted px-4 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
       >
-        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-(--color-brand)">
-              Venue Highlights
+        <div className="mx-auto w-full max-w-[1680px]">
+          <div className="section-heading mb-10 max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
+              Photos
             </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-(--color-text-primary) sm:text-3xl lg:text-[2.4rem]">
-              Get a feel for the venue before you visit
+            <h2 className="mt-3 text-[2rem] font-semibold tracking-[-0.045em] text-(--color-text-primary) sm:text-[2.6rem]">
+              Feel the venue before you arrive
             </h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-(--color-text-secondary)">
+              Take a closer look at the courts, facilities, and atmosphere
+              before choosing your schedule.
+            </p>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-(--color-text-muted)">
-            Browse the courts, atmosphere, and player areas before you lock in
-            your next session.
-          </p>
+          <FacilityPhotoMosaic photos={venue.galleryImages} title={venue.name} />
         </div>
-        <FacilityPhotoMosaic photos={venue.galleryImages} title={venue.name} />
       </section>
 
       <LiveBookingShell snapshot={snapshot} />
 
-      <section id="contact" className="px-3 pb-16 pt-8 sm:px-6 lg:px-10">
+      <section
+        id="contact"
+        className="page-section px-4 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
+      >
         <div className="mx-auto w-full max-w-[1680px]">
-          <div className="mb-8 max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-(--color-brand)">
-              Contact Details
+          <div className="section-heading mb-12 max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
+              Contact
             </p>
-            <h2 className="mt-4 text-[2.4rem] font-semibold leading-[0.95] tracking-[-0.05em] text-(--color-text-primary) sm:text-[3.2rem] lg:text-[4.1rem]">
-              Find {venue.name} with ease.
+            <h2 className="mt-3 text-[2rem] font-semibold leading-[1.05] tracking-[-0.045em] text-(--color-text-primary) sm:text-[2.6rem] lg:text-[3.2rem]">
+              Know where to go before game time
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-8 text-(--color-text-secondary) sm:text-[1.05rem]">
-              View the exact venue location, check the latest contact details,
-              and head over when you&apos;re ready to play.
+          </div>
+
+          <div className="grid overflow-hidden rounded-[2rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.68)] shadow-[0_26px_80px_rgba(var(--color-shadow-rgb),0.1)] lg:grid-cols-[minmax(0,0.82fr)_minmax(420px,1.18fr)]">
+            <div className="space-y-6 p-6 sm:p-8 lg:p-10">
+              <ContactDetail
+                icon={MapPinIcon}
+                label="Address"
+                value={venue.address}
+              />
+              <ContactDetail
+                icon={MailIcon}
+                label="Email"
+                value={venue.contactEmail ?? "Unavailable"}
+                href={
+                  venue.contactEmail
+                    ? `mailto:${venue.contactEmail}`
+                    : undefined
+                }
+              />
+              <ContactDetail
+                icon={ClockIcon}
+                label="Hours"
+                value={venue.businessHours}
+                note="Live availability stays accurate in the booking board."
+              />
+              {venue.contactPhone ? (
+                <ContactDetail
+                  icon={PhoneIcon}
+                  label="Phone"
+                  value={venue.contactPhone}
+                  href={`tel:${venue.contactPhone.replace(/\s+/g, "")}`}
+                />
+              ) : null}
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <a
+                  href={venue.googleMapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-(--color-brand-strong) px-5 py-3 text-sm font-semibold text-white transition hover:bg-(--color-brand-strong-hover)"
+                >
+                  Open in Google Maps
+                  <ExternalLinkIcon className="ml-2 h-4 w-4" />
+                </a>
+                {venue.contactFacebook ? (
+                  <a
+                    href={venue.contactFacebook}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-(--color-border-soft) px-5 py-3 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
+                  >
+                    Facebook
+                  </a>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="min-h-[360px] overflow-hidden border-t border-(--color-border-soft) bg-(--color-surface) lg:border-l lg:border-t-0">
+              <div className="h-full min-h-[360px] w-full">
+                <iframe
+                  title={`${venue.name} map`}
+                  src={getGoogleMapsEmbedUrl(
+                    venue.googleMapsUrl,
+                    `${venue.name} ${venue.address}`.trim(),
+                  )}
+                  className="h-full w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="page-section page-section-tinted px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24">
+        <div className="mx-auto grid w-full max-w-[1680px] items-start gap-8 lg:grid-cols-[minmax(300px,0.36fr)_minmax(0,0.64fr)] lg:gap-10">
+          <div className="relative overflow-hidden rounded-[2rem] bg-(--color-brand-strong) p-6 text-white shadow-[0_24px_72px_rgba(var(--color-shadow-brand-rgb),0.18)] sm:p-8">
+            <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full border border-white/10" />
+            <div className="pointer-events-none absolute -right-5 -top-8 h-28 w-28 rounded-full border border-white/10" />
+            <p className="relative text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand-accent)">
+              Cancellation
+            </p>
+            <h2 className="relative mt-3 text-[1.75rem] font-semibold tracking-[-0.04em] text-white sm:text-[2.1rem]">
+              Terms before you pay
+            </h2>
+            <p className="relative mt-5 text-sm leading-7 text-white/72 sm:text-base sm:leading-8">
+              {venue.cancellationPolicy}
+            </p>
+            <p className="relative mt-8 border-t border-white/12 pt-5 text-xs font-semibold uppercase tracking-[0.16em] text-white/54">
+              Please review before checkout
             </p>
           </div>
 
-          <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-[rgba(var(--color-surface-rgb),0.54)] shadow-[0_28px_90px_rgba(var(--color-shadow-brand-rgb),0.1)] backdrop-blur-2xl">
-            <div className="border-b border-[color:var(--color-border-neutral-200)] bg-[image:var(--gradient-shell-header)] px-4 py-4 sm:px-6 lg:px-8">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
-                    Visit & Connect
-                  </p>
-                  <p className="mt-1 text-sm text-[color:var(--color-text-secondary)]">
-                    Directions, contact details, and public venue info in one
-                    place.
-                  </p>
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-[rgba(var(--color-surface-rgb),0.62)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-brand-strong)] backdrop-blur-md">
-                  <MapPinIcon className="h-3.5 w-3.5" />
-                  Venue Map
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 sm:p-6 lg:p-8">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(340px,0.98fr)] lg:items-start">
-                <div className="space-y-4">
-                  <ContactDetail
-                    icon={MapPinIcon}
-                    label="Address"
-                    value={venue.address}
-                  />
-                  <ContactDetail
-                    icon={MailIcon}
-                    label="Email"
-                    value={venue.contactEmail ?? "Unavailable"}
-                    href={
-                      venue.contactEmail
-                        ? `mailto:${venue.contactEmail}`
-                        : undefined
-                    }
-                  />
-                  <ContactDetail
-                    icon={ClockIcon}
-                    label="Hours"
-                    value={venue.businessHours}
-                    note="Hours subject to change. Live availability is always accurate in the booking board."
-                  />
-                  {venue.contactPhone ? (
-                    <ContactDetail
-                      icon={PhoneIcon}
-                      label="Phone"
-                      value={venue.contactPhone}
-                      href={`tel:${venue.contactPhone.replace(/\s+/g, "")}`}
-                    />
-                  ) : null}
-                  <div className="flex flex-wrap gap-3 pt-2">
-                    <a
-                      href={venue.googleMapsUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center rounded-full bg-[color:var(--color-brand-strong)] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-[color:var(--color-brand-strong-hover)]"
-                    >
-                      Open in Google Maps
-                      <ExternalLinkIcon className="ml-2 h-4 w-4" />
-                    </a>
-                    {venue.contactFacebook ? (
-                      <a
-                        href={venue.contactFacebook}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#8bb4ff] bg-[rgba(24,119,242,0.14)] px-5 py-3 text-sm font-semibold text-[#1877f2] backdrop-blur-md transition hover:border-[#1877f2] hover:bg-[rgba(24,119,242,0.2)] hover:text-[#1664d9]"
-                      >
-                        <FacebookIcon className="mr-2 h-4 w-4" />
-                        Facebook
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="overflow-hidden rounded-[1.8rem] border border-white/65 bg-[rgba(var(--color-surface-rgb),0.4)] p-3 shadow-[0_18px_50px_rgba(var(--color-shadow-brand-rgb),0.08)] backdrop-blur-xl">
-                  <div className="mb-3 flex items-center justify-between rounded-[1rem] border border-white/70 bg-[rgba(var(--color-surface-rgb),0.58)] px-4 py-3 backdrop-blur-md">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--color-brand)]">
-                        Venue Location
-                      </p>
-                      <p className="mt-1 text-sm text-[color:var(--color-text-secondary)]">
-                        Tap the map or open full directions in Google Maps.
-                      </p>
-                    </div>
-                    <a
-                      href={venue.googleMapsUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-[rgba(var(--color-surface-rgb),0.7)] text-[color:var(--color-brand-strong)] backdrop-blur-md transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
-                      aria-label="Open venue location in Google Maps"
-                    >
-                      <ExternalLinkIcon className="h-4 w-4" />
-                    </a>
-                  </div>
-                  <div className="aspect-[16/11] w-full overflow-hidden rounded-[1.35rem] border border-[color:var(--color-border-soft)]">
-                    <iframe
-                      title={`${venue.name} map`}
-                      src={getGoogleMapsEmbedUrl(
-                        venue.googleMapsUrl,
-                        `${venue.name} ${venue.address}`.trim(),
-                      )}
-                      className="h-full w-full border-0"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="rounded-[2rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.72)] p-6 shadow-[0_22px_70px_rgba(var(--color-shadow-rgb),0.08)] sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
+              FAQ
+            </p>
+            <h2 className="mt-3 text-[1.75rem] font-semibold tracking-[-0.04em] text-(--color-text-primary) sm:text-[2.1rem]">
+              Common booking questions
+            </h2>
+            <Accordion type="single" collapsible className="mt-6 divide-y divide-(--color-border-soft) border-y border-(--color-border-soft)">
+              {faqs.map((faq, index) => (
+                <AccordionItem
+                  key={faq.question}
+                  value={`faq-${index}`}
+                  className="border-0"
+                >
+                  <AccordionTrigger className="py-5 text-left text-base font-semibold text-(--color-text-primary) hover:no-underline sm:text-lg">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-5 text-sm leading-7 text-(--color-text-muted)">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </div>
       </section>
 
-      <section className="px-3 pb-16 pt-6 sm:px-6 lg:px-10">
-        <div className="mx-auto grid w-full max-w-[1680px] grid-cols-1 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-          <Card className="border-[color:var(--color-border-highlight)] bg-[linear-gradient(180deg,var(--color-surface-highlight)_0%,var(--color-surface-highlight-soft)_100%)] shadow-[0_18px_50px_rgba(var(--color-shadow-brand-rgb),0.12)]">
-            <CardHeader className="pb-4">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[color:var(--color-border-highlight)] bg-[rgba(var(--color-surface-rgb),0.72)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-warning-strong)]">
-                <AlertIcon className="h-3.5 w-3.5" />
-                Cancellation Policy
-              </div>
-              <CardTitle className="mt-4 text-xl sm:text-2xl">
-                Clear expectations before players checkout
-              </CardTitle>
-              <CardDescription className="mt-3">
-                Review the reservation policy before finalizing your booking.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="rounded-[1.4rem] border border-[color:var(--color-border-highlight-soft)] bg-[rgba(var(--color-surface-rgb),0.8)] px-5 py-5 text-sm leading-7 text-[color:var(--color-text-secondary)]">
-                {venue.cancellationPolicy}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-[color:var(--color-border-card)]">
-            <CardHeader className="pb-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--color-brand)]">
-                FAQ & Operations
-              </p>
-              <CardTitle className="mt-2 text-2xl sm:text-3xl">
-                Common booking questions, answered clearly
-              </CardTitle>
-              <CardDescription className="mt-3 max-w-3xl text-base leading-7">
-                Policies, payment flow, and venue details stay easy to browse
-                without overwhelming the booking experience.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <Accordion type="single" collapsible className="space-y-4">
-                {faqs.map((faq, index) => (
-                  <AccordionItem
-                    key={faq.question}
-                    value={`faq-${index}`}
-                    className="rounded-[1.5rem] border border-[color:var(--color-border-light)] bg-[rgba(var(--color-surface-rgb),0.72)] px-5 py-3"
-                  >
-                    <AccordionTrigger className="py-3 text-lg font-semibold text-[color:var(--color-text-primary)]">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-4 pt-1 text-sm leading-7 text-[color:var(--color-text-muted)]">
-                      {faq.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-
-              <footer className="mt-8 flex flex-col gap-4 border-t border-[color:var(--color-border-light)] pt-6 text-sm text-[color:var(--color-text-muted)] md:flex-row md:items-center md:justify-between">
-                <p>Built for a modern, sport-first venue booking experience.</p>
-                <div className="flex flex-wrap gap-3">
-                  {venue.socialLinks.map((link, index) => (
-                    <Link
-                      key={`${link.label}-${index}`}
-                      href={link.href}
-                      className="rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </footer>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      <footer className="px-3 pb-8 pt-2 sm:px-6 lg:px-10">
-        <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-4 rounded-[1.75rem] border border-[color:var(--color-border-card)] bg-[rgba(var(--color-surface-rgb),0.7)] px-5 py-5 shadow-[0_16px_48px_rgba(var(--color-shadow-brand-rgb),0.08)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <footer className="border-t border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.5)] px-4 py-10 sm:px-6 lg:px-10">
+        <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <LoadingImage
               src="/brand/court-logo.png"
               alt={venue.name}
               width={136}
               height={94}
-              className="h-11 w-auto shrink-0 object-contain"
+              className="h-10 w-auto shrink-0 object-contain"
               skeletonClassName="bg-[image:var(--gradient-loading-neutral)]"
             />
-
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--color-brand)]">
+              <p className="text-sm font-semibold text-(--color-text-primary)">
                 {venue.name}
               </p>
-              <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-secondary)]">
-                Powered by{" "}
-                <span className="font-semibold text-[color:var(--color-text-primary)]">
-                  BookTheCourt
-                </span>
-                .
+              <p className="mt-1 text-sm text-(--color-text-muted)">
+                Powered by BookTheCourt
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[color:var(--color-text-muted)]">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-(--color-text-muted)">
             <a
               href="#book-now"
-              className="rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+              className="transition hover:text-(--color-brand)"
             >
               Book now
             </a>
@@ -387,10 +327,19 @@ export default async function Home() {
               href={venue.googleMapsUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+              className="transition hover:text-(--color-brand)"
             >
               Venue location
             </a>
+            {venue.socialLinks.map((link, index) => (
+              <Link
+                key={`${link.label}-${index}`}
+                href={link.href}
+                className="transition hover:text-(--color-brand)"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </footer>
@@ -412,6 +361,19 @@ function fallbackAmenities(
   ];
 }
 
+function VenueFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border-b border-white/10 px-5 py-4 last:border-b-0 sm:border-b-0 sm:border-l sm:border-white/10 sm:first:border-l-0 lg:px-6 lg:py-5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/48">
+        {label}
+      </p>
+      <p className="mt-2 truncate text-lg font-semibold leading-none tracking-[-0.035em] text-white sm:text-xl">
+        {value}
+      </p>
+    </div>
+  );
+}
+
 function ContactDetail({
   icon: Icon,
   label,
@@ -426,28 +388,28 @@ function ContactDetail({
   note?: string;
 }) {
   return (
-    <div className="flex items-start gap-4 rounded-[1.35rem] border border-[color:var(--color-border-light)] bg-[rgba(var(--color-surface-rgb),0.84)] px-4 py-4 shadow-[0_10px_28px_rgba(var(--color-shadow-brand-rgb),0.04)] sm:px-5">
-      <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--color-brand-success-border)] bg-[color:var(--color-surface-accent)] text-[color:var(--color-brand)]">
-        <Icon className="h-4.5 w-4.5" />
+    <div className="flex items-start gap-4 border-b border-(--color-border-soft) pb-5 last:border-b-0 last:pb-0">
+      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--color-surface-accent) text-(--color-brand)">
+        <Icon className="h-4 w-4" />
       </div>
-      <div className="min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-text-soft)]">
+      <div className="min-w-0 pt-0.5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-(--color-text-soft)">
           {label}
         </p>
         {href ? (
           <a
             href={href}
-            className="mt-1 block break-words text-sm leading-6 text-[color:var(--color-text-primary)] underline-offset-4 transition hover:text-[color:var(--color-brand)] hover:underline sm:text-[1.05rem]"
+            className="mt-1 block break-words text-sm leading-6 text-(--color-text-primary) underline-offset-4 transition hover:text-(--color-brand) hover:underline sm:text-[1.05rem]"
           >
             {value}
           </a>
         ) : (
-          <p className="mt-1 break-words text-sm leading-6 text-[color:var(--color-text-primary)] sm:text-[1.05rem]">
+          <p className="mt-1 break-words text-sm leading-6 text-(--color-text-primary) sm:text-[1.05rem]">
             {value}
           </p>
         )}
         {note ? (
-          <p className="mt-1 text-sm leading-6 text-[color:var(--color-text-muted)]">
+          <p className="mt-1 text-sm leading-6 text-(--color-text-muted)">
             {note}
           </p>
         ) : null}
@@ -542,30 +504,6 @@ function ClockIcon(props: SVGProps<SVGSVGElement>) {
     >
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" />
-    </svg>
-  );
-}
-
-function FacebookIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.3-1.5 1.6-1.5H17V4.9c-.8-.1-1.6-.2-2.4-.2-2.4 0-4 1.5-4 4.2V11H8v3h2.6v8h2.9Z" />
-    </svg>
-  );
-}
-
-function AlertIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      {...props}
-    >
-      <path d="M12 9v4" />
-      <path d="M12 17h.01" />
-      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
     </svg>
   );
 }

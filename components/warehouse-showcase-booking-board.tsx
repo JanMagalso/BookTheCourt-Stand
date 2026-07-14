@@ -962,7 +962,7 @@ export function WarehouseShowcaseBookingBoard({
       }`}
     >
       <div className="w-full">
-        <div className="h-fit w-full min-w-0 max-w-full overflow-hidden rounded-none border-y border-(--color-border) bg-(--color-surface-elevated) shadow-[0_16px_40px_rgba(var(--color-shadow-brand-rgb),0.05)] sm:rounded-[1.8rem] sm:border">
+        <div className="h-fit w-full min-w-0 max-w-full overflow-hidden rounded-none bg-(--color-surface-elevated) sm:rounded-[1.35rem] sm:border sm:border-(--color-border-soft)">
           <div className="border-b border-(--color-border-muted) px-4 py-5 sm:px-6">
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-4">
@@ -970,7 +970,7 @@ export function WarehouseShowcaseBookingBoard({
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--color-text-soft)">
                     Availability
                   </p>
-                  <h3 className="mt-1 font-serif text-[1.6rem] leading-none tracking-[-0.03em] text-(--color-text-primary) sm:text-[1.75rem]">
+                  <h3 className="mt-1 text-[1.6rem] font-semibold leading-none tracking-[-0.045em] text-(--color-text-primary) sm:text-[1.85rem]">
                     {formatHeroDate(currentSnapshot.selectedDate)}
                   </h3>
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-(--color-text-muted)">
@@ -1969,14 +1969,14 @@ export function WarehouseShowcaseBookingBoard({
 
                         <div className="border-t border-[color:var(--color-border-panel)] pt-6 text-sm text-[color:var(--color-text-secondary)]">
                           <p className="font-semibold text-[color:var(--color-text-primary)]">
-                            How this works
+                            What happens next
                           </p>
                           <p className="mt-2 leading-6">
-                            Upload the screenshot of your payment after sending
-                            the amount through{" "}
+                            After sending payment through{" "}
                             {selectedPaymentOption?.label ?? "your selected method"}
-                            . Your reservation will be marked pending until the
-                            venue verifies it.
+                            , upload your screenshot here. Your reservation will
+                            stay marked as pending until the venue reviews and
+                            verifies it.
                           </p>
                         </div>
                       </>
@@ -2108,8 +2108,8 @@ export function WarehouseShowcaseBookingBoard({
                         {isPending || isHoldPending
                           ? "Saving..."
                           : modalStep === "details"
-                            ? "Proceed to Payment"
-                            : "Submit Payment Proof"}
+                            ? "Continue to Payment"
+                            : "Send Payment Proof"}
                       </button>
 
                       {statusMessage ? (
@@ -2251,7 +2251,7 @@ function saveReservationResumeState(state: ReservationResumeState) {
   );
 }
 
-function readReservationResumeState() {
+function readReservationResumeState(): ReservationResumeState | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -2505,13 +2505,13 @@ function getMobileCheckoutButtonLabel(
 }
 
 function getModalTitle(step: ModalStep) {
-  return step === "details" ? "Reserve Court" : "Upload payment proof";
+  return step === "details" ? "Review your reservation" : "Send payment proof";
 }
 
 function getModalDescription(step: ModalStep) {
   return step === "details"
-    ? "Choose your slots, review your details, then proceed to payment."
-    : "Attach your payment screenshot, then submit it for venue verification.";
+    ? "Confirm your details, keep your hold active, and continue to payment when you're ready."
+    : "Send your payment screenshot so the venue can verify and finalize your reservation.";
 }
 
 function getSlotStatusTitle(
