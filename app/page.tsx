@@ -39,64 +39,57 @@ export default async function Home() {
             sizes="100vw"
             skeletonClassName="bg-[image:var(--gradient-hero-skeleton)]"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(var(--color-overlay-rgb),0.68)_0%,rgba(var(--color-overlay-rgb),0.38)_42%,rgba(var(--color-overlay-rgb),0.08)_78%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(var(--color-overlay-rgb),0.34)_0%,rgba(var(--color-overlay-rgb),0.02)_34%,rgba(var(--color-overlay-rgb),0.1)_62%,rgba(var(--color-overlay-rgb),0.7)_100%)]" />
-          <div className="hero-theme-wash absolute inset-0" />
-          <div className="hero-grid absolute inset-0 opacity-12" />
-          <div className="hero-vignette absolute inset-0" />
-          <div className="absolute -right-24 top-[18%] h-[32rem] w-[32rem] rounded-full border border-white/10" />
-          <div className="absolute -right-2 top-[28%] h-[20rem] w-[20rem] rounded-full border border-white/8" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(var(--color-overlay-rgb),0.7)_0%,rgba(var(--color-overlay-rgb),0.36)_44%,rgba(var(--color-overlay-rgb),0.12)_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(var(--color-overlay-rgb),0.38)_0%,rgba(var(--color-overlay-rgb),0.06)_32%,rgba(var(--color-overlay-rgb),0.18)_64%,rgba(var(--color-overlay-rgb),0.78)_100%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,transparent,var(--background))]" />
         </div>
 
-        <HeroNav venueName={venue.name} />
+        <HeroNav
+          venueName={venue.name}
+          contactPhone={venue.contactPhone}
+        />
 
-        <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1680px] flex-col px-4 pb-6 pt-28 sm:px-6 sm:pb-8 sm:pt-32 lg:px-10 lg:pt-28">
-          <div className="flex flex-1 items-center py-14 sm:py-16 lg:py-20">
-            <div className="hero-copy relative z-10 max-w-[50rem]">
-              <div className="mb-6 flex flex-wrap items-center gap-2.5">
-                <span className="rounded-full border border-white/16 bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/82 backdrop-blur-md">
-                  Online reservations
-                </span>
-                <span className="rounded-full border border-white/12 bg-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/66 backdrop-blur-md">
-                  Live court schedule
-                </span>
-              </div>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-(--color-brand-accent)">
-                Your next game starts here
-              </p>
-              <h1 className="max-w-[11ch] text-[3.5rem] font-semibold leading-[0.88] tracking-[-0.07em] text-white drop-shadow-[0_12px_40px_rgba(0,0,0,0.35)] sm:text-[5rem] md:text-[5.8rem] lg:text-[6.6rem]">
-                {venue.name}
-              </h1>
-              <p className="mt-6 max-w-[26ch] text-xl font-medium leading-[1.15] tracking-[-0.03em] text-white sm:mt-7 sm:text-[1.7rem] md:text-[1.9rem]">
-                Find a court. Pick a time. Come ready to play.
-              </p>
-              <p className="mt-4 max-w-[34rem] text-[0.98rem] leading-7 text-white/76 sm:text-base sm:leading-8">
-                Check live availability, reserve online, and send your payment
-                proof in one clear booking flow.
-              </p>
+        <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1680px] flex-col justify-end px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:justify-center lg:px-10 lg:pb-16 lg:pt-24">
+          <div className="hero-copy relative z-10 max-w-[46rem] lg:mt-8">
+            <h1 className="text-[3.5rem] font-semibold leading-[0.88] tracking-[-0.07em] text-white drop-shadow-[0_12px_40px_rgba(0,0,0,0.35)] sm:text-[5rem] md:text-[5.8rem] lg:text-[6.6rem]">
+              {venue.name}
+            </h1>
+            <p className="mt-6 max-w-[28ch] text-xl font-medium leading-[1.15] tracking-[-0.03em] text-white sm:mt-7 sm:text-[1.7rem] md:text-[1.9rem]">
+              Find a court. Pick a time. Come ready to play.
+            </p>
+            <p className="mt-4 max-w-[32rem] text-[0.98rem] leading-7 text-white/78 sm:text-base sm:leading-8">
+              Check live availability, reserve online, and send payment proof in
+              one clear booking flow.
+            </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:items-center sm:gap-5">
-                <a
-                  href="#book-now"
-                  className="hero-cta-primary inline-flex min-h-12 items-center justify-center rounded-full bg-(--color-brand-accent) px-7 py-3 text-sm font-semibold text-(--color-brand-strong) shadow-[0_18px_42px_rgba(0,0,0,0.32)] transition hover:bg-(--color-brand-accent-hover)"
-                >
-                  Reserve your session
-                  <ArrowRightIcon className="ml-2 h-4 w-4" />
-                </a>
-                <a
-                  href={venue.googleMapsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex min-h-12 items-center justify-center px-1 text-sm font-semibold text-white/88 underline-offset-4 transition hover:text-white hover:underline sm:px-2"
-                >
-                  View venue location
-                  <ExternalLinkIcon className="ml-2 h-4 w-4" />
-                </a>
-              </div>
+            <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:items-center sm:gap-5">
+              <a
+                href="#book-now"
+                className="hero-cta-primary inline-flex min-h-12 items-center justify-center rounded-full bg-(--color-brand-accent) px-7 py-3 text-sm font-semibold text-(--color-brand-strong) shadow-[0_18px_42px_rgba(0,0,0,0.32)] transition hover:bg-(--color-brand-accent-hover)"
+              >
+                Reserve your session
+                <ArrowRightIcon className="ml-2 h-4 w-4" />
+              </a>
+              <a
+                href={venue.googleMapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-12 items-center justify-center px-1 text-sm font-semibold text-white/88 underline-offset-4 transition hover:text-white hover:underline sm:px-2"
+              >
+                View venue location
+                <ExternalLinkIcon className="ml-2 h-4 w-4" />
+              </a>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="hero-facts relative z-10 hidden overflow-hidden rounded-[1.6rem] border border-white/28 backdrop-blur-xl sm:grid sm:grid-cols-2 lg:grid-cols-4">
+      <section
+        id="venue-info"
+        className="page-section relative z-10 px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24"
+      >
+        <div className="mx-auto w-full max-w-[1680px]">
+          <div className="grid gap-0 border-y border-(--color-border-soft) py-1 sm:grid-cols-2 lg:grid-cols-4">
             <VenueFact
               label="Courts"
               value={String(
@@ -110,15 +103,8 @@ export default async function Home() {
               value={venue.hasNightLighting ? "Night play" : "Day play"}
             />
           </div>
-        </div>
-      </section>
 
-      <section
-        id="venue-info"
-        className="page-section relative z-10 px-4 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
-      >
-        <div className="mx-auto w-full max-w-[1680px]">
-          <div className="section-heading max-w-3xl">
+          <div className="section-heading mt-14 max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
               Amenities
             </p>
@@ -126,8 +112,7 @@ export default async function Home() {
               What players find on site
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-(--color-text-secondary)">
-              Everything you need for a comfortable session, collected in one
-              quick view.
+              Essentials for a comfortable session, in one quick view.
             </p>
           </div>
 
@@ -139,7 +124,7 @@ export default async function Home() {
 
       <section
         id="gallery"
-        className="page-section px-4 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
+        className="page-section px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24"
       >
         <div className="mx-auto w-full max-w-[1680px]">
           <div className="section-heading mb-10 max-w-3xl">
@@ -149,10 +134,6 @@ export default async function Home() {
             <h2 className="mt-3 text-[2rem] font-semibold tracking-[-0.045em] text-(--color-text-primary) sm:text-[2.6rem]">
               Feel the venue before you arrive
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-(--color-text-secondary)">
-              Take a closer look at the courts, facilities, and atmosphere
-              before choosing your schedule.
-            </p>
           </div>
           <FacilityPhotoMosaic photos={venue.galleryImages} title={venue.name} />
         </div>
@@ -162,20 +143,20 @@ export default async function Home() {
 
       <section
         id="contact"
-        className="page-section px-4 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
+        className="page-section px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24"
       >
         <div className="mx-auto w-full max-w-[1680px]">
-          <div className="section-heading mb-12 max-w-3xl">
+          <div className="section-heading mb-10 max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
               Contact
             </p>
-            <h2 className="mt-3 text-[2rem] font-semibold leading-[1.05] tracking-[-0.045em] text-(--color-text-primary) sm:text-[2.6rem] lg:text-[3.2rem]">
+            <h2 className="mt-3 text-[2rem] font-semibold leading-[1.05] tracking-[-0.045em] text-(--color-text-primary) sm:text-[2.6rem] lg:text-[3rem]">
               Know where to go before game time
             </h2>
           </div>
 
-          <div className="grid overflow-hidden rounded-[2rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.68)] shadow-[0_26px_80px_rgba(var(--color-shadow-rgb),0.1)] lg:grid-cols-[minmax(0,0.82fr)_minmax(420px,1.18fr)]">
-            <div className="space-y-6 p-6 sm:p-8 lg:p-10">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(380px,1.1fr)] lg:items-start lg:gap-14">
+            <div className="space-y-6">
               <ContactDetail
                 icon={MapPinIcon}
                 label="Address"
@@ -229,8 +210,8 @@ export default async function Home() {
               </div>
             </div>
 
-            <div className="min-h-[360px] overflow-hidden border-t border-(--color-border-soft) bg-(--color-surface) lg:border-l lg:border-t-0">
-              <div className="h-full min-h-[360px] w-full">
+            <div className="overflow-hidden rounded-[1.5rem] border border-(--color-border-soft) bg-(--color-surface)">
+              <div className="aspect-[16/11] w-full">
                 <iframe
                   title={`${venue.name} map`}
                   src={getGoogleMapsEmbedUrl(
@@ -248,32 +229,31 @@ export default async function Home() {
       </section>
 
       <section className="page-section px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24">
-        <div className="mx-auto grid w-full max-w-[1680px] items-start gap-8 lg:grid-cols-[minmax(300px,0.36fr)_minmax(0,0.64fr)] lg:gap-10">
-          <div className="theme-gradient-panel relative overflow-hidden rounded-[2rem] bg-(--color-brand-strong) p-6 text-white shadow-[0_24px_72px_rgba(var(--color-shadow-brand-rgb),0.24)] sm:p-8">
-            <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full border border-white/10" />
-            <div className="pointer-events-none absolute -right-5 -top-8 h-28 w-28 rounded-full border border-white/10" />
-            <p className="relative text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand-accent)">
+        <div className="mx-auto grid w-full max-w-[1680px] items-start gap-12 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,0.62fr)] lg:gap-16">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
               Cancellation
             </p>
-            <h2 className="relative mt-3 text-[1.75rem] font-semibold tracking-[-0.04em] text-white sm:text-[2.1rem]">
+            <h2 className="mt-3 text-[1.75rem] font-semibold tracking-[-0.04em] text-(--color-text-primary) sm:text-[2.1rem]">
               Terms before you pay
             </h2>
-            <p className="relative mt-5 text-sm leading-7 text-white/72 sm:text-base sm:leading-8">
+            <p className="mt-5 text-sm leading-7 text-(--color-text-secondary) sm:text-base sm:leading-8">
               {venue.cancellationPolicy}
-            </p>
-            <p className="relative mt-8 border-t border-white/12 pt-5 text-xs font-semibold uppercase tracking-[0.16em] text-white/54">
-              Please review before checkout
             </p>
           </div>
 
-          <div className="theme-gradient-surface rounded-[2rem] border border-(--color-border-card) p-6 shadow-[0_22px_70px_rgba(var(--color-shadow-rgb),0.08)] sm:p-8">
+          <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
               FAQ
             </p>
             <h2 className="mt-3 text-[1.75rem] font-semibold tracking-[-0.04em] text-(--color-text-primary) sm:text-[2.1rem]">
               Common booking questions
             </h2>
-            <Accordion type="single" collapsible className="mt-6 divide-y divide-(--color-border-soft) border-y border-(--color-border-soft)">
+            <Accordion
+              type="single"
+              collapsible
+              className="mt-6 divide-y divide-(--color-border-soft) border-y border-(--color-border-soft)"
+            >
               {faqs.map((faq, index) => (
                 <AccordionItem
                   key={faq.question}
@@ -293,8 +273,8 @@ export default async function Home() {
         </div>
       </section>
 
-      <footer className="px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
+      <footer className="border-t border-(--color-border-soft) px-4 py-8 sm:px-6 lg:px-10">
+        <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <LoadingImage
               src="/brand/court-logo.png"
@@ -361,11 +341,11 @@ function fallbackAmenities(
 
 function VenueFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-b border-white/18 px-5 py-4 last:border-b-0 sm:border-b-0 sm:border-l sm:border-white/18 sm:first:border-l-0 lg:px-6 lg:py-5">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/72">
+    <div className="border-b border-(--color-border-soft) px-1 py-4 sm:border-b-0 sm:border-l sm:border-(--color-border-soft) sm:px-5 sm:first:border-l-0 sm:first:pl-1">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-(--color-text-soft)">
         {label}
       </p>
-      <p className="mt-2 truncate text-lg font-semibold leading-none tracking-[-0.035em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.24)] sm:text-xl">
+      <p className="mt-2 text-[1.45rem] font-semibold leading-none tracking-[-0.04em] text-(--color-text-primary)">
         {value}
       </p>
     </div>

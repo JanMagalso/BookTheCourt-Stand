@@ -239,18 +239,18 @@ export function FacilityPhotoMosaic({
 
   return (
     <div className="space-y-5">
-      <div className="relative w-full overflow-hidden rounded-[2.2rem] border border-[color:var(--color-border-card)] bg-[color:var(--color-surface-soft)] shadow-[0_24px_80px_rgba(var(--color-shadow-rgb),0.12)]">
-        <div className="overflow-hidden px-3 sm:px-4 lg:px-5" ref={emblaRef}>
-          <div className="-ml-3 flex touch-pan-y sm:-ml-4 lg:-ml-5">
+      <div className="relative w-full overflow-hidden">
+        <div className="overflow-hidden" ref={emblaRef}>
+          <div className="-ml-3 flex touch-pan-y sm:-ml-4">
             {renderedPhotos.map((photo, index) => (
               <div
                 key={`${photo}-${index}`}
-                className="min-w-0 shrink-0 grow-0 basis-[92%] pl-3 sm:basis-[72%] sm:pl-4 md:basis-1/2 lg:basis-1/4 lg:pl-5"
+                className="min-w-0 shrink-0 grow-0 basis-[92%] pl-3 sm:basis-[72%] sm:pl-4 md:basis-1/2 lg:basis-1/4"
               >
                 <button
                   type="button"
                   onClick={() => openLightbox(index)}
-                  className="relative block w-full overflow-hidden rounded-[2rem] text-left transition-transform duration-200 hover:scale-[1.01]"
+                  className="relative block w-full overflow-hidden rounded-[1.25rem] text-left transition-transform duration-200 hover:scale-[1.01]"
                   aria-label={`Open ${title} photo ${(index % photoCount) + 1}`}
                 >
                   <LoadingImage
@@ -261,11 +261,6 @@ export function FacilityPhotoMosaic({
                     className="aspect-[16/10] w-full bg-[color:var(--color-hero-deep)] object-contain md:aspect-[4/3] md:object-cover lg:aspect-[5/4]"
                     skeletonClassName="bg-[image:var(--gradient-loading-slate)]"
                   />
-                  <span className="pointer-events-none absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(var(--color-overlay-rgb),0.68)] text-white shadow-[0_10px_24px_rgba(var(--color-shadow-rgb),0.22)]">
-                    <span aria-hidden="true" className="text-lg leading-none">
-                      ⌕
-                    </span>
-                  </span>
                 </button>
               </div>
             ))}
@@ -275,11 +270,11 @@ export function FacilityPhotoMosaic({
 
       {cleanPhotos.length > 1 ? (
         <div className="flex items-center justify-between gap-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border-card)] bg-[color:var(--color-surface)] px-3 py-2 text-[11px] font-semibold tracking-[0.18em] text-[color:var(--color-text-primary)] shadow-[0_8px_24px_rgba(var(--color-shadow-rgb),0.08)]">
-            <span>
+          <div className="flex items-center gap-3 text-sm text-(--color-text-muted)">
+            <span className="font-medium text-(--color-text-primary)">
               {safeIndex + 1} / {cleanPhotos.length}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {cleanPhotos.map((dotPhoto, dotIndex) => (
                 <button
                   key={`${dotPhoto}-dot-${dotIndex}`}
@@ -287,10 +282,10 @@ export function FacilityPhotoMosaic({
                   aria-label={`Show photo ${dotIndex + 1}`}
                   onClick={() => scrollTo(dotIndex)}
                   disabled={!isCarouselReady}
-                  className={`h-2.5 rounded-full transition-all ${
+                  className={`h-1.5 rounded-full transition-all ${
                     dotIndex === safeIndex
-                      ? "w-8 bg-[color:var(--color-action-primary)]"
-                      : "w-2.5 bg-[color:var(--color-border-panel-soft)] hover:bg-[color:var(--color-text-soft)]"
+                      ? "w-6 bg-(--color-brand)"
+                      : "w-1.5 bg-(--color-border-panel-soft) hover:bg-(--color-text-soft)"
                   }`}
                 />
               ))}
@@ -302,7 +297,7 @@ export function FacilityPhotoMosaic({
               type="button"
               onClick={toggleAutoScroll}
               disabled={!isCarouselReady}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-border-card)] bg-[color:var(--color-surface)] text-[color:var(--color-text-primary)] shadow-[0_8px_24px_rgba(var(--color-shadow-rgb),0.08)] transition hover:border-[color:var(--color-action-primary)] hover:text-[color:var(--color-action-primary)]"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-(--color-border-soft) text-(--color-text-primary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
               aria-pressed={isAutoScrollPlaying}
               aria-label={
                 isAutoScrollPlaying
@@ -312,13 +307,13 @@ export function FacilityPhotoMosaic({
             >
               {isAutoScrollPlaying ? (
                 <span aria-hidden="true" className="flex items-center gap-1">
-                  <span className="block h-4 w-1.5 rounded-full bg-current" />
-                  <span className="block h-4 w-1.5 rounded-full bg-current" />
+                  <span className="block h-3.5 w-1 rounded-full bg-current" />
+                  <span className="block h-3.5 w-1 rounded-full bg-current" />
                 </span>
               ) : (
                 <span
                   aria-hidden="true"
-                  className="ml-0.5 block h-0 w-0 border-y-[8px] border-y-transparent border-l-[12px] border-l-current"
+                  className="ml-0.5 block h-0 w-0 border-y-[7px] border-y-transparent border-l-[11px] border-l-current"
                 />
               )}
             </button>
@@ -326,7 +321,7 @@ export function FacilityPhotoMosaic({
               type="button"
               onClick={showPrevious}
               disabled={!isCarouselReady}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-border-card)] bg-[color:var(--color-surface)] text-xl text-[color:var(--color-text-primary)] shadow-[0_8px_24px_rgba(var(--color-shadow-rgb),0.08)] transition hover:border-[color:var(--color-action-primary)] hover:text-[color:var(--color-action-primary)]"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-(--color-border-soft) text-xl text-(--color-text-primary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
               aria-label="Previous photo"
             >
               ‹
@@ -335,7 +330,7 @@ export function FacilityPhotoMosaic({
               type="button"
               onClick={showNext}
               disabled={!isCarouselReady}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-border-card)] bg-[color:var(--color-surface)] text-xl text-[color:var(--color-text-primary)] shadow-[0_8px_24px_rgba(var(--color-shadow-rgb),0.08)] transition hover:border-[color:var(--color-action-primary)] hover:text-[color:var(--color-action-primary)]"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-(--color-border-soft) text-xl text-(--color-text-primary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
               aria-label="Next photo"
             >
               ›

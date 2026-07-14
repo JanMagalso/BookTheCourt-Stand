@@ -59,11 +59,11 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
           {mobileAmenities.map((item) => (
             <div
               key={item.label}
-              className="rounded-[1.35rem] border border-(--color-border-card) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.64))] px-4 py-4 shadow-[0_16px_36px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition duration-200 hover:-translate-y-1 hover:border-(--color-brand) hover:shadow-[0_20px_46px_rgba(var(--color-shadow-brand-rgb),0.12)]"
+              className="border-b border-(--color-border-soft) pb-4"
             >
               <div className="flex items-start gap-3">
-                <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-(--color-border-subtle) bg-(--color-surface-accent) text-(--color-brand) shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.08)]">
-                  <item.icon className="h-4.5 w-4.5" />
+                <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--color-surface-accent) text-(--color-brand)">
+                  <item.icon className="h-4 w-4" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-(--color-text-primary)">
@@ -97,24 +97,22 @@ export function AmenitiesPreview({ amenities }: { amenities: string[] }) {
                 {getCategoryDescription(group.title)}
               </p>
             </div>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-3">
               {group.items.map((item) => (
                 <div
                   key={`${group.title}-${item.label}`}
-                  className="group rounded-[1.35rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.58)] px-4 py-4 transition duration-200 hover:-translate-y-0.5 hover:border-(--color-brand) hover:bg-[rgba(var(--color-surface-rgb),0.82)] hover:shadow-[0_16px_42px_rgba(var(--color-shadow-brand-rgb),0.1)]"
+                  className="flex items-start gap-3"
                 >
-                  <div className="flex h-full items-start gap-3">
-                    <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--color-surface-accent) text-(--color-brand) transition group-hover:bg-(--color-brand) group-hover:text-white">
-                      <item.icon className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-(--color-text-primary)">
-                        {item.label}
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-(--color-text-muted)">
-                        {item.description}
-                      </p>
-                    </div>
+                  <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--color-surface-accent) text-(--color-brand)">
+                    <item.icon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-(--color-text-primary)">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-(--color-text-muted)">
+                      {item.description}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -141,8 +139,8 @@ function AllAmenitiesDrawer({
 }) {
   return (
     <Drawer>
-      <DrawerTrigger className="inline-flex min-h-11 items-center justify-center rounded-full border border-(--color-border-light) bg-[linear-gradient(180deg,rgba(var(--color-surface-rgb),0.86),rgba(var(--color-surface-rgb),0.62))] px-5 py-3 text-sm font-semibold text-(--color-brand) shadow-[0_12px_30px_rgba(var(--color-shadow-rgb),0.08)] backdrop-blur-md transition hover:border-(--color-brand) hover:text-(--color-brand-bright)">
-        View All {totalAmenities} Amenities
+      <DrawerTrigger className="inline-flex min-h-11 items-center justify-center rounded-full border border-(--color-border-soft) px-5 py-3 text-sm font-semibold text-(--color-brand) transition hover:border-(--color-brand) hover:bg-(--color-surface-accent)">
+        View all {totalAmenities} amenities
       </DrawerTrigger>
       <DrawerContent className="h-[100dvh] overflow-y-auto pt-20 md:mb-8 md:h-auto md:max-h-[84vh] md:max-w-[880px] md:rounded-[2rem] md:pt-0">
         <DrawerHeader className="border-b border-(--color-border-lighter)">
@@ -195,6 +193,7 @@ function AllAmenitiesDrawer({
 
 function buildAmenityGroups(amenities: string[]) {
   const grouped = new Map<AmenityCategory, AmenityItem[]>();
+  const seenLabels = new Set<string>();
 
   for (const category of AMENITY_CATEGORY_ORDER) {
     grouped.set(category, []);
@@ -203,9 +202,17 @@ function buildAmenityGroups(amenities: string[]) {
   for (const amenity of amenities) {
     const sanitizedAmenity = sanitizeAmenityLabel(amenity);
     const normalized = sanitizedAmenity.toLowerCase();
+    const label = titleCaseAmenity(canonicalAmenityLabel(normalized, sanitizedAmenity));
+    const dedupeKey = label.toLowerCase();
+
+    if (seenLabels.has(dedupeKey)) {
+      continue;
+    }
+
+    seenLabels.add(dedupeKey);
     const category = resolveAmenityCategory(normalized);
     grouped.get(category)?.push({
-      label: titleCaseAmenity(sanitizedAmenity),
+      label,
       description: amenityDescription(normalized),
       icon: resolveAmenityIcon(normalized),
     });
@@ -215,6 +222,26 @@ function buildAmenityGroups(amenities: string[]) {
     title,
     items: grouped.get(title) ?? [],
   })).filter((group) => group.items.length > 0);
+}
+
+function canonicalAmenityLabel(normalized: string, fallback: string) {
+  if (normalized.includes("cafeteria") || normalized === "cafe") {
+    return "Cafe";
+  }
+
+  if (normalized.includes("restroom") || normalized.includes("toilet")) {
+    return "Restrooms";
+  }
+
+  if (normalized.includes("locker")) {
+    return "Locker Rooms";
+  }
+
+  if (normalized.includes("shower")) {
+    return "Shower Facilities";
+  }
+
+  return fallback;
 }
 
 function getCategoryDescription(category: AmenityCategory) {
