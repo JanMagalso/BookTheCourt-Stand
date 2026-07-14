@@ -48,20 +48,20 @@ export default async function Home() {
 
         <HeroNav venueName={venue.name} />
 
-        <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1680px] flex-col justify-end px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:justify-center lg:px-10 lg:pb-16 lg:pt-24">
-          <div className="hero-copy relative z-10 max-w-[46rem] lg:mt-8">
-            <h1 className="text-[3.5rem] font-semibold leading-[0.88] tracking-[-0.07em] text-white drop-shadow-[0_12px_40px_rgba(0,0,0,0.35)] sm:text-[5rem] md:text-[5.8rem] lg:text-[6.6rem]">
+        <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1680px] flex-col justify-center px-4 pb-12 pt-24 sm:px-6 sm:pb-16 sm:pt-28 lg:px-10 lg:pb-20 lg:pt-28">
+          <div className="hero-copy relative z-10 max-w-[46rem]">
+            <h1 className="text-[3rem] font-semibold leading-[0.9] tracking-[-0.07em] text-white drop-shadow-[0_12px_40px_rgba(0,0,0,0.35)] sm:text-[4.6rem] md:text-[5.6rem] lg:text-[6.4rem]">
               {venue.name}
             </h1>
-            <p className="mt-6 max-w-[28ch] text-xl font-medium leading-[1.15] tracking-[-0.03em] text-white sm:mt-7 sm:text-[1.7rem] md:text-[1.9rem]">
+            <p className="mt-5 max-w-[28ch] text-lg font-medium leading-[1.2] tracking-[-0.03em] text-white sm:mt-6 sm:text-[1.6rem] md:text-[1.85rem]">
               Find a court. Pick a time. Come ready to play.
             </p>
-            <p className="mt-4 max-w-[32rem] text-[0.98rem] leading-7 text-white/78 sm:text-base sm:leading-8">
+            <p className="mt-4 max-w-[32rem] text-[0.95rem] leading-7 text-white/78 sm:text-base sm:leading-8">
               Check live availability, reserve online, and send payment proof in
               one clear booking flow.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:items-center sm:gap-5">
+            <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row sm:items-center sm:gap-5">
               <a
                 href="#book-now"
                 className="hero-cta-primary inline-flex min-h-12 items-center justify-center rounded-full bg-(--color-brand-accent) px-7 py-3 text-sm font-semibold text-(--color-brand-strong) shadow-[0_18px_42px_rgba(0,0,0,0.32)] transition hover:bg-(--color-brand-accent-hover)"
