@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { buildBookingTransactionKey, buildReceiptId } from "@/lib/receipt";
 import { createSupabaseServiceClient, hasSupabaseEnv } from "@/lib/supabase";
 
 export async function GET(request: Request) {
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
 
   const { data: bookings, error: bookingsError } = await supabaseAdmin
     .from("bookings")
-    .select("id,court_id,reservation_name,starts_at,ends_at,status,hold_expires_at,payment_receipt_url")
+    .select("id,court_id,reservation_name,starts_at,ends_at,status,hold_expires_at,payment_reference,payment_receipt_url")
     .eq("player_id", profile.id)
     .order("starts_at", { ascending: true });
 
@@ -101,7 +102,8 @@ export async function GET(request: Request) {
     string,
     {
       id: string;
-      bookingReference: string;
+      bookingIds: string[];
+      paymentReference: string;
       reservationName: string;
       venueName: string;
       startsAt: string;
@@ -126,8 +128,12 @@ export async function GET(request: Request) {
       ? warehouseMap.get(court.warehouseId) ?? "Venue"
       : "Venue";
     const normalizedStatus = normalizeStatus(booking.status);
-    const receiptKey = String(booking.payment_receipt_url ?? "").trim();
-    const groupingKey = receiptKey || `single:${booking.id}`;
+    const groupingKey = buildBookingTransactionKey({
+      playerId: profile.id,
+      paymentReference: booking.payment_reference,
+      paymentReceiptUrl: booking.payment_receipt_url,
+      fallbackBookingId: String(booking.id),
+    });
 
     const existing = groupedBookings.get(groupingKey);
     const courtEntry = {
@@ -139,7 +145,8 @@ export async function GET(request: Request) {
     if (!existing) {
       groupedBookings.set(groupingKey, {
         id: groupingKey,
-        bookingReference: String(booking.id).slice(0, 8).toUpperCase(),
+        bookingIds: [String(booking.id)],
+        paymentReference: String(booking.payment_reference ?? ""),
         reservationName: booking.reservation_name ?? "Reservation",
         venueName,
         startsAt: booking.starts_at,
@@ -160,14 +167,24 @@ export async function GET(request: Request) {
       new Date(booking.ends_at).getTime() > new Date(existing.endsAt).getTime()
         ? booking.ends_at
         : existing.endsAt;
+    existing.bookingIds.push(String(booking.id));
     existing.courts.push(courtEntry);
   }
 
   return NextResponse.json({
-    bookings: [...groupedBookings.values()].sort(
-      (left, right) =>
-        new Date(right.startsAt).getTime() - new Date(left.startsAt).getTime(),
-    ),
+    bookings: [...groupedBookings.values()]
+      .map(({ bookingIds, paymentReference, ...booking }) => ({
+        ...booking,
+        bookingReference: buildReceiptId({
+          playerId: profile.id,
+          paymentReference,
+          bookingIds,
+        }),
+      }))
+      .sort(
+        (left, right) =>
+          new Date(right.startsAt).getTime() - new Date(left.startsAt).getTime(),
+      ),
   });
 }
 

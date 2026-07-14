@@ -14,7 +14,6 @@ export default async function MyBookingsPage() {
   return (
     <BookTheCourtMyBookingsPage
       venueName={snapshot.venue.name}
-      contactPhone={snapshot.venue.contactPhone}
     />
   );
 }

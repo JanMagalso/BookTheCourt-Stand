@@ -9,14 +9,12 @@ import { createPublicSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type HeroNavProps = {
   venueName: string;
-  contactPhone?: string | null;
   sectionBasePath?: string;
   solidOnLoad?: boolean;
 };
 
 export function HeroNav({
   venueName,
-  contactPhone,
   sectionBasePath = "",
   solidOnLoad = false,
 }: HeroNavProps) {
@@ -341,15 +339,6 @@ export function HeroNav({
             </nav>
 
             <div className="hidden items-center gap-3 lg:flex">
-              <span
-                className={`rounded-full px-4 py-2 text-sm transition-colors ${
-                  isScrolled
-                    ? "border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.52)] text-(--color-text-secondary)"
-                    : "border border-white/10 bg-white/6 text-white/68"
-                }`}
-              >
-                {contactPhone ?? "Guest-friendly reservations"}
-              </span>
               {loggedInFirstName ? (
                 <span
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${

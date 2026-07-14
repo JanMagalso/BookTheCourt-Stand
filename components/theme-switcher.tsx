@@ -75,9 +75,10 @@ export function ThemeSwitcher() {
           aria-expanded={isOpen}
           aria-label={isOpen ? "Close theme switcher" : "Open theme switcher"}
         >
-          <span aria-hidden="true" className="text-lg leading-none">
-            ◐
-          </span>
+          <span
+            aria-hidden="true"
+            className="h-2.5 w-2.5 rounded-full bg-(--color-brand) shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-brand)_14%,transparent)]"
+          />
           {!isCompactMobile ? (
             <span className="text-xs font-semibold uppercase tracking-[0.14em]">
               Theme
@@ -97,7 +98,7 @@ export function ThemeSwitcher() {
                   Theme
                 </p>
                 <p className="text-xs text-(--color-text-secondary)">
-                  Switch the venue look
+                  {themeOptions[selectedTheme].label} · {selectedMode}
                 </p>
               </div>
             </div>

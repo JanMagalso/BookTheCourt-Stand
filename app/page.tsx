@@ -35,22 +35,20 @@ export default async function Home() {
             fill
             priority
             wrapperClassName="absolute inset-0 hero-media-animate origin-center"
-            className="object-cover object-[center_35%]"
+            className="hero-photo object-cover object-[center_35%]"
             sizes="100vw"
             skeletonClassName="bg-[image:var(--gradient-hero-skeleton)]"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(var(--color-overlay-rgb),0.84)_0%,rgba(var(--color-overlay-rgb),0.56)_45%,rgba(var(--color-overlay-rgb),0.18)_100%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(var(--color-overlay-rgb),0.5)_0%,rgba(var(--color-overlay-rgb),0.04)_32%,rgba(var(--color-overlay-rgb),0.2)_58%,rgba(var(--color-overlay-rgb),0.9)_100%)]" />
-          <div className="absolute inset-0 bg-[image:var(--gradient-hero-overlay)] opacity-25" />
-          <div className="hero-grid absolute inset-0 opacity-25" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(var(--color-overlay-rgb),0.68)_0%,rgba(var(--color-overlay-rgb),0.38)_42%,rgba(var(--color-overlay-rgb),0.08)_78%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(var(--color-overlay-rgb),0.34)_0%,rgba(var(--color-overlay-rgb),0.02)_34%,rgba(var(--color-overlay-rgb),0.1)_62%,rgba(var(--color-overlay-rgb),0.7)_100%)]" />
+          <div className="hero-theme-wash absolute inset-0" />
+          <div className="hero-grid absolute inset-0 opacity-12" />
+          <div className="hero-vignette absolute inset-0" />
           <div className="absolute -right-24 top-[18%] h-[32rem] w-[32rem] rounded-full border border-white/10" />
           <div className="absolute -right-2 top-[28%] h-[20rem] w-[20rem] rounded-full border border-white/8" />
         </div>
 
-        <HeroNav
-          venueName={venue.name}
-          contactPhone={venue.contactPhone}
-        />
+        <HeroNav venueName={venue.name} />
 
         <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1680px] flex-col px-4 pb-6 pt-28 sm:px-6 sm:pb-8 sm:pt-32 lg:px-10 lg:pt-28">
           <div className="flex flex-1 items-center py-14 sm:py-16 lg:py-20">
@@ -98,7 +96,7 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="relative z-10 hidden overflow-hidden rounded-[1.6rem] border border-white/14 bg-black/16 backdrop-blur-xl sm:grid sm:grid-cols-2 lg:grid-cols-4">
+          <div className="hero-facts relative z-10 hidden overflow-hidden rounded-[1.6rem] border border-white/28 backdrop-blur-xl sm:grid sm:grid-cols-2 lg:grid-cols-4">
             <VenueFact
               label="Courts"
               value={String(
@@ -141,7 +139,7 @@ export default async function Home() {
 
       <section
         id="gallery"
-        className="page-section page-section-tinted px-4 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
+        className="page-section px-4 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
       >
         <div className="mx-auto w-full max-w-[1680px]">
           <div className="section-heading mb-10 max-w-3xl">
@@ -249,9 +247,9 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="page-section page-section-tinted px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24">
+      <section className="page-section px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24">
         <div className="mx-auto grid w-full max-w-[1680px] items-start gap-8 lg:grid-cols-[minmax(300px,0.36fr)_minmax(0,0.64fr)] lg:gap-10">
-          <div className="relative overflow-hidden rounded-[2rem] bg-(--color-brand-strong) p-6 text-white shadow-[0_24px_72px_rgba(var(--color-shadow-brand-rgb),0.18)] sm:p-8">
+          <div className="theme-gradient-panel relative overflow-hidden rounded-[2rem] bg-(--color-brand-strong) p-6 text-white shadow-[0_24px_72px_rgba(var(--color-shadow-brand-rgb),0.24)] sm:p-8">
             <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full border border-white/10" />
             <div className="pointer-events-none absolute -right-5 -top-8 h-28 w-28 rounded-full border border-white/10" />
             <p className="relative text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand-accent)">
@@ -268,7 +266,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.72)] p-6 shadow-[0_22px_70px_rgba(var(--color-shadow-rgb),0.08)] sm:p-8">
+          <div className="theme-gradient-surface rounded-[2rem] border border-(--color-border-card) p-6 shadow-[0_22px_70px_rgba(var(--color-shadow-rgb),0.08)] sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--color-brand)">
               FAQ
             </p>
@@ -295,7 +293,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.5)] px-4 py-10 sm:px-6 lg:px-10">
+      <footer className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <LoadingImage
@@ -363,11 +361,11 @@ function fallbackAmenities(
 
 function VenueFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-b border-white/10 px-5 py-4 last:border-b-0 sm:border-b-0 sm:border-l sm:border-white/10 sm:first:border-l-0 lg:px-6 lg:py-5">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/48">
+    <div className="border-b border-white/18 px-5 py-4 last:border-b-0 sm:border-b-0 sm:border-l sm:border-white/18 sm:first:border-l-0 lg:px-6 lg:py-5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/72">
         {label}
       </p>
-      <p className="mt-2 truncate text-lg font-semibold leading-none tracking-[-0.035em] text-white sm:text-xl">
+      <p className="mt-2 truncate text-lg font-semibold leading-none tracking-[-0.035em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.24)] sm:text-xl">
         {value}
       </p>
     </div>

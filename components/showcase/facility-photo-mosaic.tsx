@@ -3,6 +3,7 @@
 import AutoScroll from "embla-carousel-auto-scroll";
 import useEmblaCarousel from "embla-carousel-react";
 import { useEffect, useEffectEvent, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { LoadingImage } from "@/components/loading-image";
 
@@ -343,8 +344,8 @@ export function FacilityPhotoMosaic({
         </div>
       ) : null}
       {isLightboxOpen && activeLightboxPhoto ? (
-        <div
-          className="fixed inset-0 z-[1200] bg-[rgba(8,15,26,0.9)] backdrop-blur-sm"
+        createPortal(<div
+          className="fixed inset-0 z-[1700] bg-[rgba(8,15,26,0.94)] backdrop-blur-md"
           role="dialog"
           aria-modal="true"
           aria-label={`${title} photo viewer`}
@@ -448,7 +449,7 @@ export function FacilityPhotoMosaic({
               </div>
             </div>
           </div>
-        </div>
+        </div>, document.body)
       ) : null}
     </div>
   );

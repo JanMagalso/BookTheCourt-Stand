@@ -73,6 +73,20 @@ type ReservationResumeState = {
 
 type ModalStep = "details" | "payment";
 
+type BookingConfirmationState = {
+  receiptId: string;
+  reservationName: string;
+  selectedDate: string;
+  blocks: Array<{
+    courtId: string;
+    courtName: string;
+    startTime: string;
+    endTime: string;
+    subtotalPhp: number;
+  }>; 
+  totalPhp: number;
+};
+
 const reservationResumeStorageKey = "btc-reservation-resume";
 
 const initialFormState: BookingFormState = {
@@ -110,6 +124,13 @@ export function WarehouseShowcaseBookingBoard({
   const [activeHoldIds, setActiveHoldIds] = useState<string[]>([]);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [bookingConfirmation, setBookingConfirmation] =
+    useState<BookingConfirmationState | null>(null);
+  const [isReceiptPreviewOpen, setIsReceiptPreviewOpen] = useState(false);
+  const [isConfirmationDownloading, setIsConfirmationDownloading] =
+    useState(false);
+  const [confirmationDownloadError, setConfirmationDownloadError] =
+    useState("");
   const [modalStep, setModalStep] = useState<ModalStep>("details");
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
   const [showPolicyDetails, setShowPolicyDetails] = useState(false);
@@ -375,10 +396,35 @@ export function WarehouseShowcaseBookingBoard({
       return;
     }
 
+    const isRestoringActiveHold = Boolean(
+      pendingResumeState.holdExpiresAt &&
+        new Date(pendingResumeState.holdExpiresAt).getTime() > Date.now() &&
+        pendingResumeState.activeHoldIds?.length,
+    );
     const filteredSlots = filterRestorableSlots(
       pendingResumeState.selectedSlots,
       scheduleRows,
+      { allowHeldSlots: isRestoringActiveHold },
     );
+
+    if (filteredSlots.length === 0) {
+      clearReservationResumeState();
+      clearResumeReservationQueryParam();
+      pendingResumeStateRef.current = null;
+      setSelectedSlots([]);
+      setHoldExpiresAt(null);
+      setActiveHoldIds([]);
+      setPaymentProofFile(null);
+      setIsUploadDragging(false);
+      setModalStep("details");
+      setIsPaymentModalOpen(false);
+      setStatusMessage(
+        isRestoringActiveHold
+          ? "Your previous checkout is already complete or no longer active. The schedule has been refreshed."
+          : "Your saved reservation is no longer available. Please choose a new schedule.",
+      );
+      return;
+    }
 
     setSelectedSlots(filteredSlots);
     setFormState((current) => ({
@@ -393,16 +439,20 @@ export function WarehouseShowcaseBookingBoard({
     setHoldExpiresAt(pendingResumeState.holdExpiresAt ?? null);
     setActiveHoldIds(pendingResumeState.activeHoldIds ?? []);
     setIsPaymentModalOpen(
-      pendingResumeState.isPaymentModalOpen ?? filteredSlots.length > 0,
+      filteredSlots.length > 0 &&
+        (pendingResumeState.isPaymentModalOpen ?? true),
     );
     setModalStep(pendingResumeState.modalStep ?? "details");
     setStatusMessage(
-      pendingResumeState.holdExpiresAt &&
-        new Date(pendingResumeState.holdExpiresAt).getTime() > Date.now()
+      isRestoringActiveHold &&
+        filteredSlots.length === pendingResumeState.selectedSlots.length &&
+        filteredSlots.length > 0
         ? "Your payment session was restored after refresh."
         : filteredSlots.length > 0
-          ? "Your reservation details were restored after login."
-          : "We restored your details, but some selected slots are no longer available.",
+          ? isRestoringActiveHold
+            ? "Your session was restored, but some held slots could not be matched."
+            : "Your reservation details were restored after login."
+          : "We restored your details, but the selected slots could not be matched to the current schedule.",
     );
 
     pendingResumeStateRef.current = null;
@@ -445,7 +495,7 @@ export function WarehouseShowcaseBookingBoard({
   ]);
 
   useEffect(() => {
-    if (!isPaymentModalOpen) {
+    if (!isPaymentModalOpen && !bookingConfirmation) {
       return;
     }
 
@@ -470,7 +520,7 @@ export function WarehouseShowcaseBookingBoard({
       document.body.style.width = previousBodyWidth;
       window.scrollTo({ top: scrollY });
     };
-  }, [isPaymentModalOpen]);
+  }, [bookingConfirmation, isPaymentModalOpen]);
 
   useEffect(() => {
     if (!isPaymentModalOpen || modalStep !== "payment") {
@@ -899,6 +949,7 @@ export function WarehouseShowcaseBookingBoard({
         const result = (await response.json()) as {
           message?: string;
           error?: string;
+          receiptId?: string;
           bookings?: BookingSlot[];
         };
 
@@ -928,6 +979,22 @@ export function WarehouseShowcaseBookingBoard({
           : initialFormState;
 
         skipExpiredHoldReleaseRef.current = true;
+        clearReservationResumeState();
+        pendingResumeStateRef.current = null;
+        clearResumeReservationQueryParam();
+        setBookingConfirmation({
+          receiptId: result.receiptId ?? "BTC-PENDING",
+          reservationName: formState.reservationName,
+          selectedDate: currentSnapshot.selectedDate,
+          blocks: groupedBlocks.map((block) => ({
+            courtId: block.courtId,
+            courtName: block.courtName,
+            startTime: block.startTime,
+            endTime: block.endTime,
+            subtotalPhp: block.subtotalPhp,
+          })),
+          totalPhp: subtotal,
+        });
         setStatusMessage(result.message ?? "Booking request saved.");
         setSelectedSlots([]);
         setFormState(nextFormState);
@@ -941,6 +1008,77 @@ export function WarehouseShowcaseBookingBoard({
         setStatusMessage("Network error. Please try again.");
       }
     });
+  }
+
+  async function handleDownloadBookingConfirmation() {
+    if (!bookingConfirmation || isConfirmationDownloading) {
+      return;
+    }
+
+    setIsConfirmationDownloading(true);
+    setConfirmationDownloadError("");
+
+    try {
+      const blob = await createBookingReceiptImage({
+        confirmation: bookingConfirmation,
+        venueName: currentSnapshot.venue.name,
+        venueLocation: currentSnapshot.venue.address,
+        logoSrc: "/brand/court-logo.png",
+      });
+      downloadReceiptBlob(blob, `${bookingConfirmation.receiptId}.png`);
+    } catch {
+      setConfirmationDownloadError(
+        "We could not create the image. Please try downloading it again.",
+      );
+    } finally {
+      setIsConfirmationDownloading(false);
+    }
+  }
+
+  async function handleSaveReceiptToPhotos() {
+    if (!bookingConfirmation || isConfirmationDownloading) {
+      return;
+    }
+
+    setIsConfirmationDownloading(true);
+    setConfirmationDownloadError("");
+
+    try {
+      const blob = await createBookingReceiptImage({
+        confirmation: bookingConfirmation,
+        venueName: currentSnapshot.venue.name,
+        venueLocation: currentSnapshot.venue.address,
+        logoSrc: "/brand/court-logo.png",
+      });
+      const filename = `${bookingConfirmation.receiptId}.png`;
+      const file = new File([blob], filename, { type: "image/png" });
+
+      if (
+        typeof navigator.share === "function" &&
+        (!navigator.canShare || navigator.canShare({ files: [file] }))
+      ) {
+        try {
+          await navigator.share({
+            title: `Reservation receipt ${bookingConfirmation.receiptId}`,
+            text: `Reservation receipt ${bookingConfirmation.receiptId}`,
+            files: [file],
+          });
+          return;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
+        }
+      }
+
+      downloadReceiptBlob(blob, filename);
+    } catch {
+      setConfirmationDownloadError(
+        "We could not prepare the receipt image. Please try again.",
+      );
+    } finally {
+      setIsConfirmationDownloading(false);
+    }
   }
 
   const selectedCourtIds = new Set(
@@ -1461,14 +1599,17 @@ export function WarehouseShowcaseBookingBoard({
 
       {isPaymentModalOpen ? (
         <BodyPortal>
-          <div className="fixed inset-0 z-[1500] flex items-center justify-center overscroll-contain bg-[rgba(var(--color-overlay-rgb),0.42)] p-3 backdrop-blur-sm sm:p-4">
-            <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden overscroll-contain rounded-[2rem] border border-(--color-border-panel) bg-(--color-surface-warm) shadow-[0_30px_120px_rgba(var(--color-shadow-rgb),0.18)]">
-              <div className="sticky top-0 z-20 flex items-start justify-between border-b border-(--color-border-panel) bg-(--color-surface-warm) px-5 py-5 sm:px-6 sm:py-6">
+          <div className="fixed inset-0 z-[1500] flex items-center justify-center overscroll-contain bg-[rgba(var(--color-overlay-rgb),0.58)] p-2 backdrop-blur-md sm:p-5">
+            <div className="flex max-h-[95dvh] w-full max-w-[1180px] flex-col overflow-hidden overscroll-contain rounded-[1.6rem] border border-(--color-border-card) bg-(--color-surface) shadow-[0_36px_140px_rgba(var(--color-shadow-rgb),0.28)] sm:rounded-[2rem]">
+              <div className="theme-gradient-surface sticky top-0 z-20 flex items-start justify-between border-b border-(--color-border-panel) px-5 py-5 sm:px-8 sm:py-7">
                 <div>
-                  <h3 className="text-xl font-semibold tracking-[-0.03em] text-(--color-text-primary) sm:text-2xl">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-(--color-brand)">
+                    Secure checkout
+                  </p>
+                  <h3 className="mt-2 text-xl font-semibold tracking-[-0.04em] text-(--color-text-primary) sm:text-[1.7rem]">
                     {getModalTitle(modalStep)}
                   </h3>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-(--color-text-muted)">
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-(--color-text-muted) sm:text-[0.95rem]">
                     {getModalDescription(modalStep)}
                   </p>
                 </div>
@@ -1476,7 +1617,7 @@ export function WarehouseShowcaseBookingBoard({
                   type="button"
                   aria-label="Close booking modal"
                   onClick={closePaymentModal}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-(--color-border-panel) bg-[rgba(var(--color-surface-rgb),0.82)] text-xl leading-none text-(--color-text-muted) transition hover:border-(--color-border-panel-soft) hover:text-(--color-text-primary)"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-(--color-border-panel) bg-[rgba(var(--color-surface-rgb),0.82)] text-lg leading-none text-(--color-text-muted) shadow-[0_8px_24px_rgba(var(--color-shadow-rgb),0.06)] transition hover:border-(--color-brand) hover:text-(--color-brand)"
                 >
                   ×
                 </button>
@@ -1487,46 +1628,42 @@ export function WarehouseShowcaseBookingBoard({
                 className="min-h-0 flex-1 overflow-y-auto"
                 onSubmit={submitBookings}
               >
-                <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_340px]">
-                <div className="border-b border-(--color-border-panel) px-5 py-5 md:border-b-0 md:border-r md:px-6 md:py-6">
+                <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_360px]">
+                <div className="border-b border-(--color-border-panel) px-5 py-5 md:border-b-0 md:border-r md:px-8 md:py-7">
                   <div className="space-y-8">
-                    <div className="flex flex-col gap-4 border-b border-(--color-border-panel) pb-5 sm:flex-row sm:items-end sm:justify-between">
-                      <div className="flex min-w-0 items-center gap-6">
-                        <div className="min-w-0">
-                          <p
-                            className={`text-sm font-semibold tracking-[-0.02em] ${
-                              modalStep === "details"
-                                ? "text-(--color-text-primary)"
-                                : "text-(--color-text-soft)"
-                            }`}
-                          >
-                            1. Reservation Details
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="grid min-w-0 flex-1 grid-cols-2 gap-1 rounded-[1rem] border border-(--color-border-panel) bg-(--color-surface-soft) p-1">
+                        <div
+                          className={`min-w-0 rounded-[0.75rem] px-3 py-3 transition sm:px-4 ${
+                            modalStep === "details"
+                              ? "bg-(--color-brand-strong) text-white shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.18)]"
+                              : "text-(--color-text-soft)"
+                          }`}
+                        >
+                          <p className="text-[9px] font-bold uppercase tracking-[0.18em] opacity-60">
+                            Step 01
                           </p>
-                          <div
-                            className={`mt-3 h-1 rounded-full transition ${
-                              modalStep === "details"
-                                ? "bg-(--color-action-primary)"
-                                : "bg-(--color-border-panel)"
-                            }`}
-                          />
+                          <p
+                            className="mt-1 text-xs font-semibold tracking-[-0.02em] sm:text-sm"
+                          >
+                            Reservation details
+                          </p>
                         </div>
-                        <div className="min-w-0">
-                          <p
-                            className={`text-sm font-semibold tracking-[-0.02em] ${
-                              modalStep === "payment"
-                                ? "text-(--color-text-primary)"
-                                : "text-(--color-text-soft)"
-                            }`}
-                          >
-                            2. Payment Proof
+                        <div
+                          className={`min-w-0 rounded-[0.75rem] px-3 py-3 transition sm:px-4 ${
+                            modalStep === "payment"
+                              ? "bg-(--color-brand-strong) text-white shadow-[0_10px_26px_rgba(var(--color-shadow-brand-rgb),0.18)]"
+                              : "text-(--color-text-soft)"
+                          }`}
+                        >
+                          <p className="text-[9px] font-bold uppercase tracking-[0.18em] opacity-60">
+                            Step 02
                           </p>
-                          <div
-                            className={`mt-3 h-1 rounded-full transition ${
-                              modalStep === "payment"
-                                ? "bg-(--color-action-primary)"
-                                : "bg-(--color-border-panel)"
-                            }`}
-                          />
+                          <p
+                            className="mt-1 text-xs font-semibold tracking-[-0.02em] sm:text-sm"
+                          >
+                            Payment proof
+                          </p>
                         </div>
                       </div>
 
@@ -1539,7 +1676,7 @@ export function WarehouseShowcaseBookingBoard({
 
                     {modalStep === "details" ? (
                       <>
-                        <section className="rounded-[1.25rem] border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.58)] p-4 sm:p-5">
+                        <section className="rounded-[1.4rem] border border-[color:var(--color-border-panel)] bg-[color:var(--color-surface-soft)] p-4 sm:p-5">
                           <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
@@ -1816,7 +1953,7 @@ export function WarehouseShowcaseBookingBoard({
                             </div>
                           </div>
 
-                          <div className="grid gap-3 rounded-[1.25rem] border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] p-4 sm:p-5">
+                          <div className="grid gap-4 rounded-[1.4rem] border border-[color:var(--color-border-panel)] bg-[color:var(--color-surface-soft)] p-4 sm:p-5">
                             <div className="flex items-center justify-between gap-3">
                               <div>
                                 <p className="text-sm font-semibold text-[color:var(--color-text-primary)]">
@@ -1836,7 +1973,7 @@ export function WarehouseShowcaseBookingBoard({
                               ) : null}
                             </div>
 
-                            <div className="relative overflow-hidden rounded-[1rem] border border-[color:var(--color-border-panel-soft)] bg-[color:var(--color-surface-soft)]">
+                            <div className="relative mx-auto w-full max-w-[360px] overflow-hidden rounded-[1.25rem] border border-[color:var(--color-border-panel-soft)] bg-white p-2 shadow-[0_18px_50px_rgba(var(--color-shadow-rgb),0.1)]">
                               <div
                                 className={`absolute inset-0 z-10 flex items-center justify-center bg-[rgba(var(--color-surface-rgb),0.72)] backdrop-blur-[2px] transition ${
                                   isPaymentMethodSwitching
@@ -1857,7 +1994,7 @@ export function WarehouseShowcaseBookingBoard({
                                   width={720}
                                   height={720}
                                   unoptimized
-                                  wrapperClassName="aspect-square w-full bg-white"
+                                  wrapperClassName="aspect-square w-full overflow-hidden rounded-[0.9rem] bg-white"
                                   className="h-full w-full object-contain"
                                   skeletonClassName="bg-[image:var(--gradient-loading-neutral)]"
                                   onLoad={() =>
@@ -1984,7 +2121,7 @@ export function WarehouseShowcaseBookingBoard({
                   </div>
                 </div>
 
-                <div className="bg-[rgba(var(--color-surface-rgb),0.55)] px-5 py-5 md:px-6 md:py-6">
+                <div className="theme-gradient-surface px-5 py-5 md:px-6 md:py-7">
                   <div className="md:sticky md:top-0">
                     <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--color-text-soft)]">
                       Booking Summary
@@ -2064,7 +2201,7 @@ export function WarehouseShowcaseBookingBoard({
                       </div>
                     </div>
 
-                    <div className="sticky bottom-0 z-10 -mx-5 mt-8 border-t border-[color:var(--color-border-panel)] bg-[color:var(--color-surface-warm)] px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 shadow-[0_-14px_28px_rgba(var(--color-shadow-rgb),0.08)] md:-mx-6 md:px-6">
+                    <div className="mt-8 border-t border-[color:var(--color-border-panel)] pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-5">
                       <div className="flex flex-wrap items-center gap-3">
                         <button
                           type="button"
@@ -2103,7 +2240,7 @@ export function WarehouseShowcaseBookingBoard({
                       <button
                         type="submit"
                         disabled={isPending || isHoldPending}
-                        className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[color:var(--color-action-primary)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(var(--color-shadow-brand-rgb),0.24)] transition hover:bg-[color:var(--color-action-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
+                        className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-[0.9rem] bg-[color:var(--color-action-primary)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(var(--color-shadow-brand-rgb),0.24)] transition hover:-translate-y-0.5 hover:bg-[color:var(--color-action-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
                       >
                         {isPending || isHoldPending
                           ? "Saving..."
@@ -2137,8 +2274,665 @@ export function WarehouseShowcaseBookingBoard({
           </div>
         </BodyPortal>
       ) : null}
+
+      {bookingConfirmation ? (
+        <BodyPortal>
+          <div className="fixed inset-0 z-[1600] flex items-center justify-center bg-[rgba(var(--color-overlay-rgb),0.62)] p-3 backdrop-blur-md sm:p-5">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="booking-confirmation-title"
+              className="max-h-[94dvh] w-full max-w-2xl overflow-y-auto rounded-[1.75rem] border border-(--color-border-card) bg-(--color-surface) shadow-[0_36px_140px_rgba(var(--color-shadow-rgb),0.3)]"
+            >
+              <div className="theme-gradient-panel relative overflow-hidden px-6 py-7 text-white sm:px-8 sm:py-9">
+                <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border border-white/12" />
+                <div className="relative flex items-start justify-between gap-5">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/14 text-(--color-brand-accent) ring-1 ring-white/18">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-6 w-6"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="m5 12 4 4L19 6" />
+                        </svg>
+                      </span>
+                      <div className="flex h-12 items-center rounded-xl border border-white/16 bg-white/92 px-3 shadow-sm">
+                        <LoadingImage
+                          src="/brand/court-logo.png"
+                          alt={`${currentSnapshot.venue.name} logo`}
+                          width={112}
+                          height={42}
+                          className="h-9 w-auto object-contain"
+                          wrapperClassName="h-9 w-28"
+                          skeletonClassName="bg-white"
+                        />
+                      </div>
+                    </div>
+                    <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.22em] text-white/58">
+                      Request received
+                    </p>
+                    <h3
+                      id="booking-confirmation-title"
+                      className="mt-2 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl"
+                    >
+                      Your booking is pending verification
+                    </h3>
+                    <p className="mt-3 max-w-xl text-sm leading-6 text-white/72">
+                      Your payment proof was sent successfully. The venue will
+                      review it before confirming your reservation.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setBookingConfirmation(null)}
+                    aria-label="Close booking confirmation"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/14 bg-white/8 text-lg text-white/72 transition hover:bg-white/14 hover:text-white"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <div className="px-6 py-6 sm:px-8 sm:py-7">
+                <div className="flex flex-col gap-4 border-b border-(--color-border-soft) pb-5 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-(--color-text-soft)">
+                      Reservation date
+                    </p>
+                    <p className="mt-2 text-xl font-semibold tracking-[-0.03em] text-(--color-text-primary)">
+                      {formatDisplayDate(bookingConfirmation.selectedDate)}
+                    </p>
+                  </div>
+                  <div className="sm:text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-(--color-text-soft)">
+                      Receipt ID
+                    </p>
+                    <p className="mt-2 font-mono text-sm font-semibold text-(--color-brand)">
+                      {bookingConfirmation.receiptId}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-2 divide-y divide-(--color-border-soft)">
+                  {bookingConfirmation.blocks.map((block) => (
+                    <div
+                      key={`${block.courtId}-${block.startTime}`}
+                      className="flex items-start justify-between gap-4 py-4"
+                    >
+                      <div>
+                        <p className="font-semibold text-(--color-text-primary)">
+                          {block.courtName}
+                        </p>
+                        <p className="mt-1 text-sm text-(--color-text-muted)">
+                          {formatTimeLabel(block.startTime)} -{" "}
+                          {formatTimeLabel(block.endTime)}
+                        </p>
+                      </div>
+                      <p className="font-semibold text-(--color-text-primary)">
+                        {formatCurrency(block.subtotalPhp)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between border-t border-(--color-border-soft) pt-5">
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-(--color-text-soft)">
+                    Total submitted
+                  </p>
+                  <p className="text-2xl font-semibold tracking-[-0.04em] text-(--color-action-primary)">
+                    {formatCurrency(bookingConfirmation.totalPhp)}
+                  </p>
+                </div>
+
+                <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setBookingConfirmation(null)}
+                    className="inline-flex min-h-12 items-center justify-center rounded-[0.9rem] border border-(--color-border-soft) bg-(--color-surface) px-5 py-3 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
+                  >
+                    Back to schedule
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsReceiptPreviewOpen(true)}
+                    className="inline-flex min-h-12 items-center justify-center rounded-[0.9rem] border border-(--color-brand) bg-(--color-surface) px-4 py-3 text-sm font-semibold text-(--color-brand) transition hover:bg-(--color-surface-soft) disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="3" />
+                      <path d="m7 15 3-3 2 2 3-4 2 3" />
+                    </svg>
+                    Preview receipt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        authState
+                          ? "/my-bookings"
+                          : "/login?returnTo=%2Fmy-bookings",
+                      )
+                    }
+                    className="inline-flex min-h-12 items-center justify-center rounded-[0.9rem] bg-(--color-action-primary) px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(var(--color-shadow-brand-rgb),0.2)] transition hover:-translate-y-0.5 hover:bg-(--color-action-primary-hover) sm:col-span-2"
+                  >
+                    {authState ? "Check My Bookings" : "Sign in to check booking"}
+                  </button>
+                </div>
+                {confirmationDownloadError ? (
+                  <p className="mt-3 rounded-xl border border-(--color-border-danger) bg-(--color-surface-danger-soft) px-4 py-3 text-sm font-medium text-(--color-danger-strong)">
+                    {confirmationDownloadError}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </BodyPortal>
+      ) : null}
+
+      {bookingConfirmation && isReceiptPreviewOpen ? (
+        <BodyPortal>
+          <div className="fixed inset-0 z-[1700] flex items-center justify-center bg-[rgba(var(--color-overlay-rgb),0.72)] p-3 backdrop-blur-lg sm:p-5">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="booking-receipt-preview-title"
+              className="max-h-[96dvh] w-full max-w-5xl overflow-y-auto rounded-[1.75rem] border border-(--color-border-card) bg-(--color-surface) shadow-[0_40px_160px_rgba(var(--color-shadow-rgb),0.4)]"
+            >
+              <div className="flex items-start justify-between gap-5 px-5 pb-4 pt-5 sm:px-7 sm:pt-6">
+                <div>
+                  <h3
+                    id="booking-receipt-preview-title"
+                    className="text-xl font-semibold tracking-[-0.03em] text-(--color-text-primary) sm:text-2xl"
+                  >
+                    Reservation receipt preview
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-6 text-(--color-text-muted)">
+                    Review the generated booking receipt, then save or download
+                    the image when you are ready.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsReceiptPreviewOpen(false)}
+                  aria-label="Close receipt preview"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-(--color-border-soft) bg-(--color-surface) text-lg text-(--color-text-muted) transition hover:border-(--color-brand) hover:text-(--color-brand)"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="border-y border-(--color-border-soft) bg-(--color-surface-soft) p-3 sm:p-5">
+                <BookingReceiptPreviewCard
+                  confirmation={bookingConfirmation}
+                  venueName={currentSnapshot.venue.name}
+                  venueLocation={currentSnapshot.venue.address}
+                />
+              </div>
+
+              <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+                <p className="font-mono text-xs font-semibold text-(--color-text-soft)">
+                  {bookingConfirmation.receiptId}
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsReceiptPreviewOpen(false)}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-(--color-border-soft) bg-(--color-surface) px-5 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveReceiptToPhotos()}
+                    disabled={isConfirmationDownloading}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-(--color-border-soft) bg-(--color-surface) px-5 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand) disabled:cursor-wait disabled:opacity-60"
+                  >
+                    Save to Photos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDownloadBookingConfirmation()}
+                    disabled={isConfirmationDownloading}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#087f83] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(8,127,131,0.22)] transition hover:bg-[#076d71] disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 3v12" />
+                      <path d="m7 10 5 5 5-5" />
+                      <path d="M5 21h14" />
+                    </svg>
+                    {isConfirmationDownloading
+                      ? "Preparing image..."
+                      : "Download image"}
+                  </button>
+                </div>
+              </div>
+              {confirmationDownloadError ? (
+                <p className="mx-5 mb-5 rounded-xl border border-(--color-border-danger) bg-(--color-surface-danger-soft) px-4 py-3 text-sm font-medium text-(--color-danger-strong) sm:mx-7">
+                  {confirmationDownloadError}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </BodyPortal>
+      ) : null}
     </div>
   );
+}
+
+function BookingReceiptPreviewCard({
+  confirmation,
+  venueName,
+  venueLocation,
+}: {
+  confirmation: BookingConfirmationState;
+  venueName: string;
+  venueLocation: string;
+}) {
+  return (
+    <div className="mx-auto aspect-[16/9] min-h-[31rem] w-full overflow-hidden rounded-xl bg-[#0c5059] p-[3%] text-white shadow-[0_24px_70px_rgba(8,63,70,0.24)] sm:min-h-0">
+      <div className="relative flex h-full flex-col overflow-hidden rounded-[1.25rem] border border-white/8 bg-[linear-gradient(135deg,#2b6469_0%,#2e6872_52%,#347d7d_100%)] p-5 sm:p-7 lg:p-9">
+        <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-white/5 blur-2xl" />
+        <div className="relative flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#8dd9d3] sm:text-xs">
+              BookTheCourt receipt
+            </p>
+            <p className="mt-1 font-mono text-xl tracking-[-0.03em] sm:text-3xl">
+              {confirmation.receiptId}
+            </p>
+            <p className="mt-1 text-[10px] text-white/66 sm:text-sm">
+              {confirmation.reservationName} · {venueName}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="hidden rounded-xl bg-white/92 px-2 py-1.5 sm:block">
+              <LoadingImage
+                src="/brand/court-logo.png"
+                alt={`${venueName} logo`}
+                width={96}
+                height={36}
+                className="h-7 w-auto object-contain"
+                wrapperClassName="h-7 w-24"
+                skeletonClassName="bg-white"
+              />
+            </div>
+            <span className="rounded-full bg-[#fff2cf] px-3 py-1.5 text-[10px] font-semibold text-[#9a6615] sm:px-4 sm:text-xs">
+              Pending
+            </span>
+          </div>
+        </div>
+
+        <div className="relative mt-5 grid gap-2 sm:grid-cols-4 sm:gap-3">
+          <ReceiptPreviewField
+            label="Reserved by"
+            value={confirmation.reservationName}
+          />
+          <ReceiptPreviewField label="Facility" value={venueName} />
+          <ReceiptPreviewField label="Location" value={venueLocation} />
+          <ReceiptPreviewField
+            label="Date"
+            value={formatReceiptDateLabel(confirmation.selectedDate)}
+          />
+        </div>
+
+        <div className="relative mt-2 grid flex-1 gap-2 sm:grid-cols-[0.95fr_1.05fr] sm:gap-3">
+          <ReceiptPreviewField
+            label="Paid amount"
+            value={formatReceiptAmount(confirmation.totalPhp)}
+            large
+          />
+          <div className="rounded-xl bg-white/10 px-4 py-3 sm:px-5 sm:py-4">
+            <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-white/48 sm:text-[10px]">
+              Courts
+            </p>
+            <div className="mt-2 space-y-0.5 text-[10px] leading-4 text-white/92 sm:text-sm sm:leading-5">
+              {confirmation.blocks.map((block) => (
+                <p key={`${block.courtId}-${block.startTime}`}>
+                  {block.courtName} - {formatTimeLabel(block.startTime)} -{" "}
+                  {formatTimeLabel(block.endTime)}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative mt-4 flex items-end justify-between gap-4 text-[8px] leading-3.5 text-white/65 sm:text-[10px] sm:leading-4">
+          <div>
+            <p>Match this receipt ID with your booking reference when needed.</p>
+            <p>Once the reservation is approved you will receive an email.</p>
+            <p>Generated directly by BookTheCourt.</p>
+          </div>
+          <span className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 text-white/60">
+            {confirmation.blocks.length} slot
+            {confirmation.blocks.length === 1 ? "" : "s"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReceiptPreviewField({
+  label,
+  value,
+  large = false,
+}: {
+  label: string;
+  value: string;
+  large?: boolean;
+}) {
+  return (
+    <div className="rounded-xl bg-white/10 px-4 py-3 sm:px-5 sm:py-4">
+      <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-white/48 sm:text-[10px]">
+        {label}
+      </p>
+      <p
+        className={`mt-1.5 font-medium text-white/94 ${
+          large ? "text-sm sm:text-lg" : "text-[10px] sm:text-sm"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+async function createBookingReceiptImage({
+  confirmation,
+  venueName,
+  venueLocation,
+  logoSrc,
+}: {
+  confirmation: BookingConfirmationState;
+  venueName: string;
+  venueLocation: string;
+  logoSrc: string;
+}) {
+  await document.fonts?.ready;
+
+  const width = 1600;
+  const height = 900;
+  const scale = 1.5;
+  const canvas = document.createElement("canvas");
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Unable to create the confirmation image.");
+  }
+
+  context.scale(scale, scale);
+  context.textBaseline = "alphabetic";
+
+  context.fillStyle = "#0c5059";
+  context.fillRect(0, 0, width, height);
+
+  const receiptGradient = context.createLinearGradient(80, 80, 1520, 820);
+  receiptGradient.addColorStop(0, "#2a6268");
+  receiptGradient.addColorStop(0.52, "#2d6972");
+  receiptGradient.addColorStop(1, "#347d7d");
+  drawRoundedRect(context, 80, 68, 1440, 764, 32);
+  context.fillStyle = receiptGradient;
+  context.fill();
+  context.strokeStyle = "rgba(255,255,255,0.08)";
+  context.lineWidth = 2;
+  context.stroke();
+
+  const logo = await loadCanvasImage(logoSrc).catch(() => null);
+  if (logo) {
+    drawRoundedRect(context, 1250, 105, 180, 74, 16);
+    context.fillStyle = "rgba(255,255,255,0.94)";
+    context.fill();
+    drawContainedImage(context, logo, 1268, 115, 144, 54);
+  }
+
+  context.fillStyle = "#8dd9d3";
+  context.font = "700 16px Avenir Next, Segoe UI, sans-serif";
+  context.fillText("BOOKTHECOURT RECEIPT", 125, 126);
+
+  context.fillStyle = "#ffffff";
+  context.font = "500 36px IBM Plex Mono, monospace";
+  context.fillText(confirmation.receiptId, 125, 174);
+  context.fillStyle = "rgba(255,255,255,0.68)";
+  context.font = "500 18px Avenir Next, Segoe UI, sans-serif";
+  context.fillText(
+    `${confirmation.reservationName} · ${venueName}`,
+    125,
+    208,
+  );
+
+  drawCanvasPill(context, 1318, 194, 112, 42, "Pending");
+
+  const topFields = [
+    { label: "RESERVED BY", value: confirmation.reservationName },
+    { label: "FACILITY", value: venueName },
+    { label: "LOCATION", value: venueLocation },
+    { label: "DATE", value: formatReceiptDateLabel(confirmation.selectedDate) },
+  ];
+  const fieldWidth = 324;
+  topFields.forEach((field, index) => {
+    drawReceiptCanvasField(context, {
+      x: 125 + index * 340,
+      y: 250,
+      width: fieldWidth,
+      height: 100,
+      label: field.label,
+      value: field.value,
+    });
+  });
+
+  drawReceiptCanvasField(context, {
+    x: 125,
+    y: 370,
+    width: 664,
+    height: 196,
+    label: "PAID AMOUNT",
+    value: formatReceiptAmount(confirmation.totalPhp),
+    valueSize: 28,
+  });
+
+  drawRoundedRect(context, 809, 370, 621, 196, 20);
+  context.fillStyle = "rgba(255,255,255,0.10)";
+  context.fill();
+  drawReceiptCanvasLabel(context, "COURTS", 833, 405);
+  context.fillStyle = "rgba(255,255,255,0.94)";
+  context.font = "500 20px Avenir Next, Segoe UI, sans-serif";
+  confirmation.blocks.slice(0, 6).forEach((block, index) => {
+    context.fillText(
+      fitCanvasText(
+        context,
+        `${block.courtName} - ${formatTimeLabel(block.startTime)} - ${formatTimeLabel(block.endTime)}`,
+        565,
+      ),
+      833,
+      440 + index * 27,
+    );
+  });
+
+  context.fillStyle = "rgba(255,255,255,0.64)";
+  context.font = "500 15px Avenir Next, Segoe UI, sans-serif";
+  context.fillText(
+    "Match this receipt ID with your booking reference when needed.",
+    125,
+    712,
+  );
+  context.fillText(
+    "Once the reservation is approved you will receive an email.",
+    125,
+    738,
+  );
+  context.fillText("Generated directly by BookTheCourt.", 125, 764);
+
+  const slotLabel = `${confirmation.blocks.length} slot${confirmation.blocks.length === 1 ? "" : "s"}`;
+  context.font = "600 15px Avenir Next, Segoe UI, sans-serif";
+  const slotPillWidth = Math.max(82, context.measureText(slotLabel).width + 36);
+  drawRoundedRect(context, 1430 - slotPillWidth, 726, slotPillWidth, 42, 21);
+  context.fillStyle = "rgba(255,255,255,0.10)";
+  context.fill();
+  context.fillStyle = "rgba(255,255,255,0.62)";
+  context.textAlign = "center";
+  context.fillText(slotLabel, 1430 - slotPillWidth / 2, 753);
+  context.textAlign = "left";
+
+  return await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((result) => {
+      if (result) {
+        resolve(result);
+      } else {
+        reject(new Error("Unable to export the confirmation image."));
+      }
+    }, "image/png");
+  });
+}
+
+function drawReceiptCanvasField(
+  context: CanvasRenderingContext2D,
+  input: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    label: string;
+    value: string;
+    valueSize?: number;
+  },
+) {
+  drawRoundedRect(context, input.x, input.y, input.width, input.height, 20);
+  context.fillStyle = "rgba(255,255,255,0.10)";
+  context.fill();
+  drawReceiptCanvasLabel(context, input.label, input.x + 24, input.y + 34);
+  context.fillStyle = "rgba(255,255,255,0.94)";
+  context.font = `500 ${input.valueSize ?? 23}px Avenir Next, Segoe UI, sans-serif`;
+  context.fillText(
+    fitCanvasText(context, input.value, input.width - 48),
+    input.x + 24,
+    input.y + 72,
+  );
+}
+
+function drawReceiptCanvasLabel(
+  context: CanvasRenderingContext2D,
+  label: string,
+  x: number,
+  y: number,
+) {
+  context.fillStyle = "rgba(255,255,255,0.48)";
+  context.font = "700 12px Avenir Next, Segoe UI, sans-serif";
+  context.fillText(label, x, y);
+}
+
+function drawCanvasPill(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  label: string,
+) {
+  drawRoundedRect(context, x, y, width, height, height / 2);
+  context.fillStyle = "#fff2cf";
+  context.fill();
+  context.fillStyle = "#9a6615";
+  context.font = "600 16px Avenir Next, Segoe UI, sans-serif";
+  context.textAlign = "center";
+  context.fillText(label, x + width / 2, y + 27);
+  context.textAlign = "left";
+}
+
+function downloadReceiptBlob(blob: Blob, filename: string) {
+  const objectUrl = URL.createObjectURL(blob);
+  const downloadLink = document.createElement("a");
+  downloadLink.href = objectUrl;
+  downloadLink.download = filename;
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  downloadLink.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+}
+
+function loadCanvasImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Unable to load image: ${src}`));
+    image.src = src;
+  });
+}
+
+function drawContainedImage(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  const ratio = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+  const drawWidth = image.naturalWidth * ratio;
+  const drawHeight = image.naturalHeight * ratio;
+  context.drawImage(
+    image,
+    x + (width - drawWidth) / 2,
+    y + (height - drawHeight) / 2,
+    drawWidth,
+    drawHeight,
+  );
+}
+
+function drawRoundedRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  context.beginPath();
+  context.roundRect(x, y, width, height, radius);
+}
+
+function fitCanvasText(
+  context: CanvasRenderingContext2D,
+  value: string,
+  maxWidth: number,
+) {
+  if (context.measureText(value).width <= maxWidth) {
+    return value;
+  }
+
+  let shortened = value;
+  while (
+    shortened.length > 1 &&
+    context.measureText(`${shortened}…`).width > maxWidth
+  ) {
+    shortened = shortened.slice(0, -1);
+  }
+  return `${shortened}…`;
 }
 
 function BodyPortal({ children }: { children: ReactNode }) {
@@ -2299,7 +3093,10 @@ function readReservationResumeState(): ReservationResumeState | null {
         : [],
       modalStep:
         parsed.modalStep === "payment" ? "payment" : "details",
-      isPaymentModalOpen: Boolean(parsed.isPaymentModalOpen),
+      isPaymentModalOpen:
+        typeof parsed.isPaymentModalOpen === "boolean"
+          ? parsed.isPaymentModalOpen
+          : undefined,
     };
   } catch {
     return null;
@@ -2331,17 +3128,22 @@ function clearResumeReservationQueryParam() {
 function filterRestorableSlots(
   slots: SelectedSlot[],
   rows: VenueSnapshot["availabilityRows"],
+  options: { allowHeldSlots?: boolean } = {},
 ) {
-  const availableKeys = new Set(
+  const restorableKeys = new Set(
     rows.flatMap((row) =>
       row.courts
-        .filter((court) => court.status === "available")
+        .filter(
+          (court) =>
+            court.status === "available" ||
+            (options.allowHeldSlots && court.status === "hold"),
+        )
         .map((court) => `${court.courtId}-${row.startTime}`),
     ),
   );
 
   return slots.filter((slot) =>
-    availableKeys.has(getSelectedSlotKey(slot.courtId, slot.startTime)),
+    restorableKeys.has(getSelectedSlotKey(slot.courtId, slot.startTime)),
   );
 }
 
@@ -2436,6 +3238,20 @@ function formatDisplayDate(value: string) {
     day: "numeric",
     year: "numeric",
   }).format(date);
+}
+
+function formatReceiptDateLabel(value: string) {
+  const date = new Date(`${value}T12:00:00`);
+  return new Intl.DateTimeFormat("en-PH", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatReceiptAmount(value: number) {
+  return `PHP ${Math.round(value).toLocaleString("en-PH")}`;
 }
 
 function formatHeroDate(value: string) {

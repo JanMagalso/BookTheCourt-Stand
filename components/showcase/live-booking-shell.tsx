@@ -5,7 +5,7 @@ export function LiveBookingShell({ snapshot }: { snapshot: VenueSnapshot }) {
   return (
     <section
       id="book-now"
-      className="page-section page-section-tinted px-3 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
+      className="page-section px-3 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28"
     >
       <div className="mx-auto w-full max-w-[1680px]">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(300px,0.28fr)] lg:items-end">
@@ -29,7 +29,7 @@ export function LiveBookingShell({ snapshot }: { snapshot: VenueSnapshot }) {
           </div>
         </div>
 
-        <div className="relative mt-10 overflow-x-visible rounded-[2rem] border border-(--color-border-card) bg-[rgba(var(--color-surface-rgb),0.78)] p-0 shadow-[0_28px_90px_rgba(var(--color-shadow-brand-rgb),0.12)] backdrop-blur-xl sm:p-4">
+        <div className="theme-gradient-surface relative mt-10 overflow-x-visible rounded-[2rem] border border-(--color-border-card) p-0 shadow-[0_28px_90px_rgba(var(--color-shadow-brand-rgb),0.14)] backdrop-blur-xl sm:p-4">
           <WarehouseShowcaseBookingBoard snapshot={snapshot} />
         </div>
       </div>

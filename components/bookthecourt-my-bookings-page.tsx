@@ -9,7 +9,6 @@ import { createPublicSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type BookTheCourtMyBookingsPageProps = {
   venueName: string;
-  contactPhone?: string | null;
 };
 
 type Reservation = {
@@ -37,7 +36,6 @@ type BookingStatusTab = "all" | "pending" | "booked" | "hold" | "cancelled";
 
 export function BookTheCourtMyBookingsPage({
   venueName,
-  contactPhone,
 }: BookTheCourtMyBookingsPageProps) {
   const isSupabaseConfigured = hasSupabaseEnv();
   const supabase = useMemo(
@@ -168,7 +166,6 @@ export function BookTheCourtMyBookingsPage({
     <main className="relative min-h-screen overflow-hidden bg-(--background) text-(--color-text-primary)">
       <HeroNav
         venueName={venueName}
-        contactPhone={contactPhone}
         sectionBasePath="/"
         solidOnLoad
       />
