@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createPublicSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type BookTheCourtLoginPageProps = {
   venueName: string;
 };
+
+const reservationResumeStorageKey = "btc-reservation-resume";
 
 export function BookTheCourtLoginPage({
   venueName,
@@ -31,6 +34,8 @@ export function BookTheCourtLoginPage({
   const [password, setPassword] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
+  const [isSignOutPending, setIsSignOutPending] = useState(false);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -95,7 +100,16 @@ export function BookTheCourtLoginPage({
       return;
     }
 
-    router.replace(returnTo, { scroll: false });
+    returnToReservation();
+  }
+
+  function returnToReservation() {
+    if (isReturning) {
+      return;
+    }
+
+    setIsReturning(true);
+    router.replace(resolveReservationReturnPath(returnTo), { scroll: false });
   }
 
   async function handleSignOut() {
@@ -103,9 +117,15 @@ export function BookTheCourtLoginPage({
       return;
     }
 
-    await supabase.auth.signOut();
-    setSessionEmail(null);
-    setStatusMessage("Signed out successfully.");
+    setIsSignOutPending(true);
+
+    try {
+      await supabase.auth.signOut();
+      setSessionEmail(null);
+      setStatusMessage("Signed out successfully.");
+    } finally {
+      setIsSignOutPending(false);
+    }
   }
 
   return (
@@ -161,10 +181,12 @@ export function BookTheCourtLoginPage({
               />
               <button
                 type="button"
-                onClick={() => router.replace(returnTo, { scroll: false })}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-(--color-border-soft) px-4 py-2 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
+                onClick={returnToReservation}
+                disabled={isReturning}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-(--color-border-soft) px-4 py-2 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand) disabled:cursor-wait disabled:opacity-60"
               >
-                Back to reservation
+                {isReturning ? <ButtonSpinner /> : null}
+                {isReturning ? "Restoring..." : "Back to reservation"}
               </button>
             </div>
 
@@ -192,17 +214,21 @@ export function BookTheCourtLoginPage({
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={() => router.replace(returnTo, { scroll: false })}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-(--color-brand-strong) px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-(--color-brand-strong-hover)"
+                    onClick={returnToReservation}
+                    disabled={isReturning || isSignOutPending}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-(--color-brand-strong) px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-(--color-brand-strong-hover) disabled:cursor-wait disabled:opacity-60"
                   >
-                    Continue Reservation
+                    {isReturning ? <ButtonSpinner /> : null}
+                    {isReturning ? "Restoring..." : "Continue Reservation"}
                   </button>
                   <button
                     type="button"
                     onClick={() => void handleSignOut()}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-(--color-border-soft) px-5 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand)"
+                    disabled={isReturning || isSignOutPending}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-(--color-border-soft) px-5 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand) disabled:cursor-wait disabled:opacity-60"
                   >
-                    Use another account
+                    {isSignOutPending ? <ButtonSpinner /> : null}
+                    {isSignOutPending ? "Signing out..." : "Use another account"}
                   </button>
                 </div>
               </div>
@@ -233,8 +259,9 @@ export function BookTheCourtLoginPage({
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-(--color-brand-strong) px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-(--color-brand-strong-hover) disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-(--color-brand-strong) px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-(--color-brand-strong-hover) disabled:cursor-wait disabled:opacity-60"
                 >
+                  {isPending ? <ButtonSpinner /> : null}
                   {isPending ? "Signing in..." : "Sign In"}
                 </button>
               </form>
@@ -270,4 +297,14 @@ function sanitizeReturnPath(value: string | null) {
   }
 
   return value;
+}
+
+function resolveReservationReturnPath(returnTo: string) {
+  if (returnTo !== "/" || typeof window === "undefined") {
+    return returnTo;
+  }
+
+  return window.sessionStorage.getItem(reservationResumeStorageKey)
+    ? "/?resumeReservation=1"
+    : returnTo;
 }

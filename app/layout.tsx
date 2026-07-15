@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+import { PageLoader } from "@/components/page-loader";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { rootThemeStyle } from "@/lib/theme";
 
@@ -19,6 +20,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <ThemeSwitcher />
+        <PageLoader />
       </body>
     </html>
   );

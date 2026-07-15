@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
 import { LoadingImage } from "@/components/loading-image";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import {
   formatCurrency,
   getAvailabilityRows,
@@ -65,6 +66,7 @@ type ReservationResumeState = {
   selectedDate: string;
   selectedSlots: SelectedSlot[];
   formState: BookingFormState;
+  resumeOnReturn?: boolean;
   holdExpiresAt?: string | null;
   activeHoldIds?: string[];
   modalStep?: ModalStep;
@@ -137,16 +139,22 @@ export function WarehouseShowcaseBookingBoard({
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
   const [showPolicyDetails, setShowPolicyDetails] = useState(false);
   const [isHoldPending, setIsHoldPending] = useState(false);
+  const [isReleasePending, setIsReleasePending] = useState(false);
+  const [isLoginRedirectPending, setIsLoginRedirectPending] = useState(false);
+  const [isReservationSignOutPending, setIsReservationSignOutPending] =
+    useState(false);
   const [isDateNavigating, setIsDateNavigating] = useState(false);
   const [isUploadDragging, setIsUploadDragging] = useState(false);
   const [isPaymentMethodSwitching, setIsPaymentMethodSwitching] = useState(false);
+  const [isQrDownloading, setIsQrDownloading] = useState(false);
+  const [qrDownloadError, setQrDownloadError] = useState("");
   const [authMode, setAuthMode] = useState<AuthMode>("guest");
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [authStatusMessage, setAuthStatusMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const paymentProofInputId = useId();
   const pendingResumeStateRef = useRef<ReservationResumeState | null>(null);
-  const paymentModalScrollRef = useRef<HTMLFormElement | null>(null);
+  const paymentModalScrollRef = useRef<HTMLDivElement | null>(null);
   const skipExpiredHoldReleaseRef = useRef(false);
 
   const groupedBlocks = useMemo(
@@ -389,8 +397,15 @@ export function WarehouseShowcaseBookingBoard({
       new Date(saved.holdExpiresAt).getTime() > Date.now() &&
       Array.isArray(saved.activeHoldIds) &&
       saved.activeHoldIds.length > 0;
+    const shouldResumeSavedSelection = Boolean(
+      saved.resumeOnReturn && saved.selectedSlots.length > 0,
+    );
 
-    if (!shouldRestoreAfterLogin && !hasActiveSavedHold) {
+    if (
+      !shouldRestoreAfterLogin &&
+      !hasActiveSavedHold &&
+      !shouldResumeSavedSelection
+    ) {
       return;
     }
 
@@ -648,10 +663,18 @@ export function WarehouseShowcaseBookingBoard({
   }
 
   function redirectToBookTheCourtLogin() {
+    if (isLoginRedirectPending) {
+      return;
+    }
+
+    setIsLoginRedirectPending(true);
     saveReservationResumeState({
       selectedDate: currentSnapshot.selectedDate,
       selectedSlots,
       formState,
+      resumeOnReturn: true,
+      modalStep: "details",
+      isPaymentModalOpen: true,
     });
 
     const returnTo = `/?resumeReservation=1`;
@@ -661,16 +684,26 @@ export function WarehouseShowcaseBookingBoard({
   }
 
   async function signOutReservationAccount() {
+    if (isReservationSignOutPending) {
+      return;
+    }
+
     if (!supabase) {
       setAuthState(null);
       setAuthMode("guest");
       return;
     }
 
-    await supabase.auth.signOut();
-    setAuthState(null);
-    setAuthMode("guest");
-    setAuthStatusMessage("You can continue as a guest.");
+    setIsReservationSignOutPending(true);
+
+    try {
+      await supabase.auth.signOut();
+      setAuthState(null);
+      setAuthMode("guest");
+      setAuthStatusMessage("You can continue as a guest.");
+    } finally {
+      setIsReservationSignOutPending(false);
+    }
   }
 
   function toggleSlot(slot: SelectedSlot) {
@@ -812,10 +845,20 @@ export function WarehouseShowcaseBookingBoard({
     setStatusMessage("");
   }
 
-  function handleManualRelease() {
-    releaseSelection({ reason: "manual" }).catch(() => {
+  async function handleManualRelease() {
+    if (isReleasePending) {
+      return;
+    }
+
+    setIsReleasePending(true);
+
+    try {
+      await releaseSelection({ reason: "manual" });
+    } catch {
       setStatusMessage("We could not release the held slots. Please try again.");
-    });
+    } finally {
+      setIsReleasePending(false);
+    }
   }
 
   function handleContinueToPayment() {
@@ -859,6 +902,7 @@ export function WarehouseShowcaseBookingBoard({
       return;
     }
 
+    setIsHoldPending(true);
     let restorableSelection = selectedSlots;
 
     try {
@@ -872,6 +916,7 @@ export function WarehouseShowcaseBookingBoard({
 
       if (!response.ok || !latestSnapshot?.selectedDate) {
         setStatusMessage("We could not refresh the latest availability yet.");
+        setIsHoldPending(false);
         return;
       }
 
@@ -893,16 +938,16 @@ export function WarehouseShowcaseBookingBoard({
       }
     } catch {
       setStatusMessage("We could not refresh the latest availability yet.");
+      setIsHoldPending(false);
       return;
     }
 
     if (restorableSelection.length === 0) {
+      setIsHoldPending(false);
       return;
     }
 
     const latestGroupedBlocks = groupSelectedSlots(restorableSelection);
-
-    setIsHoldPending(true);
 
     try {
       const response = await fetch("/api/booking-holds", {
@@ -1139,6 +1184,47 @@ export function WarehouseShowcaseBookingBoard({
       );
     } finally {
       setIsConfirmationDownloading(false);
+    }
+  }
+
+  async function handleDownloadQr() {
+    const option = selectedPaymentOption;
+    if (!option?.qrUrl || isQrDownloading) {
+      return;
+    }
+
+    setIsQrDownloading(true);
+    setQrDownloadError("");
+
+    try {
+      const response = await fetch(option.qrUrl, { mode: "cors" });
+      if (!response.ok) {
+        throw new Error(`Unexpected response: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const extension = blob.type.includes("png")
+        ? "png"
+        : blob.type.includes("webp")
+          ? "webp"
+          : blob.type.includes("jpeg") || blob.type.includes("jpg")
+            ? "jpg"
+            : "png";
+      downloadReceiptBlob(blob, `${option.methodKey}-qr.${extension}`);
+    } catch {
+      // Cross-origin QR hosts can block a direct fetch; fall back to opening the
+      // image so the player can still long-press or right-click to save it.
+      const opened = window.open(
+        option.qrUrl,
+        "_blank",
+        "noopener,noreferrer",
+      );
+      if (!opened) {
+        setQrDownloadError(
+          "We could not download the QR. Please screenshot it instead.",
+        );
+      }
+    } finally {
+      setIsQrDownloading(false);
     }
   }
 
@@ -1620,14 +1706,23 @@ export function WarehouseShowcaseBookingBoard({
                   <button
                     type="button"
                     onClick={handleManualRelease}
-                    disabled={isHoldPending || groupedBlocks.length === 0}
-                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.5)] px-5 py-3 text-sm font-semibold text-(--color-text-secondary) transition hover:bg-(--color-surface-soft) disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-14 sm:px-7 sm:text-base"
+                    disabled={
+                      isHoldPending ||
+                      isReleasePending ||
+                      groupedBlocks.length === 0
+                    }
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.5)] px-5 py-3 text-sm font-semibold text-(--color-text-secondary) transition hover:bg-(--color-surface-soft) disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-14 sm:px-7 sm:text-base"
                   >
-                    Clear
+                    {isReleasePending ? <ButtonSpinner /> : null}
+                    {isReleasePending ? "Clearing..." : "Clear"}
                   </button>
                   <button
                     type="button"
-                    disabled={isHoldPending || groupedBlocks.length === 0}
+                    disabled={
+                      isHoldPending ||
+                      isReleasePending ||
+                      groupedBlocks.length === 0
+                    }
                     onClick={handleContinueToPayment}
                     className="inline-flex min-h-12 items-center justify-center rounded-full bg-(--color-action-secondary) px-7 py-3 text-base font-bold text-white shadow-[0_16px_32px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-(--color-action-secondary-hover) disabled:cursor-not-allowed disabled:bg-(--color-border-panel) disabled:text-(--color-text-soft) disabled:shadow-none sm:min-h-14 sm:px-10 sm:text-[1.05rem]"
                   >
@@ -1661,7 +1756,7 @@ export function WarehouseShowcaseBookingBoard({
         <BodyPortal>
           <div className="fixed inset-0 z-[1500] flex items-center justify-center overscroll-contain bg-[rgba(var(--color-overlay-rgb),0.58)] p-2 backdrop-blur-md sm:p-5">
             <div className="flex max-h-[95dvh] w-full max-w-[1180px] flex-col overflow-hidden overscroll-contain rounded-[1.6rem] border border-(--color-border-card) bg-(--color-surface) shadow-[0_36px_140px_rgba(var(--color-shadow-rgb),0.28)] sm:rounded-[2rem]">
-              <div className="theme-gradient-surface sticky top-0 z-20 flex items-start justify-between border-b border-(--color-border-panel) px-5 py-5 sm:px-8 sm:py-7">
+              <div className="theme-gradient-surface z-20 flex shrink-0 items-start justify-between border-b border-(--color-border-panel) px-5 py-4 sm:px-8 sm:py-5">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-(--color-brand)">
                     Secure checkout
@@ -1677,20 +1772,24 @@ export function WarehouseShowcaseBookingBoard({
                   type="button"
                   aria-label="Close booking modal"
                   onClick={closePaymentModal}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-(--color-border-panel) bg-[rgba(var(--color-surface-rgb),0.82)] text-lg leading-none text-(--color-text-muted) shadow-[0_8px_24px_rgba(var(--color-shadow-rgb),0.06)] transition hover:border-(--color-brand) hover:text-(--color-brand)"
+                  disabled={isPending || isHoldPending || isReleasePending}
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-(--color-border-panel) bg-[rgba(var(--color-surface-rgb),0.82)] text-lg leading-none text-(--color-text-muted) shadow-[0_8px_24px_rgba(var(--color-shadow-rgb),0.06)] transition hover:border-(--color-brand) hover:text-(--color-brand) disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   ×
                 </button>
               </div>
 
               <form
-                ref={paymentModalScrollRef}
-                className="min-h-0 flex-1 overflow-y-auto"
+                className="flex min-h-0 flex-1 flex-col"
                 onSubmit={submitBookings}
               >
+                <div
+                  ref={paymentModalScrollRef}
+                  className="min-h-0 flex-1 overflow-y-auto"
+                >
                 <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="border-b border-(--color-border-panel) px-5 py-5 md:border-b-0 md:border-r md:px-8 md:py-7">
-                  <div className="space-y-8">
+                <div className="border-b border-(--color-border-panel) px-5 py-5 md:border-b-0 md:border-r md:px-8 md:py-6">
+                  <div className="space-y-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="grid min-w-0 flex-1 grid-cols-2 gap-1 rounded-[1rem] border border-(--color-border-panel) bg-(--color-surface-soft) p-1">
                         <div
@@ -1784,9 +1883,15 @@ export function WarehouseShowcaseBookingBoard({
                                   onClick={() =>
                                     void signOutReservationAccount()
                                   }
-                                  className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)]"
+                                  disabled={isReservationSignOutPending}
+                                  className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-[color:var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-brand)] hover:text-[color:var(--color-brand)] disabled:cursor-wait disabled:opacity-60"
                                 >
-                                  Use guest checkout instead
+                                  {isReservationSignOutPending ? (
+                                    <ButtonSpinner />
+                                  ) : null}
+                                  {isReservationSignOutPending
+                                    ? "Switching to guest..."
+                                    : "Use guest checkout instead"}
                                 </button>
                               </div>
                             ) : (
@@ -1799,9 +1904,15 @@ export function WarehouseShowcaseBookingBoard({
                                 <button
                                   type="button"
                                   onClick={redirectToBookTheCourtLogin}
-                                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-[color:var(--color-brand-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-strong-hover)]"
+                                  disabled={isLoginRedirectPending}
+                                  className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-strong)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-strong-hover)] disabled:cursor-wait disabled:opacity-65"
                                 >
-                                  Open BookTheCourt Login
+                                  {isLoginRedirectPending ? (
+                                    <ButtonSpinner />
+                                  ) : null}
+                                  {isLoginRedirectPending
+                                    ? "Opening login..."
+                                    : "Open BookTheCourt Login"}
                                 </button>
                               </div>
                             )
@@ -1914,7 +2025,7 @@ export function WarehouseShowcaseBookingBoard({
                           ) : null}
 
                           <div className="mt-5 space-y-3">
-                            <label className="flex items-start gap-3 rounded-lg border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] px-4 py-4 text-sm text-[color:var(--color-text-secondary)]">
+                            <label className="flex items-start gap-3 rounded-lg border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] px-4 py-3 text-sm text-[color:var(--color-text-secondary)]">
                               <input
                                 type="checkbox"
                                 checked={formState.acceptedTerms}
@@ -1935,7 +2046,7 @@ export function WarehouseShowcaseBookingBoard({
                               </span>
                             </label>
 
-                            <label className="flex items-start gap-3 rounded-lg border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] px-4 py-4 text-sm text-[color:var(--color-text-secondary)]">
+                            <label className="flex items-start gap-3 rounded-lg border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] px-4 py-3 text-sm text-[color:var(--color-text-secondary)]">
                               <input
                                 type="checkbox"
                                 checked={formState.acceptedProceed}
@@ -1957,7 +2068,7 @@ export function WarehouseShowcaseBookingBoard({
                               </span>
                             </label>
 
-                            <label className="flex items-start gap-3 rounded-lg border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] px-4 py-4 text-sm text-[color:var(--color-text-secondary)]">
+                            <label className="flex items-start gap-3 rounded-lg border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] px-4 py-3 text-sm text-[color:var(--color-text-secondary)]">
                               <input
                                 type="checkbox"
                                 checked={formState.acceptedFeePolicy}
@@ -2021,10 +2132,6 @@ export function WarehouseShowcaseBookingBoard({
                                   {selectedPaymentOption?.label ??
                                     "your selected method"}
                                 </p>
-                                <p className="mt-1 text-xs leading-5 text-[color:var(--color-text-muted)]">
-                                  The QR updates when you choose a different
-                                  payment pill.
-                                </p>
                               </div>
                               {isPaymentMethodSwitching ? (
                                 <span className="inline-flex items-center rounded-full bg-[color:var(--color-surface-info)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-action-primary)]">
@@ -2033,7 +2140,7 @@ export function WarehouseShowcaseBookingBoard({
                               ) : null}
                             </div>
 
-                            <div className="relative mx-auto w-full max-w-[360px] overflow-hidden rounded-[1.25rem] border border-[color:var(--color-border-panel-soft)] bg-white p-2 shadow-[0_18px_50px_rgba(var(--color-shadow-rgb),0.1)]">
+                            <div className="relative mx-auto w-full max-w-[240px] overflow-hidden rounded-[1.25rem] border border-[color:var(--color-border-panel-soft)] bg-white p-2 shadow-[0_18px_50px_rgba(var(--color-shadow-rgb),0.1)]">
                               <div
                                 className={`absolute inset-0 z-10 flex items-center justify-center bg-[rgba(var(--color-surface-rgb),0.72)] backdrop-blur-[2px] transition ${
                                   isPaymentMethodSwitching
@@ -2083,6 +2190,44 @@ export function WarehouseShowcaseBookingBoard({
                                 </div>
                               )}
                             </div>
+
+                            {selectedPaymentOption?.qrUrl ? (
+                              <div className="grid gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void handleDownloadQr()}
+                                  disabled={isQrDownloading}
+                                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[color:var(--color-border-panel)] bg-[rgba(var(--color-surface-rgb),0.82)] px-5 py-2.5 text-sm font-semibold text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-action-primary)] hover:text-[color:var(--color-text-primary)] disabled:cursor-wait disabled:opacity-60"
+                                >
+                                  {isQrDownloading ? (
+                                    <ButtonSpinner />
+                                  ) : (
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      className="h-4 w-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <path d="M12 3v12" />
+                                      <path d="m7 10 5 5 5-5" />
+                                      <path d="M5 21h14" />
+                                    </svg>
+                                  )}
+                                  {isQrDownloading
+                                    ? "Preparing QR..."
+                                    : "Download QR"}
+                                </button>
+                                {qrDownloadError ? (
+                                  <p className="text-xs font-medium text-[color:var(--color-danger-strong)]">
+                                    {qrDownloadError}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : null}
                           </div>
 
                           <label className="grid gap-2 text-sm font-medium text-[color:var(--color-text-secondary)]">
@@ -2261,73 +2406,87 @@ export function WarehouseShowcaseBookingBoard({
                       </div>
                     </div>
 
-                    <div className="mt-8 border-t border-[color:var(--color-border-panel)] pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-5">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            modalStep === "payment"
-                              ? setModalStep("details")
-                              : closePaymentModal()
-                          }
-                          className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border-soft)] bg-[color:var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[color:var(--color-text-secondary)] shadow-[0_8px_24px_rgba(var(--color-shadow-rgb),0.05)] transition hover:border-[color:var(--color-brand-success-border)] hover:text-[color:var(--color-brand-strong)]"
-                        >
-                          <span
-                            aria-hidden="true"
-                            className="mr-2 text-base leading-none"
-                          >
-                            ←
-                          </span>
-                          Back
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void releaseSelection({ reason: "manual" })
-                          }
-                          className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--color-border-danger)] bg-[color:var(--color-surface-danger-soft)] px-4 py-2.5 text-sm font-semibold text-[color:var(--color-danger-strong)] transition hover:bg-[color:var(--color-surface-danger)] hover:text-[color:var(--color-danger)]"
-                        >
-                          <span
-                            aria-hidden="true"
-                            className="mr-2 text-base leading-none"
-                          >
-                            ×
-                          </span>
-                          Release Hold
-                        </button>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={isPending || isHoldPending}
-                        className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-[0.9rem] bg-[color:var(--color-action-primary)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(var(--color-shadow-brand-rgb),0.24)] transition hover:-translate-y-0.5 hover:bg-[color:var(--color-action-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
-                      >
-                        {isPending || isHoldPending
-                          ? "Saving..."
-                          : modalStep === "details"
-                            ? "Continue to Payment"
-                            : "Send Payment Proof"}
-                      </button>
-
-                      {statusMessage ? (
-                        <div
-                          className={`mt-4 rounded-[1rem] border px-4 py-3 text-sm ${
-                            isErrorStatusMessage(statusMessage)
-                              ? "border-[color:var(--color-border-danger)] bg-[color:var(--color-surface-danger-soft)] font-semibold text-[color:var(--color-danger-strong)]"
-                              : "border-[color:var(--color-border-light)] bg-[color:var(--color-surface-soft)] text-[color:var(--color-text-secondary)]"
-                          }`}
-                        >
-                          {statusMessage}
-                        </div>
-                      ) : hasActiveHold ? (
-                        <p className="mt-4 text-sm text-[color:var(--color-text-soft)]">
-                          Slots are held for 10 minutes once you proceed to
-                          payment.
-                        </p>
-                      ) : null}
-                    </div>
                   </div>
                 </div>
+                </div>
+                </div>
+
+                <div className="shrink-0 border-t border-[color:var(--color-border-panel)] bg-[color:var(--color-surface)] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-8">
+                  {statusMessage ? (
+                    <div
+                      className={`mb-3 rounded-[0.9rem] border px-4 py-2.5 text-sm ${
+                        isErrorStatusMessage(statusMessage)
+                          ? "border-[color:var(--color-border-danger)] bg-[color:var(--color-surface-danger-soft)] font-semibold text-[color:var(--color-danger-strong)]"
+                          : "border-[color:var(--color-border-light)] bg-[color:var(--color-surface-soft)] text-[color:var(--color-text-secondary)]"
+                      }`}
+                    >
+                      {statusMessage}
+                    </div>
+                  ) : null}
+
+                  <div className="flex items-center justify-between gap-3 sm:gap-4">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--color-text-soft)]">
+                        Total
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xl font-semibold tracking-[-0.03em] text-[color:var(--color-action-primary)] sm:text-2xl">
+                          {formatCurrency(subtotal)}
+                        </p>
+                        {hasActiveHold ? (
+                          <span className="inline-flex items-center rounded-full bg-[color:var(--color-surface-danger-soft)] px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--color-danger)]">
+                            {holdCountdown.label}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          modalStep === "payment"
+                            ? setModalStep("details")
+                            : closePaymentModal()
+                        }
+                        disabled={isPending || isHoldPending || isReleasePending}
+                        className="inline-flex min-h-12 items-center justify-center rounded-full border border-[color:var(--color-border-soft)] bg-[color:var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-brand-success-border)] hover:text-[color:var(--color-brand-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {modalStep === "payment" ? "Back" : "Cancel"}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isPending || isHoldPending || isReleasePending}
+                        className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[color:var(--color-action-primary)] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(var(--color-shadow-brand-rgb),0.24)] transition hover:bg-[color:var(--color-action-primary-hover)] disabled:cursor-wait disabled:opacity-60 sm:flex-none sm:text-base"
+                      >
+                        {isPending || isHoldPending ? <ButtonSpinner /> : null}
+                        {isHoldPending
+                          ? "Securing..."
+                          : isPending
+                            ? "Sending..."
+                            : modalStep === "details"
+                              ? "Continue to Payment"
+                              : "Send Payment Proof"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {hasActiveHold ? (
+                    <div className="mt-2.5 flex items-center justify-between gap-3">
+                      <p className="text-xs text-[color:var(--color-text-soft)]">
+                        Slots are held for 10 minutes.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void handleManualRelease()}
+                        disabled={isPending || isHoldPending || isReleasePending}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--color-danger-strong)] underline-offset-4 transition hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isReleasePending ? <ButtonSpinner /> : null}
+                        {isReleasePending ? "Releasing..." : "Release hold"}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </form>
             </div>
@@ -2545,9 +2704,10 @@ export function WarehouseShowcaseBookingBoard({
                     type="button"
                     onClick={() => void handleSaveReceiptToPhotos()}
                     disabled={isConfirmationDownloading}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-(--color-border-soft) bg-(--color-surface) px-5 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand) disabled:cursor-wait disabled:opacity-60"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-(--color-border-soft) bg-(--color-surface) px-5 py-2.5 text-sm font-semibold text-(--color-text-secondary) transition hover:border-(--color-brand) hover:text-(--color-brand) disabled:cursor-wait disabled:opacity-60"
                   >
-                    Save to Photos
+                    {isConfirmationDownloading ? <ButtonSpinner /> : null}
+                    {isConfirmationDownloading ? "Preparing..." : "Save to Photos"}
                   </button>
                   <button
                     type="button"
@@ -2555,7 +2715,7 @@ export function WarehouseShowcaseBookingBoard({
                     disabled={isConfirmationDownloading}
                     className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#087f83] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(8,127,131,0.22)] transition hover:bg-[#076d71] disabled:cursor-wait disabled:opacity-60"
                   >
-                    <svg
+                    {isConfirmationDownloading ? <ButtonSpinner /> : <svg
                       viewBox="0 0 24 24"
                       className="mr-2 h-4 w-4"
                       fill="none"
@@ -2568,7 +2728,7 @@ export function WarehouseShowcaseBookingBoard({
                       <path d="M12 3v12" />
                       <path d="m7 10 5 5 5-5" />
                       <path d="M5 21h14" />
-                    </svg>
+                    </svg>}
                     {isConfirmationDownloading
                       ? "Preparing image..."
                       : "Download image"}
@@ -3145,6 +3305,7 @@ function readReservationResumeState(): ReservationResumeState | null {
         acceptedProceed: Boolean(parsed.formState?.acceptedProceed),
         acceptedFeePolicy: Boolean(parsed.formState?.acceptedFeePolicy),
       },
+      resumeOnReturn: Boolean(parsed.resumeOnReturn),
       holdExpiresAt: parsed.holdExpiresAt
         ? String(parsed.holdExpiresAt)
         : null,

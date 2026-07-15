@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { createPublicSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type BookTheCourtRegisterPageProps = {
@@ -258,8 +259,9 @@ export function BookTheCourtRegisterPage({
               <button
                 type="submit"
                 disabled={isPending}
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-(--color-brand-strong) px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-(--color-brand-strong-hover) disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-(--color-brand-strong) px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(var(--color-shadow-brand-rgb),0.18)] transition hover:bg-(--color-brand-strong-hover) disabled:cursor-wait disabled:opacity-60"
               >
+                {isPending ? <ButtonSpinner /> : null}
                 {isPending ? "Creating account..." : "Create BookTheCourt Account"}
               </button>
             </form>
