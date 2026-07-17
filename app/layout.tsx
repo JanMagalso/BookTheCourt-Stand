@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 import { ConfirmBookingPanel } from "@/components/confirm-booking-panel";
 import { PageLoader } from "@/components/page-loader";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { rootThemeStyle } from "@/lib/theme";
+import { getThemeInitScript, rootThemeStyle } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "Court Booking Standalone",
@@ -17,8 +18,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased" style={rootThemeStyle}>
+    <html
+      lang="en"
+      className="h-full antialiased"
+      style={rootThemeStyle}
+      suppressHydrationWarning
+    >
       <body className="min-h-full flex flex-col">
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: getThemeInitScript() }}
+        />
         {children}
         <ConfirmBookingPanel />
         <ThemeSwitcher />

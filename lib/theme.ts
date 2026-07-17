@@ -469,6 +469,7 @@ export const themeOptions = {
 
 export type ThemeName = keyof typeof themeOptions;
 export type ThemeMode = "light" | "dark";
+export type ThemeModePreference = ThemeMode | "system";
 
 const configuredDefaultThemeName = process.env.NEXT_PUBLIC_DEFAULT_THEME?.trim();
 
@@ -477,6 +478,7 @@ export const defaultThemeName: ThemeName =
     ? (configuredDefaultThemeName as ThemeName)
     : "green";
 export const defaultThemeMode: ThemeMode = "light";
+export const defaultThemeModePreference: ThemeModePreference = "system";
 export const themeStorageKey = "btc-theme";
 export const themeModeStorageKey = "btc-theme-mode";
 
@@ -604,7 +606,40 @@ export function isThemeMode(value: string): value is ThemeMode {
   return value === "light" || value === "dark";
 }
 
+export function isThemeModePreference(value: string): value is ThemeModePreference {
+  return value === "system" || value === "light" || value === "dark";
+}
+
+export function getSystemThemeMode(): ThemeMode {
+  if (typeof window === "undefined") {
+    return defaultThemeMode;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+export function resolvePreferredThemeMode(
+  preference: ThemeModePreference,
+): ThemeMode {
+  return preference === "system" ? getSystemThemeMode() : preference;
+}
+
 export const rootThemeStyle = getThemeVariables(defaultThemeName, defaultThemeMode) as CSSProperties;
+
+export function getThemeInitScript() {
+  const themeMap = Object.fromEntries(
+    (Object.keys(themeOptions) as ThemeName[]).flatMap((themeName) =>
+      (["light", "dark"] as const).map((mode) => [
+        `${themeName}:${mode}`,
+        getThemeVariables(themeName, mode),
+      ]),
+    ),
+  );
+
+  return `(function(){try{var themeKey=${JSON.stringify(themeStorageKey)};var modeKey=${JSON.stringify(themeModeStorageKey)};var defaultTheme=${JSON.stringify(defaultThemeName)};var themeMap=${JSON.stringify(themeMap)};var theme=localStorage.getItem(themeKey)||defaultTheme;if(!themeMap[theme+":light"]){theme=defaultTheme;}var preference=localStorage.getItem(modeKey)||"system";var mode=preference==="light"||preference==="dark"?preference:(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");var vars=themeMap[theme+":"+mode];if(!vars){return;}var root=document.documentElement;root.dataset.theme=theme;root.dataset.themeMode=mode;for(var key in vars){if(Object.prototype.hasOwnProperty.call(vars,key)){root.style.setProperty(key,vars[key]);}}}catch(e){}})();`;
+}
 
 function resolveThemeMode(theme: ThemeTokens, mode: ThemeMode): ThemeTokens {
   if (mode === "light") {

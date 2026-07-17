@@ -3,15 +3,17 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 import {
-  defaultThemeMode,
+  defaultThemeModePreference,
   defaultThemeName,
   getThemeVariables,
+  isThemeModePreference,
   isThemeName,
-  isThemeMode,
+  resolvePreferredThemeMode,
   themeModeStorageKey,
   themeOptions,
   themeStorageKey,
   type ThemeMode,
+  type ThemeModePreference,
   type ThemeName,
 } from "@/lib/theme";
 
@@ -31,20 +33,48 @@ export function ThemeSwitcher() {
     const savedTheme = window.localStorage.getItem(themeStorageKey);
     return savedTheme && isThemeName(savedTheme) ? savedTheme : defaultThemeName;
   });
-  const [selectedMode, setSelectedMode] = useState<ThemeMode>(() => {
+  const [modePreference, setModePreference] = useState<ThemeModePreference>(() => {
     if (typeof window === "undefined") {
-      return defaultThemeMode;
+      return defaultThemeModePreference;
     }
 
     const savedMode = window.localStorage.getItem(themeModeStorageKey);
-    return savedMode && isThemeMode(savedMode) ? savedMode : defaultThemeMode;
+    return savedMode && isThemeModePreference(savedMode)
+      ? savedMode
+      : defaultThemeModePreference;
   });
+  const [selectedMode, setSelectedMode] = useState<ThemeMode>(() =>
+    resolvePreferredThemeMode(
+      typeof window === "undefined"
+        ? defaultThemeModePreference
+        : (() => {
+            const savedMode = window.localStorage.getItem(themeModeStorageKey);
+            return savedMode && isThemeModePreference(savedMode)
+              ? savedMode
+              : defaultThemeModePreference;
+          })(),
+    ),
+  );
 
   useEffect(() => {
-    applyTheme(selectedTheme, selectedMode);
+    const syncTheme = () => {
+      const nextMode = resolvePreferredThemeMode(modePreference);
+      setSelectedMode(nextMode);
+      applyTheme(selectedTheme, nextMode);
+    };
+
+    syncTheme();
     window.localStorage.setItem(themeStorageKey, selectedTheme);
-    window.localStorage.setItem(themeModeStorageKey, selectedMode);
-  }, [selectedMode, selectedTheme]);
+    window.localStorage.setItem(themeModeStorageKey, modePreference);
+
+    if (modePreference !== "system") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", syncTheme);
+    return () => mediaQuery.removeEventListener("change", syncTheme);
+  }, [modePreference, selectedTheme]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 640px)");
@@ -98,20 +128,23 @@ export function ThemeSwitcher() {
                   Theme
                 </p>
                 <p className="text-xs text-(--color-text-secondary)">
-                  {themeOptions[selectedTheme].label} · {selectedMode}
+                  {themeOptions[selectedTheme].label} ·{" "}
+                  {modePreference === "system"
+                    ? `system (${selectedMode})`
+                    : selectedMode}
                 </p>
               </div>
             </div>
 
             <div className="mb-3 inline-flex rounded-full border border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.68)] p-1">
-              {(["light", "dark"] as const).map((mode) => {
-                const isActive = selectedMode === mode;
+              {(["system", "light", "dark"] as const).map((mode) => {
+                const isActive = modePreference === mode;
 
                 return (
                   <button
                     key={mode}
                     type="button"
-                    onClick={() => setSelectedMode(mode)}
+                    onClick={() => setModePreference(mode)}
                     className={`inline-flex min-h-9 items-center justify-center rounded-full px-3 text-xs font-semibold uppercase tracking-[0.14em] transition ${
                       isActive
                         ? "bg-(--color-brand-strong) text-white shadow-[0_8px_20px_rgba(var(--color-shadow-rgb),0.18)]"

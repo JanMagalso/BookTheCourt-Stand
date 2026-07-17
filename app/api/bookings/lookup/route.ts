@@ -175,39 +175,97 @@ export async function POST(request: Request) {
   return NextResponse.json({ results });
 }
 
+type BookingLookupFilters = {
+  bookingReference?: string;
+  email?: string;
+  playerIds?: string[];
+  date?: string;
+  limit?: number;
+  orderAscending?: boolean;
+  includeReference?: boolean;
+};
+
 async function selectVenueBookings(
   supabaseAdmin: ReturnType<typeof createSupabaseServiceClient>,
   courtIds: string[],
-  apply: (query: any) => any,
-  options?: { includeReference?: boolean },
+  filters: BookingLookupFilters = {},
 ) {
-  const includeReference = options?.includeReference !== false;
+  const includeReference = filters.includeReference !== false;
+  const limit = filters.limit ?? 40;
+  const orderAscending = filters.orderAscending ?? false;
 
   if (includeReference) {
-    const withReference = await apply(
-      supabaseAdmin
-        .from("bookings")
-        .select(`${BOOKING_SELECT},booking_reference`)
-        .in("court_id", courtIds),
-    );
+    const withReference = await buildBookingLookupQuery(
+      supabaseAdmin,
+      courtIds,
+      `${BOOKING_SELECT},booking_reference`,
+      filters,
+    )
+      .order("starts_at", { ascending: orderAscending })
+      .limit(limit);
 
     if (!withReference.error) {
-      return (withReference.data ?? []) as BookingRow[];
+      return (withReference.data ?? []) as unknown as BookingRow[];
     }
 
     console.error("booking lookup select with reference failed", withReference.error);
+
+    // Don't return unfiltered rows when the caller asked for a booking_reference match.
+    if (filters.bookingReference) {
+      return [] as BookingRow[];
+    }
   }
 
-  const fallback = await apply(
-    supabaseAdmin.from("bookings").select(BOOKING_SELECT).in("court_id", courtIds),
-  );
+  const fallback = await buildBookingLookupQuery(
+    supabaseAdmin,
+    courtIds,
+    BOOKING_SELECT,
+    {
+      ...filters,
+      bookingReference: undefined,
+    },
+  )
+    .order("starts_at", { ascending: orderAscending })
+    .limit(limit);
 
   if (fallback.error) {
     console.error("booking lookup select failed", fallback.error);
     return [] as BookingRow[];
   }
 
-  return (fallback.data ?? []) as BookingRow[];
+  return (fallback.data ?? []) as unknown as BookingRow[];
+}
+
+function buildBookingLookupQuery(
+  supabaseAdmin: ReturnType<typeof createSupabaseServiceClient>,
+  courtIds: string[],
+  selectColumns: string,
+  filters: BookingLookupFilters,
+) {
+  let query = supabaseAdmin
+    .from("bookings")
+    .select(selectColumns)
+    .in("court_id", courtIds);
+
+  if (filters.bookingReference) {
+    query = query.eq("booking_reference", filters.bookingReference);
+  }
+
+  if (filters.email) {
+    query = query.ilike("reservation_contact_email", filters.email);
+  }
+
+  if (filters.playerIds?.length) {
+    query = query.in("player_id", filters.playerIds);
+  }
+
+  if (filters.date) {
+    query = query
+      .gte("starts_at", startOfDayIso(filters.date))
+      .lt("starts_at", endOfDayIso(filters.date));
+  }
+
+  return query;
 }
 
 async function findBookingsByReceiptId(
@@ -215,24 +273,21 @@ async function findBookingsByReceiptId(
   receiptId: string,
   courtIds: string[],
 ) {
-  const byReference = await selectVenueBookings(
-    supabaseAdmin,
-    courtIds,
-    (query) => query.eq("booking_reference", receiptId).limit(40),
-  );
+  const byReference = await selectVenueBookings(supabaseAdmin, courtIds, {
+    bookingReference: receiptId,
+    limit: 40,
+  });
 
   if (byReference.length) {
     return byReference;
   }
 
   // Reconstruct receipt IDs for submitted bookings when booking_reference is unset.
-  const rows = await selectVenueBookings(
-    supabaseAdmin,
-    courtIds,
-    (query) =>
-      query.order("starts_at", { ascending: false }).limit(300),
-    { includeReference: false },
-  );
+  const rows = await selectVenueBookings(supabaseAdmin, courtIds, {
+    includeReference: false,
+    limit: 300,
+    orderAscending: false,
+  });
 
   return findGroupedMatchByReceipt(rows, receiptId);
 }
@@ -243,23 +298,12 @@ async function findBookingsByEmail(
   courtIds: string[],
   date?: string,
 ) {
-  const applyEmailFilters = (query: any) => {
-    let filtered = query.ilike("reservation_contact_email", email);
-
-    if (date) {
-      filtered = filtered
-        .gte("starts_at", startOfDayIso(date))
-        .lt("starts_at", endOfDayIso(date));
-    }
-
-    return filtered.order("starts_at", { ascending: false }).limit(40);
-  };
-
-  const byContactEmail = await selectVenueBookings(
-    supabaseAdmin,
-    courtIds,
-    applyEmailFilters,
-  );
+  const byContactEmail = await selectVenueBookings(supabaseAdmin, courtIds, {
+    email,
+    date,
+    limit: 40,
+    orderAscending: false,
+  });
 
   if (byContactEmail.length) {
     return byContactEmail;
@@ -271,16 +315,11 @@ async function findBookingsByEmail(
     return [];
   }
 
-  return selectVenueBookings(supabaseAdmin, courtIds, (query) => {
-    let filtered = query.in("player_id", playerIds);
-
-    if (date) {
-      filtered = filtered
-        .gte("starts_at", startOfDayIso(date))
-        .lt("starts_at", endOfDayIso(date));
-    }
-
-    return filtered.order("starts_at", { ascending: false }).limit(40);
+  return selectVenueBookings(supabaseAdmin, courtIds, {
+    playerIds,
+    date,
+    limit: 40,
+    orderAscending: false,
   });
 }
 
@@ -289,13 +328,11 @@ async function findBookingsByDate(
   date: string,
   courtIds: string[],
 ) {
-  return selectVenueBookings(supabaseAdmin, courtIds, (query) =>
-    query
-      .gte("starts_at", startOfDayIso(date))
-      .lt("starts_at", endOfDayIso(date))
-      .order("starts_at", { ascending: true })
-      .limit(80),
-  );
+  return selectVenueBookings(supabaseAdmin, courtIds, {
+    date,
+    limit: 80,
+    orderAscending: true,
+  });
 }
 
 async function findPlayerIdsForEmail(
