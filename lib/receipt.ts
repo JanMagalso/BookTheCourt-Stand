@@ -22,6 +22,24 @@ export function buildReceiptId(input: {
   return `BTC-${digest}`;
 }
 
+export function normalizeReceiptId(value: string) {
+  const compact = value.trim().toUpperCase().replace(/\s+/g, "");
+
+  if (!compact) {
+    return "";
+  }
+
+  if (compact.startsWith("BTC-")) {
+    return compact;
+  }
+
+  if (compact.startsWith("BTC")) {
+    return `BTC-${compact.slice(3).replace(/^-/, "")}`;
+  }
+
+  return `BTC-${compact}`;
+}
+
 export function buildBookingTransactionKey(input: {
   playerId: string;
   paymentReference?: string | null;

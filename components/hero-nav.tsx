@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { SVGProps } from "react";
 import { useEffect, useMemo, useState } from "react";
 
+import { openConfirmBookingPanel } from "@/lib/confirm-booking-events";
 import { createPublicSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type HeroNavProps = {
@@ -168,6 +169,19 @@ export function HeroNav({
             </Link>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={openConfirmBookingPanel}
+                aria-label="Check booking status"
+                title="Check booking status"
+                className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl border transition ${
+                  isScrolled
+                    ? "border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.6)] text-(--color-text-primary) hover:border-(--color-brand) hover:text-(--color-brand)"
+                    : "border-white/12 bg-white/8 text-white hover:bg-white/14"
+                }`}
+              >
+                <SearchIcon className="h-5 w-5" />
+              </button>
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen((current) => !current)}
@@ -339,6 +353,19 @@ export function HeroNav({
             </nav>
 
             <div className="hidden items-center gap-3 lg:flex">
+              <button
+                type="button"
+                onClick={openConfirmBookingPanel}
+                aria-label="Check booking status"
+                title="Check booking status"
+                className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
+                  isScrolled
+                    ? "border-(--color-border-soft) bg-[rgba(var(--color-surface-rgb),0.52)] text-(--color-text-secondary) hover:border-(--color-brand) hover:text-(--color-brand)"
+                    : "border-white/10 bg-white/6 text-white/78 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <SearchIcon className="h-4.5 w-4.5" />
+              </button>
               {loggedInFirstName ? (
                 <span
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
@@ -474,6 +501,24 @@ function CalendarIcon(props: SVGProps<SVGSVGElement>) {
       <path d="M16 2v4" />
       <rect x="3" y="5" width="18" height="16" rx="2" />
       <path d="M3 10h18" />
+    </svg>
+  );
+}
+
+function SearchIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-4-4" />
     </svg>
   );
 }

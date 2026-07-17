@@ -2773,12 +2773,12 @@ function BookingReceiptPreviewCard({
   venueLocation: string;
 }) {
   return (
-    <div className="mx-auto aspect-[16/9] min-h-[31rem] w-full overflow-hidden rounded-xl bg-[#0c5059] p-[3%] text-white shadow-[0_24px_70px_rgba(8,63,70,0.24)] sm:min-h-0">
-      <div className="relative flex h-full flex-col overflow-hidden rounded-[1.25rem] border border-white/8 bg-[linear-gradient(135deg,#2b6469_0%,#2e6872_52%,#347d7d_100%)] p-5 sm:p-7 lg:p-9">
+    <div className="mx-auto aspect-[16/9] min-h-[31rem] w-full overflow-hidden rounded-xl bg-(--color-brand-strong) p-[3%] text-white shadow-[0_24px_70px_rgba(var(--color-shadow-rgb),0.28)] sm:min-h-0">
+      <div className="theme-gradient-panel relative flex h-full flex-col overflow-hidden rounded-[1.25rem] border border-white/8 p-5 sm:p-7 lg:p-9">
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-white/5 blur-2xl" />
         <div className="relative flex items-start justify-between gap-4">
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#8dd9d3] sm:text-xs">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-(--color-brand-accent) sm:text-xs">
               BookTheCourt receipt
             </p>
             <p className="mt-1 font-mono text-xl tracking-[-0.03em] sm:text-3xl">
@@ -2789,7 +2789,7 @@ function BookingReceiptPreviewCard({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden rounded-xl bg-white/92 px-2 py-1.5 sm:block">
+            <div className="hidden sm:block">
               <LoadingImage
                 src="/brand/court-logo.png"
                 alt={`${venueName} logo`}
@@ -2797,7 +2797,7 @@ function BookingReceiptPreviewCard({
                 height={36}
                 className="h-7 w-auto object-contain"
                 wrapperClassName="h-7 w-24"
-                skeletonClassName="bg-white"
+                skeletonClassName="bg-white/10"
               />
             </div>
             <span className="rounded-full bg-[#fff2cf] px-3 py-1.5 text-[10px] font-semibold text-[#9a6615] sm:px-4 sm:text-xs">
@@ -2909,29 +2909,40 @@ async function createBookingReceiptImage({
   context.scale(scale, scale);
   context.textBaseline = "alphabetic";
 
-  context.fillStyle = "#0c5059";
+  const rootStyles = getComputedStyle(document.documentElement);
+  const readThemeColor = (variable: string, fallback: string) =>
+    rootStyles.getPropertyValue(variable).trim() || fallback;
+  const brandStrong = readThemeColor("--color-brand-strong", "#17352a");
+  const heroMid = readThemeColor("--color-hero-mid", "#0c382c");
+  const brandAccent = readThemeColor("--color-brand-accent", "#d5ef76");
+
+  context.fillStyle = brandStrong;
   context.fillRect(0, 0, width, height);
 
-  const receiptGradient = context.createLinearGradient(80, 80, 1520, 820);
-  receiptGradient.addColorStop(0, "#2a6268");
-  receiptGradient.addColorStop(0.52, "#2d6972");
-  receiptGradient.addColorStop(1, "#347d7d");
   drawRoundedRect(context, 80, 68, 1440, 764, 32);
+  const receiptGradient = context.createLinearGradient(80, 68, 1360, 832);
+  receiptGradient.addColorStop(0, brandStrong);
+  receiptGradient.addColorStop(0.58, brandStrong);
+  receiptGradient.addColorStop(1, heroMid);
   context.fillStyle = receiptGradient;
   context.fill();
+
+  const accentGlow = context.createRadialGradient(1360, 160, 0, 1360, 160, 320);
+  accentGlow.addColorStop(0, withAlpha(brandAccent, 0.18));
+  accentGlow.addColorStop(1, withAlpha(brandAccent, 0));
+  context.fillStyle = accentGlow;
+  context.fill();
+
   context.strokeStyle = "rgba(255,255,255,0.08)";
   context.lineWidth = 2;
   context.stroke();
 
   const logo = await loadCanvasImage(logoSrc).catch(() => null);
   if (logo) {
-    drawRoundedRect(context, 1250, 105, 180, 74, 16);
-    context.fillStyle = "rgba(255,255,255,0.94)";
-    context.fill();
-    drawContainedImage(context, logo, 1268, 115, 144, 54);
+    drawContainedImage(context, logo, 1250, 105, 180, 74);
   }
 
-  context.fillStyle = "#8dd9d3";
+  context.fillStyle = brandAccent;
   context.font = "700 16px Avenir Next, Segoe UI, sans-serif";
   context.fillText("BOOKTHECOURT RECEIPT", 125, 126);
 
@@ -3028,6 +3039,38 @@ async function createBookingReceiptImage({
       }
     }, "image/png");
   });
+}
+
+function withAlpha(color: string, alpha: number) {
+  const value = color.trim();
+
+  const hexMatch = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(value);
+  if (hexMatch) {
+    const hex = hexMatch[1];
+    const full =
+      hex.length === 3
+        ? hex
+            .split("")
+            .map((char) => char + char)
+            .join("")
+        : hex;
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  const rgbMatch = /^rgba?\(([^)]+)\)$/i.exec(value);
+  if (rgbMatch) {
+    const parts = rgbMatch[1]
+      .split(/[,\s/]+/)
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(", ");
+    return `rgba(${parts}, ${alpha})`;
+  }
+
+  return value;
 }
 
 function drawReceiptCanvasField(

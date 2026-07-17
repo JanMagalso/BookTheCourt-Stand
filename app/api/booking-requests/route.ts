@@ -200,6 +200,12 @@ export async function POST(request: Request) {
       bookingIds: bookingRows.bookings.map((booking) => String(booking.id)),
     });
 
+    await persistBookingReference(
+      supabaseAdmin,
+      bookingRows.bookings.map((booking) => String(booking.id)),
+      receiptId,
+    );
+
     void sendOwnerBookingNotification(supabaseAdmin, {
       warehouseId,
       receiptId,
@@ -919,6 +925,25 @@ async function updateHeldBookings(
   }
 
   return { ok: true as const, bookings: data };
+}
+
+async function persistBookingReference(
+  supabaseAdmin: ReturnType<typeof createSupabaseServiceClient>,
+  bookingIds: string[],
+  receiptId: string,
+) {
+  if (!bookingIds.length) {
+    return;
+  }
+
+  const { error } = await supabaseAdmin
+    .from("bookings")
+    .update({ booking_reference: receiptId })
+    .in("id", bookingIds);
+
+  if (error) {
+    console.error("booking-requests reference persist failed", error);
+  }
 }
 
 async function insertPendingBookings(
